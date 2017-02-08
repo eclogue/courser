@@ -9,10 +9,10 @@
  */
 namespace Barge\Model;
 
-use medoo;
+use Barge\Model\DB;
 use Barge\Model\Cache;
 
-abstract class Dao
+abstract class Model
 {
     protected $db = '';
 
@@ -30,12 +30,15 @@ abstract class Dao
 
     protected $debug = false;
 
+    public $attr = [];
+
+    public $fields = [];
 
 
     public function __construct($config, $cache = null)
     {
         $this->config = $config;
-        $this->db = new medoo($config);
+        $this->db = new DB($config);
         $this->cache = Cache::getCache($cache);
     }
 
@@ -47,12 +50,14 @@ abstract class Dao
         return $this;
     }
 
-    public function cacheKey () {
-        $str =  json_encode($this->config) . strtolower($this->sql) . $this->flag;
+    public function cacheKey()
+    {
+        $str = json_encode($this->config) . strtolower($this->sql) . $this->flag;
         return md5(str);
     }
 
-    public function register($value) {
+    public function register($value)
+    {
         $key = $this->table . '#' . $this->flag;
         $this->cache->set($key, $value);
     }
@@ -65,7 +70,7 @@ abstract class Dao
 
     public function update($data, $where)
     {
-        if($this->debug) $this->db = $this->db->debug();
+        if ($this->debug) $this->db->debug();
         $this->before();
 
         $this->result = $this->db->update($this->table, $data, $where);
@@ -75,7 +80,7 @@ abstract class Dao
 
     public function insert($data)
     {
-        if($this->debug) $this->db = $this->db->debug();
+        if ($this->debug) $this->db = $this->db->debug();
         $this->before();
         $this->result = $this->db->insert($this->table, $data);
         $this->after();
@@ -86,7 +91,7 @@ abstract class Dao
 
     public function delete($where)
     {
-        if($this->debug) $this->db = $this->db->debug();
+        if ($this->debug) $this->db = $this->db->debug();
         $this->before();
         $this->result = $this->db->delete($this->table, $where);
         $this->sql = $this->db->last_query();
@@ -95,10 +100,11 @@ abstract class Dao
         return $this->result;
     }
 
-    public function findOne($column, $where) {
-        if($this->debug) $this->db->debug();
+    public function findOne($column, $where)
+    {
+        if ($this->debug) $this->db->debug();
         $this->before();
-        if($this->enableCache) {
+        if ($this->enableCache) {
             $data = $this->cache->get();
         }
         $this->result = $this->db->get($column, $where);
@@ -109,20 +115,23 @@ abstract class Dao
         return $this->result;
     }
 
-    public function findByIndex($index, $value, $column = '*') {
+    public function findByIndex($index, $value, $column = '*')
+    {
         return $this->findOne([$index => $value], $column);
     }
 
 
-    public function findById($id, $column = '*') {
+    public function findById($id, $column = '*')
+    {
         return $this->findOne(['id' => $id], $column);
     }
 
-    public function find($columns = '*', $where = '') {
-        if($this->debug) $this->db->debug();
+    public function find($columns = '*', $where = '')
+    {
+        if ($this->debug) $this->db->debug();
         $this->before();
         $this->result = $this->db->select($this->table, $columns, $where);
-        $this->sql = $this->db->last_query();
+//        $this->sql = $this->db->sql;
         $this->after();
 
         return $this->result;
@@ -136,5 +145,20 @@ abstract class Dao
     public function after()
     {
 
+    }
+
+    public function __call()
+    {
+
+    }
+
+    public function __get()
+    {
+        
+    }
+
+    public function __set($key, $value)
+    {
+        $this->attr[$key] = $value;
     }
 }

@@ -27,11 +27,9 @@ class Parse
 
     public $tree = [];
 
-    public $root = 'root';
-
-    public $token = [];
-
     public $sql = '';
+
+    public $values = [];
 
 
     public function __construct()
@@ -46,10 +44,6 @@ class Parse
      * */
     public function generateNode($entities, $child = false)
     {
-        echo "-------------->\n";
-        var_dump($entities);
-        echo "<--------------\n";
-
         foreach ($entities as $key => $value) {
             $node = [];
             $value = !is_array($value) ? ['$eq' => $value] : $value;
@@ -100,19 +94,21 @@ class Parse
         return is_numeric($keys[0]);
     }
 
-    public function build()
+    public function build($entities)
     {
-
+        $this->generateNode($entities);
         foreach ($this->tree as $key => $node) {
             if ($node['type'] === 'field') {
                 $this->sql .= $this->parseFieldNode($node);
             } else {
-                if ($node['value'] === 1) {
+                if ($node['value'] === 1) { // last child
                     $this->sql .= ')';
                 }
                 $this->sql .= $this->parseLogicalNode($node);
             }
         }
+
+        return '(' . $this->sql . ')';
     }
 
     private function parseFieldNode($node)
@@ -123,9 +119,10 @@ class Parse
         foreach ($node['value'] as $operator => $value) {
             $temp = [$filed];
             $temp[] = self::$operator[$operator];
-            $temp[] = $value;
+            $temp[] = '?';
             $temp[] = $connector;
             $string .= implode('', $temp);
+            $this->values[] = $value;
         }
 
         return rtrim($string, $connector);
@@ -142,22 +139,4 @@ class Parse
     }
 
 }
-
-
-$condition = [
-    'id' => ['$gt' => 1, '$lt' => 100, '$neq' => 23],
-    '$or' => [
-        'email' => ['eq' => 'aaxx@scac.com'],
-        'nick' => '1',
-    ],
-    'age' => ['$lt' => 70]
-];
-
-
-$p = new Parse();
-$p->generateNode($condition);
-$p->build();
-
-var_dump($p->tree);
-var_dump($p->sql);
 

@@ -20,7 +20,13 @@ $app->run();
  # /users/11
  $app->get('/users/:id', function($req, $res) {
     var_dump($req->params['id']); // id must be integer
-  });
+ });
+ # use list link
+ $app->get('users/*', [function($req, $res) {
+    /* do something*/
+  }, function($req, $res) {
+    /*...todo*/
+  }]);
  
   # use namespace
   $app->put('/user/{username}', ['MyNamespace\Controller', 'action']);
@@ -34,7 +40,9 @@ $app->run();
  ```
  
  ### Model
+ 
  used like mongo shell
+ 
   ```php
   $user = new Model('user');
 
