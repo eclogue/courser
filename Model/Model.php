@@ -149,6 +149,11 @@ abstract class Model
 
     }
 
+    public function DB()
+    {
+        return $this->db;
+    }
+
     public function __call()
     {
 
