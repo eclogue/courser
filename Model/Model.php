@@ -38,7 +38,8 @@ abstract class Model
     public function __construct($config, $cache = null)
     {
         $this->config = $config;
-        $this->db = new DB($config);
+        $this->db = new DB();
+        $this->db->add($config);
         $this->cache = Cache::getCache($cache);
     }
 
@@ -53,7 +54,7 @@ abstract class Model
     public function cacheKey()
     {
         $str = json_encode($this->config) . strtolower($this->sql) . $this->flag;
-        return md5(str);
+        return md5($str);
     }
 
     public function register($value)
@@ -105,6 +106,7 @@ abstract class Model
         if ($this->debug) $this->db->debug();
         $this->before();
         if ($this->enableCache) {
+            $key = '';
             $data = $this->cache->get();
         }
         $this->result = $this->db->get($column, $where);

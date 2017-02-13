@@ -15,29 +15,81 @@ class DB
 
     protected $fields = [];
 
+    private $linkr = null;
 
-    public function __construct($config)
+    private $linkw = null;
+
+    private $links = [];
+
+
+    public function __construct()
+    {
+        $this->parser = new Parse();
+    }
+
+    public function add($config, $type = 'single')
+    {
+        $type = strtolower($type);
+        if ($type === 'master') {
+            $this->config['master'] = $config;
+        } else if ($type === 'slave') {
+            $this->config['slave'] = $config;
+        } else {
+            $this->config['single'] = $config;
+        }
+    }
+
+    public function connect()
     {
         try {
-            $this->config = $config;
-            $this->parser = new Parse();
-            $dsn = $this->dsn($config);
-            $this->db = new \PDO(
-                $dsn,
-                $config['username'],
-                $config['password'],
-                $config['options']
-            );
+            foreach ($this->config as $type => $config) {
+                $connection = $this->getDB($config);
+                $dsn = $this->dsn($connection);
+                if (!empty($this->links[$dsn])) {
+                    $this->linkw = $this->links[$dsn]['linkw'];
+                    $this->linkr = $this->links[$dsn]['linkr'];
+                    continue;
+                }
+
+                $link[$dsn] = new \PDO(
+                    $dsn,
+                    $connection['username'],
+                    $connection['password'],
+                    $connection['options']
+                );
+                if ($type === 'master') {
+                    $this->linkw = $link[$dsn];
+                } else if ($type === 'slave') {
+                    $this->linkr = $link[$dsn];
+                } else {
+                    $this->linkr = $this->linkw = $link[$dsn];
+                }
+                $this->links[$dsn]['linkw'] = $this->linkw;
+                $this->links[$dsn]['linkr'] = $this->linkr;
+            }
         } catch (\Exception $err) {
-            throw new \Exception($err->getMessage());
+            throw new \Error('DB connect error,' . $err->getMessage());
         }
+    }
+
+    public function getDB($connection)
+    {
+        if (!is_array($connection)) {
+            throw new \Error('DB connection must be array');
+        }
+        $len = count($connection);
+        $index = mt_rand(0, $len - 1);
+        return $connection[$index];
     }
 
     private function dsn($config)
     {
         $dsn = 'mysql:';
-        if(isset($config) && $config['socket']) {
-            $dsn .= 'unix_socket=' . $config->socket;
+        if (is_array($config)) {
+
+        }
+        if (isset($config) && $config['socket']) {
+            $dsn .= 'unix_socket=' . $config['socket'];
         } else {
             $dsn .= 'host=' . $config['host'] . ';port=' . $config['port'];
         }
