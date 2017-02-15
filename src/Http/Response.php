@@ -11,19 +11,29 @@ namespace Barge\Http;
 use Barge\Http\StdObject;
 use Barge\Http\Header;
 
-class Response extends StdObject
+class Response
 {
 
     public $response = '';
 
     public $headers = [];
 
+    public $statusCode = 200;
+
     private $header;
 
-    public function __construct(array $arguments = [])
+    public $res;
+
+    public function __construct()
     {
         $this->header = new Header(array());
-        parent::__construct($arguments);
+
+    }
+
+
+    public function setResponse($response)
+    {
+        $this->res = $response;
     }
 
 
@@ -46,7 +56,6 @@ class Response extends StdObject
 
     public function json($data)
     {
-        $this->header('Content-Type', 'application/json');
         if (is_array($data)) {
             $data = json_decode($data);
         }
@@ -64,18 +73,15 @@ class Response extends StdObject
         $this->header('ETag', $ETag);
     }
 
-    public function redirect($url)
-    {
-
-    }
 
 
     public function end($data)
     {
-        echo "------\n";
-//        var_dump($this);
-//        var_dump($data);
-//        var_dump($this);
+        foreach($this->headers as $key => $value) {
+            $this->res->header($key, $value);
+        }
+        $this->res->status($this->statusCode);
+        $this->res->end($data);
     }
 
     public function send($str)
@@ -84,9 +90,9 @@ class Response extends StdObject
         $this->end($str);
     }
 
-    public function sendFile($str)
+    public function sendFile($file)
     {
-
+        $this->res->sendFile($file);
     }
 
     public function getHeader()
@@ -94,9 +100,9 @@ class Response extends StdObject
 
     }
 
-    public function __invoke($request)
+    public function __invoke($string)
     {
-        return $this;
+        $this->end($string);
     }
 
     public function __toString()

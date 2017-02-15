@@ -83,8 +83,7 @@ class Barge
     {
         $router = $this->container['router'];
         $request = $router->request;
-        $uri = isset($request->header['REQUEST_URI']) ? $request->header['REQUEST_URI'] : '/';
-
+        $uri = isset($request->header['request_uri']) ? $request->header['request_uri'] : '/';
         $router->dispatch($uri);
     }
 
@@ -95,13 +94,13 @@ class Barge
     public function setRequest($request)
     {
         $router = $this->container['router'];
-        $router->request->extend($request);
+        $router->request->setRequest($request);
     }
 
     public function setResponse($response)
     {
         $router = $this->container['router'];
-        $router->response->extend($response);
+        $router->response->setResponse($response);
     }
 
 

@@ -10,7 +10,7 @@ namespace Barge\Http;
 use Barge\Http\StdObject;
 use Barge\Http\Header;
 
-class Request extends StdObject
+class Request
 {
 
     private $params = [];
@@ -19,7 +19,7 @@ class Request extends StdObject
 
     public $methods = [];
 
-    public $body = [];
+    public $body = null;
 
     public $header = [];
 
@@ -27,17 +27,14 @@ class Request extends StdObject
 
     public $method = '';
 
+    public $req = '';
 
-    public function __construct(array $arguments = [])
+
+    public function setRequest($req)
     {
-        $this->server = array_change_key_case($_SERVER, CASE_LOWER);
-        $this->method = isset($this->server['request_method']) ? $this->server['request_method'] : 'get';
-        $this->uri = isset($this->server['request_uri']) ? $this->server['request_uri'] : '/';
-        $this->body = $this->getBody();
-        $this->header = array_merge(Header::defaultHeader(), $this->server);
-        parent::__construct($arguments);
+        $this->req = $req;
+        $this->method = $req->header['method'];
     }
-
 
     /*
      * 活取当前http求情的method
@@ -72,65 +69,54 @@ class Request extends StdObject
             $this->params[$key] = $val;
     }
 
-    /*
-     * 设置http求情方法
-     * */
-    public function setMethod()
-    {
-        $argv = func_get_args();
-        $this->method = array_merge($this->method, $argv);
-    }
 
+    /*
+     * get request header by field name
+     *
+     * @param string $name
+     * */
     public function header($name)
     {
-        return isset($this->header[$name]) ? $this->header[$name] : null;
+        return $this->req->header($name) ?: null;
     }
 
-    public function get($name)
-    {
-        return $_GET[$name] ?: false;
-    }
 
     public function cookie()
     {
 
     }
 
-    public function post($key)
+    /*
+     * get request body by param name
+     *
+     * @param string $key param name
+     * @return string || null
+     * */
+    public function body($key)
     {
-        if(empty($_POST)) return false;
-        if(isset($_POST[$key])) return $_POST[$key];
-        if(isset($this->body[$key])) return $this->body[$key];
-
-        return false;
+        if($this->header('content-type') === 'application/x-www-form-urlencoded') {
+            return $this->req->post($key);
+        } else {
+            if($this->body === null) {
+                if (function_exists('mb_parse_str'))
+                    mb_parse_str(file_get_contents('php://input'), $this->body);
+                else
+                    parse_str(file_get_contents('php://input'), $this->body);
+            } else {
+                return isset($this->body[$key]) ? $this->body[$key] : null;
+            }
+        }
     }
 
+    public function query($key)
+    {
+        return $this->req->get($key) ?: null;
+    }
 
-//    public function accept($) {
-//
-//    }
 
     public function __invoke($request)
     {
         return $this;
-    }
-
-    /**
-     * Returns rest request parameters.
-     * @return array the request parameters
-     */
-    public function getBody()
-    {
-
-        $result = [];
-        $httpMethod = array('get', 'put', 'delete', 'put', 'patch', 'options');
-        if (!isset($_SERVER['REQUEST_METHOD']) || !in_array(strtolower($_SERVER['REQUEST_METHOD']), $httpMethod))
-            return $result;
-        if (function_exists('mb_parse_str'))
-            mb_parse_str(file_get_contents('php://input'), $result);
-        else
-            parse_str(file_get_contents('php://input'), $result);
-        return $result;
     }
 
 }

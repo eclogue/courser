@@ -29,7 +29,6 @@ class Router
 
     public function __construct($request, $response)
     {
-//        var_dump($request->server);
         $this->request = $request;
         $this->response = $response;
     }
@@ -39,7 +38,7 @@ class Router
         $this->container = $container;
     }
 
-    public function group($group, $callable, Init $scope = null)
+    public function group($group, $callable, $scope = null)
     {
         $group = rtrim($group) . '/';
         if (substr(strlen($group) - 1, 1) !== '*') $group .= '*';
@@ -145,7 +144,7 @@ class Router
     {
         $uri = $uri ?: '/';
         $method = $this->request->method;
-        $route = $this->middleware;
+        $this->middleware();
         $group = $this->mapGroup($uri);
         if ($group) { // @todo 去掉匹配部分
             $uri = $group;
@@ -154,14 +153,7 @@ class Router
         if (!$found) {
             return 404;
         }
-        $route = array_merge($route, $found);
-        if ($route === false) {
-            return 0; // method not allow 405
-        }
-        if (!count($route)) {
-            return false; // return not found;
-        }
-        foreach ($route as $key => $callback) {
+        foreach ($found as $key => $callback) {
             if (is_string($key)) {
                 $this->handle([$key => $callback]);
             } else {
@@ -169,6 +161,15 @@ class Router
             }
         }
         return true; // @todo
+    }
+
+    private function middleware()
+    {
+        if (count($this->middleware)) {
+            foreach ($this->middleware as $middleware) {
+                yield $middleware($this->request, $this->response);
+            }
+        }
     }
 
 
@@ -185,18 +186,16 @@ class Router
                 $method = null;
                 foreach ($callback as $class => $action) {
                     $method = $action;
-                    $key = 'init.classes.' . $class;
+                    $key = 'Barge.classes.' . $class;
                     $obj = Config::get($key);
-                    if ($obj) break;
-                    $obj = new $class();
-                    Config::set($key, $obj);
+                    if (!$obj) {
+                        $obj = new $class();
+                        Config::set($key, $obj);
+                    }
+                    yield call_user_func_array([$obj, $method], [$this->request, $this->response]);
                 }
-                $next = call_user_func_array([$obj, $method], [$this->request, $this->response]);
             } else {
-                $next = $callback($this->request, $this->response);
-            }
-            if ($next && is_callable($next)) {
-                $this->handle($next);
+                yield $callback($this->request, $this->response);
             }
         } catch (\Exception $err) {
             $this->handleError($err);
