@@ -8,9 +8,9 @@
 
 namespace Barge\Server;
 
+use Barge\Barge;
 use Swoole\Http\Server;
 use Barge\Set\Config;
-use Barge\Init;
 
 class HttpServer
 {
@@ -32,7 +32,7 @@ class HttpServer
 
     public function __construct($path, $config)
     {
-        $this->app = new Init();
+        $this->app = new Barge();
         $this->app->init($path, $config);
         $this->host = Config::get('host', '127.0.0.1');
         $this->port = Config::get('port', '5001');
@@ -44,12 +44,12 @@ class HttpServer
 
 
     public function mount($req, $res) {
-
         if(!is_file($req->server['request_uri'])) {
 //            $request = new \ReflectionClass($req);
 //            $response = new \ReflectionClass($res);
             $this->app->setRequest($req);
             $this->app->setResponse($res);
+//            var_dump($res->end('dddd'));
             $this->app->run();
         }
     }

@@ -74,9 +74,6 @@ abstract class Model
         if ($this->debug) $this->db->debug();
         $this->before();
 
-        $this->result = $this->db->update($this->table, $data, $where);
-        $this->after();
-        $this->sql = $this->db->last_query();
     }
 
     public function insert($data)
@@ -92,8 +89,6 @@ abstract class Model
 
     public function delete($where)
     {
-        if ($this->debug) $this->db = $this->db->debug();
-        $this->before();
         $this->result = $this->db->delete($this->table, $where);
         $this->sql = $this->db->last_query();
         $this->after();
@@ -101,42 +96,37 @@ abstract class Model
         return $this->result;
     }
 
-    public function findOne($column, $where)
+    public function findOne($where)
     {
         if ($this->debug) $this->db->debug();
-        $this->before();
-        if ($this->enableCache) {
-            $key = '';
-            $data = $this->cache->get();
-        }
-        $this->result = $this->db->get($column, $where);
-        $this->sql = $this->db->last_query();
-        $this->register($this->sql);
-        $this->after();
+        $this->result = $this->db->where($where)->select();
+//        $this->register($this->sql);
+//        $this->after();
 
         return $this->result;
     }
 
-    public function findByIndex($index, $value, $column = '*')
+    public function findByIndex($index, $value)
     {
-        return $this->findOne([$index => $value], $column);
+        return $this->findOne([$index => $value]);
     }
 
 
-    public function findById($id, $column = '*')
+    public function findById($id)
     {
-        return $this->findOne(['id' => $id], $column);
+        return $this->findOne(['id' => $id]);
     }
 
-    public function find($columns = '*', $where = '')
+    public function find($where, $options)
     {
-        if ($this->debug) $this->db->debug();
-        $this->before();
-        $this->result = $this->db->select($this->table, $columns, $where);
-//        $this->sql = $this->db->sql;
-        $this->after();
+        $this->result = $this->db->where($where)->select();
 
         return $this->result;
+    }
+
+    public function build()
+    {
+        return $this->db;
     }
 
     public function before()
@@ -149,10 +139,6 @@ abstract class Model
 
     }
 
-    public function DB()
-    {
-        return $this->db;
-    }
 
     public function __call()
     {
@@ -161,11 +147,21 @@ abstract class Model
 
     public function __get()
     {
-        
+
     }
 
     public function __set($key, $value)
     {
         $this->attr[$key] = $value;
+    }
+
+    protected function checkFields($fields)
+    {
+        if (is_string($fields)) return isset($this->fields[$fields]);
+        foreach ($fields as $field => $value) {
+            if (!isset($this->fields[$field])) return false;
+        }
+
+        return true;
     }
 }

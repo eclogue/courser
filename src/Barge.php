@@ -55,6 +55,7 @@ class Barge
         $container = new Container();
 
         $container['request'] = $container->factory((function($c) {
+//            var_dump($c);
             return new Request();
         }));
         $container['response'] = $container->factory((function($c) {

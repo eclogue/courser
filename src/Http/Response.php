@@ -72,9 +72,10 @@ class Response extends StdObject
 
     public function end($data)
     {
-
-        $this->getHeader();
-        exit($data);
+        echo "------\n";
+//        var_dump($this);
+//        var_dump($data);
+//        var_dump($this);
     }
 
     public function send($str)

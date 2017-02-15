@@ -7,6 +7,7 @@ class DB
 {
 
     protected $config = [];
+
     protected $parser = null;
 
     protected $sql = [];
@@ -20,6 +21,8 @@ class DB
     private $linkw = null;
 
     private $links = [];
+
+    private $values = [];
 
 
     public function __construct()
@@ -101,16 +104,21 @@ class DB
     public function table($table)
     {
         $this->table = $table;
+        return $this;
     }
 
     public function field($field)
     {
         $this->fields = $this->wrapField($field);
+        return $this;
     }
 
     public function where($condition)
     {
-        $this->sql[] = 'WHERE ' . $this->parser->build($condition);
+        list($sql, $values) = $this->parser->build($condition);
+        $this->sql[] = $sql;
+        $this->values[] = $values;
+        return $this;
     }
 
     public function order($orderBy)
@@ -123,24 +131,77 @@ class DB
     public function skip($offset)
     {
         $this->sql[] = 'OFFSET ' . $offset;
+        return $this;
+
     }
 
     public function limit($limit)
     {
         $this->sql[] = 'LIMIT ' . $limit;
+        return $this;
     }
 
 
     public function group($field)
     {
         $this->sql[] = 'GROUP BY `' . $field . '`';
+        return $this;
     }
 
     public function select()
     {
         $sql = 'SELECT %s FROM `%s` %s';
         $sql = printf($sql, $this->fields, $this->table, $this->sql);
-        return $this->db->query($sql); // @fixme
+        $this->sql = $sql;
+        return $this->linkr->query($sql, $this->values);
+    }
+
+    public function delete()
+    {
+        $sql = 'DELETE FROM `%s` %s';
+        $sql = printf($sql, $this->table, $this->sql);
+        $this->sql = $sql;
+        return $this->linkw->query($sql, $this->values);
+    }
+
+    public function update($data)
+    {
+        $set = '';
+        foreach ($data as $field => $value) {
+            if (is_string($value)) {
+                $set .= '`' . $field . '`=?';
+                $this->values[] = $value;
+                continue;
+            }
+            if (is_array($value)) {
+                if (isset($value['$increment'])) {
+                    $set .= '`' . $field . '`=' . $field . '+' . $value;
+                } else {
+                    $set .= '`' . $field . '`=?' . json_encode($value);
+                    $this->values[] = $value;
+                }
+            }
+        }
+        $sql = 'UPDATE `%s` SET %s %s';
+        $sql = printf($sql, $this->fields, $this->table, $this->sql);
+        $this->sql = $sql;
+
+        return $this->linkw->query($sql, $this->values);
+    }
+
+    public function insert($data) {
+        $fields = [];
+        $values = [];
+        foreach ($data as $field => $value) {
+            $field[] = '`'. $field .'`';
+            $values[] = $value;
+        }
+        $fields = implode(',', $fields);
+        $values = implode(',', $values);
+        $sql = 'INSERT INTO `%s`(%s)VALUE(%s)';
+        $this->sql = printf($sql, $this->table, $fields, $values);
+
+        return $this->linkw->query($sql, $this->values);
     }
 
     public function wrapField($fields)

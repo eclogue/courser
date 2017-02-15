@@ -108,7 +108,13 @@ class Parse
             }
         }
 
-        return '(' . $this->sql . ')';
+        $this->sql = 'WHERE(' . $this->sql . ')';
+
+        $ret = ['sql' => $this->sql, 'values'=> $this->values];
+        $this->sql = '';
+        $this->values = [];
+
+        return $ret;
     }
 
     private function parseFieldNode($node)

@@ -24,26 +24,16 @@ abstract class StdObject
 
     }
 
-    public function extend($request)
+    public function extend($object)
     {
-        $reflection = new \ReflectionClass($request);
-        $properties = $reflection->getProperties(\ReflectionProperty::IS_PUBLIC);
-        foreach ($properties as $prop) {
-            $property = $prop->getName();
-            $this->{$property} = $request->{$property};
-        }
-
-        $methods = $reflection->getMethods();
-        foreach ($methods as $key => $value) {
-            $name = $value->name;
-            $this->$name = function($arguments) use ($request, $name) {
-                return $request->$name($arguments);
-            };
-        }
+        $this->extend = $object;
     }
 
     public function __set($name, $value)
     {
+        if(isset($this->extend[$name])) {
+            $this->extend[$name] = $value;
+        }
         $this->$name = $value;
     }
 
