@@ -1,0 +1,135 @@
+#!/usr/local/bin/node
+const monitor = require('chokidar');
+const config = require('../watch.js');
+const spawn = require('child_process').spawn;
+const exec = require('child_process').exec;
+const color = require('cli-color');
+const fs = require('fs');
+const util = require('util');
+const commander = require('commander');
+const pm2 = require('pm2');
+
+
+let root = config.root ? config.root : __dirname.substr(0, __dirname.length - 'bin'.length);
+let tmp = config.tpm ? config.tmp : './init.pid';
+const script = config.script;
+const executeFile = config.executeFile;
+
+const run = function ($cmd) {
+  monitor.watch(config.watch, { ignored: config.ignore }).on('all', (event, path) => {
+    console.log(event, path);
+    if (!fs.existsSync(tmp)) {
+      let fd = fs.openSync(tmp, 'w+');
+      fs.writeSync(fd, '');
+      fs.close(fd);
+    }
+    let pid = fs.readFileSync(tmp);
+    pid = pid.toString().replace(/(\n|\r|(\r\n)|(\u0085)|(\u2028)|(\u2029))/g, '');
+    if (pid) {
+      let cmd = util.format("ps -C %s | grep -v PID | awk '{print $1}' | xargs kill -15", pid);
+      exec(cmd, function (err, stdout, stderr) {
+        if (err) {
+          console.log(color.red(err.message));
+          console.log(stdout, stderr);
+        }
+        watch();
+      });
+    } else {
+      watch();
+    }
+  });
+};
+
+
+const watch = () => {
+  const server = spawn.apply(null, [script, [executeFile], { cwd: root }]);
+  console.log(color.green('child process pid: ', server.pid));
+  console.log(tmp);
+  const fd = fs.openSync(tmp, 'w+');
+  fs.writeSync(fd, server.pid);
+  fs.close(fd);
+  server.stdout.on('data', function (data) {
+    console.log(color.blue(data.toString()));
+  });
+
+  // 捕获标准错误输出并将其打印到控制台 
+  server.stderr.on('data', function (data) {
+    console.log(color.red.bgBlackBright(data.toString()));
+  });
+  server.on('error', function (err) {
+    console.log(color.red('error on process:', err.code), err.message);
+    console.log(color.red('stack:', err.stack));
+    console.log(color.yellow('wait for change....'))
+  });
+
+  server.on('exit', function (code, signal) {
+    console.log(color.yellow('start process fail or process exit, waiting for file changing ...'));
+  });
+};
+
+commander.version('0.0.1')
+  .option('-h, --help', '--help show menus')
+  .option('-w, --watch', 'start up process')
+  .option('--start <action>', 'process restart')
+  .option('--reload <action>', 'process restart')
+  .option('--stop <action>', 'manage worker stop')
+  .option('--list <action>', 'manage worker stop')
+  .option('--minitor <action>', 'manage worker stop')
+  .option('--delete  <action>', 'manage worker stop')
+
+commander.command('watch')
+  .description('start server and watch files change')
+  .action(function (name) {
+    run();
+  });
+
+commander.command('start')
+  .description('start server')
+  .action(function (name) {
+    pm2.connect(function (err) {
+      if (err) {
+        console.error(err);
+        process.exit(2);
+      }
+
+      pm2.start({
+        interpreter: "php",
+        script: executeFile,         // Script to be run
+        exec_mode: 'fork',        // Allow your app to be clustered
+        instances: 1,                // Optional: Scale your app by 4
+        max_memory_restart: config.memory   // Optional: Restart your app if it reaches 100Mo
+      }, function (err, apps) {
+        pm2.disconnect();   // Disconnect from PM2
+        if (err) throw err
+      });
+    });
+  });
+
+
+commander.arguments('<cmd>')
+  .action(function (cmd) {
+    pm2.connect(function (err) {
+      if (err) {
+        console.error(err);
+        process.exit(2);
+      }
+      if (!pm2.hasOwnProperty(cmd)) {
+        console.log('Illegal command~,Bye!');
+        process.exit(3);
+      }
+      pm2[cmd]({
+        interpreter: "php",
+        script: executeFile,
+        exec_mode: config.mode || 'fork',
+        instances: 1,
+        max_memory_restart: config.memory
+      }, function (err, apps) {
+        pm2.disconnect();
+        if (err) throw err
+      });
+    });
+  });
+
+
+commander.parse(process.argv);
+

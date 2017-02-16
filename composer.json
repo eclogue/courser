@@ -1,0 +1,26 @@
+{
+    "name": "shipmen/Barge",
+    "description": "light and faster php rest micro framework",
+    "version": "0.0.1",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "bugbear",
+            "email": "mulberry10th@gmail.com",
+            "homepage": "http://bugbear.me"
+        }
+    ],
+    "autoload": {
+        "psr-4": {"Barge\\": "src/"}
+    },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/shipmen/Barge"
+        }
+    ],
+    "require": {
+        "monolog/monolog": "^1.22",
+        "pimple/pimple": "~3.0"
+    }
+}
