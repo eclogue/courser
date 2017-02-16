@@ -1,6 +1,0 @@
-{
-    "require": {
-        "monolog/monolog": "^1.22",
-        "pimple/pimple": "~3.0"
-    }
-}
