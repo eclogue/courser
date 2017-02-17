@@ -27,31 +27,9 @@ class Barge
 
     public $router = '';
 
-    public static $appPath = 'App';
-
-    public static $core_path = __DIR__;
-
-    private static $includePath = array();
-    /*
-     * @var array $_import
-     * */
-    public static $_import = array();
-
-    /*
-     * @var instance $_instance application object
-     * */
-    public static $_instance = null;
-
-
-    /*
-     * @var autoload classes
-     * */
-    public static $_classes = array();
-
 
     public function __construct()
     {
-        spl_autoload_register(array($this, 'loader'));
         $container = new Container();
 
         $container['request'] = $container->factory((function($c) {
@@ -67,8 +45,7 @@ class Barge
         $this->container = $container;
     }
 
-    public function init($appPath, $config = []) {
-        self::setAppPath($appPath);
+    public function init($config = []) {
         Config::set($config);
         $this->container['router']->setContainer($this->container);
     }
@@ -123,26 +100,8 @@ class Barge
         return true;
     }
 
-    /*
-     * 设置应用的路径
-     * @param string $appPath
-     * */
-    public static function setAppPath($appPath)
-    {
-        self::$appPath = $appPath;
-    }
 
-    /*
-     * 获取应用路径
-     * */
-    public static function getAppPath()
-    {
-        return self::$appPath;
-    }
-
-
-
-    public function used($callable)
+    public function use($callable)
     {
         $this->container['router']->addMiddleware($callable);
     }

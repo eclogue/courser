@@ -25,12 +25,15 @@ class Context
 
     public function __toString()
     {
-        // TODO: Implement __toString() method.
+        return '';
     }
 
     public function __invoke()
     {
-        // TODO: Implement __invoke() method.
+        return [
+            'request' => $this->toArray($this->request),
+            'response' => $this->toArray($this->response)
+        ];
     }
 
     public function __get($name)
@@ -41,5 +44,11 @@ class Context
     public function __set($name, $value)
     {
 
+    }
+
+    private function toArray($object)
+    {
+        $reflection = new \ReflectionClass($object);
+        return $reflection->getProperties(\ReflectionProperty::IS_PUBLIC);
     }
 }
