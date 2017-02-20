@@ -33,7 +33,7 @@ class Request
     public function setRequest($req)
     {
         $this->req = $req;
-        $this->method = $req->header['method'];
+        $this->method = $req->server['request_method'];
     }
 
     /*

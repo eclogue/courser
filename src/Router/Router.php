@@ -8,8 +8,9 @@
 
 namespace Barge\Router;
 
-use Barge\Init;
+use Barge\Co\Compose;
 use Barge\Set\Config;
+use Barge\Co\Coroutine;
 
 class Router
 {
@@ -21,11 +22,13 @@ class Router
 
     public $response;
 
-    public $middleware = [];
+    public $middlewares = [];
 
     public $container = [];
 
     private $groups = [];
+
+    private $stack = [];
 
     public function __construct($request, $response)
     {
@@ -65,21 +68,26 @@ class Router
         if ($pattern) {
             $this->patterns[$route] = "#^$pattern$#";
         }
-        $this->routes[$method][$route] = is_array($callback) ? $callback : [$callback];
+        $this->routes[$method][$route] = $this->isIndexArray($callback) ? $callback : [$callback];
         $this->request->methods[] = strtolower($method);
     }
+
+    public function isIndexArray($node)
+    {
+        if (!is_array($node)) return false;
+        $keys = array_keys($node);
+        return is_numeric($keys[0]);
+    }
+
 
     private function getPattern($route)
     {
         return preg_replace_callback('#:([\w]+)|{([\w]+)}|(\*)#', array($this, 'mapPattern'), $route);
     }
 
-    public function addMiddleware($group, $middleware)
+    public function addMiddleware($middleware)
     {
-        if (!isset($this->middleware)) {
-            $this->middleware[$group] = [];
-        }
-        $this->middleware[$group] = array_merge($this->middleware[$group], $middleware);
+        $this->middlewares[] = $middleware;
     }
 
     private function mapPattern($match)
@@ -116,7 +124,6 @@ class Router
                     }
                 }
             }
-
             return $this->routes[$method][$regex];
         }
 
@@ -144,7 +151,6 @@ class Router
     {
         $uri = $uri ?: '/';
         $method = $this->request->method;
-        $this->middleware();
         $group = $this->mapGroup($uri);
         if ($group) { // @todo 去掉匹配部分
             $uri = $group;
@@ -153,24 +159,40 @@ class Router
         if (!$found) {
             return 404;
         }
-        foreach ($found as $key => $callback) {
-            if (is_string($key)) {
-                $this->handle([$key => $callback]);
-            } else {
-                $this->handle($callback);
-            }
-        }
+        $this->middlewares = array_merge($this->middlewares, $found);
+        $this->middleware();
         return true; // @todo
     }
 
-    private function middleware()
+
+    private function middleware($index = 0)
     {
-        if (count($this->middleware)) {
-            foreach ($this->middleware as $middleware) {
-                yield $middleware($this->request, $this->response);
+        $compose = new Compose();
+        foreach($this->middlewares as $middleware) {
+            $generator = null;
+            if (is_array($middleware)) {
+                foreach ($middleware as $class => $action) {
+                    $method = $action;
+                    $key = 'Barge.classes.' . $class;
+                    $obj = Config::get($key);
+                    if (!$obj) {
+                        $obj = new $class();
+                        Config::set($key, $obj);
+                    }
+                    $generator = call_user_func_array([$obj, $method], [$this->request, $this->response]);
+
+                }
+            } else {
+                $generator = $middleware($this->request, $this->response);
+            }
+            if($generator === null) continue;
+            if($generator instanceof  \Generator) {
+                $compose->newTask($generator);
             }
         }
+        $compose->run();
     }
+    
 
 
     public function handleError($err)
