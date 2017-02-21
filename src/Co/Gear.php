@@ -10,7 +10,7 @@
 namespace Barge\Co;
 
 
-class Crane
+class Gear
 {
 
     public $callback = null;
