@@ -10,13 +10,14 @@
 namespace Barge\Co;
 
 class Coroutine {
-    protected $taskId;
-    protected $coroutine;
-    protected $first = true;
-    protected $sendValue = null;
 
-    public function __construct($taskId, \Generator $coroutine) {
-        $this->taskId = $taskId;
+    protected $coroutine;
+
+    protected $first = true;
+
+    protected $value = null;
+
+    public function __construct(\Generator $coroutine) {
         $this->coroutine = $coroutine;
     }
 
@@ -24,20 +25,19 @@ class Coroutine {
     public function run() {
         if ($this->first) {
             $this->first = false;
-            return $this->coroutine->current();
+            return $this->Current();
         } else {
-            $retval = $this->coroutine->next();
-            $this->sendValue = null;
-            return $retval;
+            return $this->coroutine->send($this->value);
         }
     }
 
-    public function getTaskId() {
-        return $this->taskId;
+    public function Current() {
+        $this->value = $this->coroutine->current();
+        return$this->value;
     }
 
-    public function setSendValue($sendValue) {
-        $this->sendValue = $sendValue;
+    public function setValue($value) {
+        $this->value = $value;
     }
 
     public function isFinished() {

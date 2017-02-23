@@ -27,35 +27,37 @@ class HttpServer
 
     public $port = '5001';
 
-    private $app = '';
 
-
-    public function __construct($path, $config)
+    public function __construct($config)
     {
-        $this->app = new Barge();
-        $this->app->init($path, $config);
+        Config::set($config);
+        $this->config = $config;
         $this->host = Config::get('host', '127.0.0.1');
         $this->port = Config::get('port', '5001');
     }
 
-    public function app() {
-        return $this->app;
-    }
 
-
-    public function mount($req, $res) {
-        if(!is_file($req->server['request_uri'])) {
-//            $request = new \ReflectionClass($req);
-//            $response = new \ReflectionClass($res);
-            $this->app->setRequest($req);
-            $this->app->setResponse($res);
-//            var_dump($res->end('dddd'));
-            $this->app->run();
+    public function mount($req, $res)
+    {
+        if (!is_file($req->server['request_uri'])) {
+            $env = $this->config;
+            $app = Barge::run($env);
+            $app($req, $res);
         }
     }
 
-    public function start() {
+    public function start()
+    {
         $this->server = new Server($this->host, $this->port);
+        $tmpDir = sys_get_temp_dir();
+        $config = [
+            'daemonize' => false,
+            'dispatch_mode' => 3,
+            'log_file' => $tmpDir . '/Barge.log',
+            'upload_tmp_dir'=> $tmpDir,
+        ];
+        $config = array_merge($config, Config::get('server', []));
+        $this->server->set($config);
         $this->server->on('Request', [$this, 'mount']);
         $this->server->start();
     }

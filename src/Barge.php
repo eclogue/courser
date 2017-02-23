@@ -10,142 +10,77 @@ namespace Barge;
 
 use Barge\Set\Config;
 use Barge\Router\Router;
-use Pimple\Container;
 use Barge\Http\Request;
 use Barge\Http\Response;
 
 
 class Barge
 {
-    public $env = '';
+    public $env = [];
 
     public static $middleware = [];
 
-    public $request = null;
+    public static $routes = [];
 
-    public $response = '';
-
-    public $router = '';
+    public static $group = [];
 
 
-    public function __construct()
+    public function __construct($env = [])
     {
-        $container = new Container();
-
-        $container['request'] = $container->factory((function($c) {
-//            var_dump($c);
-            return new Request();
-        }));
-        $container['response'] = $container->factory((function($c) {
-            return new Response();
-        }));
-        $container['router'] = function ($c) {
-            return new Router($c['request'], $c['response']);
-        };
-        $this->container = $container;
-    }
-
-    public function init($config = []) {
-        Config::set($config);
-        $this->container['router']->setContainer($this->container);
+        $this->env = $env;
     }
 
 
-    /*
-     * 运行框架
-     * @param string $appPath 应用的路径
-     * @param string $config 配置文件的名称
-     * */
-    public function run()
+    public function createContext($req, $res)
     {
-        $router = $this->container['router'];
-        $request = $router->request;
-        $uri = isset($request->header['request_uri']) ? $request->header['request_uri'] : '/';
-        $router->dispatch($uri);
+        $router = new Router(new Request, new Response);
+        $router->response->setResponse($res);
+        $router->request->setRequest($req);
+        return $router;
+
     }
 
-    public function getRouter() {
-        return $this->container['router'];
-    }
-
-    public function setRequest($request)
+    public static function use ($callable)
     {
-        $router = $this->container['router'];
-        $router->request->setRequest($request);
+        self:: $middleware[] = $callable;
     }
 
-    public function setResponse($response)
+    public static function get($route, $callback)
     {
-        $router = $this->container['router'];
-        $router->response->setResponse($response);
+        self::$routes['get'][$route] = $callback;
     }
 
-    public function register($key, $instance)
+
+    public static function group($group, $callback) {
+        self::$group[$group] = $callback;
+    }
+
+    public static function post($route, $callback)
     {
-        if (!$this->container->offsetExists($key))
-            $this->container->offsetSet($key, $instance);
-
-        return true;
-    }
-
-    /*
-     * 销毁挂载实力
-     * @param $key string
-     * */
-    public function unRegister($key)
-    {
-        if ($this->container->offsetExists([$key]))
-            $this->container->offsetUnset($key);
-
-        return true;
-    }
-
-
-    public function use($callable)
-    {
-        $this->container['router']->addMiddleware($callable);
-    }
-
-    public function get($route, $callback)
-    {
-        $this->container['router']->addRoute('GET', $route, $callback);
-    }
-
-
-    public function group($group, $callback) {
-        $this->container['router']->group($group, $callback, $this);
-    }
-
-    public function post($route, $callback)
-    {
-        $this->container['router']->addRoute('POST', $route, $callback);
+        self::$routes['post'][$route] = $callback;
     }
 
     public function put($route, $callback)
     {
-        $this->container['router']->addRoute('PUT', $route, $callback);
+        self::$routes['put'][$route] = $callback;
+    }
+
+    public static function delete($route, $callback)
+    {
+        self::$routes['delete'][$route] = $callback;
     }
 
 
-    public function delete($route, $callback)
+    public static function option($route, $callback)
     {
-        $this->container['router']->addRoute('PUT', $route, $callback);
+        self::$routes['option'][$route] = $callback;
     }
-
-    public function patch()
+//
+    public static function all($route, $callback)
     {
-
-    }
-
-
-    public function option($route, $callback)
-    {
-        $this->container['router']->addRoute('OPTION', $route, $callback);
-    }
-
-    public function all($route, $callback)
-    {
-        $this->container['router']->addRoute('OPTION', $route, $callback);
+        foreach (Router::$allowMethods as $method) {
+            self::$method($route, $callback);
+        }
     }
 
 
@@ -153,6 +88,33 @@ class Barge
     {
         Config::set('port', $port);
 
+    }
+
+    public static function createApplication($env)
+    {
+        return new Barge($env);
+    }
+
+    public static function __callStatic($name, $args)
+    {
+        if (is_callable(['Barge', $name])) {
+            self::$routes[$name] = $args;
+        }
+    }
+
+    public static function run($env = [])
+    {
+        return function($req, $res) use($env) {
+            $app = Barge::createApplication($env);
+            $router = $app->createContext($req, $res);
+            $router->addMiddleware(self::$middleware);
+            foreach (self::$routes as $method => $routes) {
+                foreach ($routes as $path => $route)
+                    $router->addRoute($method, $path, $route);
+            }
+            $uri = isset($req->header['request_uri']) ? $req->header['request_uri'] : '/';
+            $router->dispatch($uri);
+        };
     }
 
 }

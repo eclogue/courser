@@ -1,11 +1,5 @@
 <?php
 
-/**
- * Created by PhpStorm.
- * User: crab
- * Date: 15-10-15
- * Time: 下午11:36
- */
 namespace Barge\Set;
 
 class Config
@@ -74,5 +68,10 @@ class Config
 
         return true;
 
+    }
+
+    public static function all()
+    {
+        return self::$_config;
     }
 }

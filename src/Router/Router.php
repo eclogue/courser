@@ -8,9 +8,9 @@
 
 namespace Barge\Router;
 
-use Barge\Co\Compose;
 use Barge\Set\Config;
 use Barge\Co\Coroutine;
+use Barge\Co\Compose;
 
 class Router
 {
@@ -29,6 +29,15 @@ class Router
     private $groups = [];
 
     private $stack = [];
+
+    public static $allowMethods = [
+        'get',
+        'post',
+        'put',
+        'delete',
+        'options',
+        'patch',
+    ];
 
     public function __construct($request, $response)
     {
@@ -87,7 +96,8 @@ class Router
 
     public function addMiddleware($middleware)
     {
-        $this->middlewares[] = $middleware;
+        if (!is_array($middleware)) return $this->middlewares[] = $middleware;
+        return $this->middlewares = array_merge($this->middlewares, $middleware);
     }
 
     private function mapPattern($match)
@@ -159,16 +169,17 @@ class Router
         if (!$found) {
             return 404;
         }
+
         $this->middlewares = array_merge($this->middlewares, $found);
         $this->middleware();
         return true; // @todo
     }
 
 
-    private function middleware($index = 0)
+    private function middleware()
     {
         $compose = new Compose();
-        foreach($this->middlewares as $middleware) {
+        foreach ($this->middlewares as $middleware) {
             $generator = null;
             if (is_array($middleware)) {
                 foreach ($middleware as $class => $action) {
@@ -185,14 +196,13 @@ class Router
             } else {
                 $generator = $middleware($this->request, $this->response);
             }
-            if($generator === null) continue;
-            if($generator instanceof  \Generator) {
-                $compose->newTask($generator);
+            if ($generator === null) continue;
+            if ($generator instanceof \Generator) {
+                $compose->add($generator);
             }
         }
         $compose->run();
     }
-    
 
 
     public function handleError($err)
