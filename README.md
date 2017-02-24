@@ -1,11 +1,16 @@
 # Barge
-Just for fun
 
-### get start
+A fast and lighter PHP micro framework use swoole.The greatest truths are the simplest.
+ `Entities should not be multiplied unnecessarily.`
+
+### Installation
+`composer require Barge`
+`composer require crane`
+### Get start
 
 `composer install` 
 
-create a new file server.php
+Create a new file server.php.
 
 ```php
 <?php
@@ -41,6 +46,7 @@ $server->start();
 now run `php server.php`, visit 127.0.0.1:5001
 
 ### Router
+
 ```php
 
  # basic /users/11
@@ -90,7 +96,18 @@ $condition = [
 
    ```
 -------
-#coding...
+### Community
 
-#maintain
+ - [中文文档]()
+ - [English document]()
+ - [Example]()
+ - [FAQ](https://github.com/shipmen/Barge/issues)
+ 
+### Coding...
+
+### Maintain
+
 mulberry10<[mulberry10th@gmail.com]()>
+
+### License
+    MIT
