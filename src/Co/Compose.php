@@ -8,33 +8,50 @@
  */
 
 namespace Barge\Co;
-use Barge\Co\Coroutine;
-use Barge\Co\Gear;
 
 
-class Compose {
+class Compose
+{
     protected $queue;
 
-    public function __construct() {
+    protected $first = true;
+
+    private $value = null;
+
+
+    public function __construct()
+    {
         $this->queue = new \SplQueue();
     }
 
-    public function add(\Generator $coroutine) {
-        $co = new Coroutine($coroutine);
-        $this->convey($co);
-    }
-
-    public function convey(Coroutine $co) {
+    public function push($co)
+    {
         $this->queue->enqueue($co);
     }
 
 
-    public function run() {
+    public function run()
+    {
         while (!$this->queue->isEmpty()) {
-            $task = $this->queue->dequeue();
-            $task->run();
-            if (!$task->isFinished()) {
-                $this->convey($task);
+            $co = $this->queue->dequeue();
+            if (!$co instanceof \Generator) {
+                $this->value = $co;
+                continue;
+            }
+            if($this->first) {
+                $this->first = false;
+                $this->value = $co->current();
+                continue;
+            }
+            if ($this->value) {
+                $co->send($this->value);
+            } else {
+                $co->next();
+            }
+            $this->value = $co->current();
+            if ($co->valid()) {
+                $this->push($co);
+                continue;
             }
         }
     }

@@ -11,6 +11,7 @@ namespace Barge\Router;
 use Barge\Set\Config;
 use Barge\Co\Coroutine;
 use Barge\Co\Compose;
+use Barge\Co\Gear;
 
 class Router
 {
@@ -43,6 +44,7 @@ class Router
     {
         $this->request = $request;
         $this->response = $response;
+//        $this->queue = new \SplQueue();
     }
 
     public function setContainer($container)
@@ -179,38 +181,22 @@ class Router
     private function middleware()
     {
         $compose = new Compose();
-        foreach ($this->middlewares as $middleware) {
-            $generator = null;
-            if (is_array($middleware)) {
-                foreach ($middleware as $class => $action) {
-                    $method = $action;
-                    $key = 'Barge.classes.' . $class;
-                    $obj = Config::get($key);
-                    if (!$obj) {
-                        $obj = new $class();
-                        Config::set($key, $obj);
-                    }
-                    $generator = call_user_func_array([$obj, $method], [$this->request, $this->response]);
-
-                }
-            } else {
-                $generator = $middleware($this->request, $this->response);
-            }
-            if ($generator === null) continue;
-            if ($generator instanceof \Generator) {
-                $compose->add($generator);
-            }
+        foreach ($this->middlewares as $index => $middleware) {
+            $gen = $middleware($this->request, $this->response);
+            $compose->push($gen);
         }
         $compose->run();
     }
 
 
-    public function handleError($err)
+    public
+    function handleError($err)
     {
         throw $err;
     }
 
-    private function handle($callback)
+    private
+    function handle($callback)
     {
         try {
             if (is_array($callback)) {
@@ -233,4 +219,6 @@ class Router
             $this->handleError($err);
         }
     }
+
+
 }

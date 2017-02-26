@@ -71,7 +71,7 @@ now run `php server.php`, visit 127.0.0.1:5001
   ]);
  ```
  
- ### Model
+### Model
  
  used like mongo shell
  
@@ -96,6 +96,30 @@ $condition = [
 
    ```
 -------
+
+### Benchmark
+    
+    Just kidding.
+     
+    `webbench -c 200 -t 20 http://127.0.0.1:5001/`
+   >
+    Transactions:		       16340 hits
+    Availability:		      100.00 %
+    Elapsed time:		       19.13 secs
+    Data transferred:	        0.16 MB
+    Response time:		        0.00 secs
+    Transaction rate:	      854.16 trans/sec
+    Throughput:		        0.01 MB/sec
+    Concurrency:		        1.20
+    Successful transactions:       16340
+    Failed transactions:	           0
+    Longest transaction:	        0.11
+    Shortest transaction:	        0.00
+    Memery:		       `24MB`
+    CPU:		       `14%`
+
+
+
 ### Community
 
  - [中文文档]()
