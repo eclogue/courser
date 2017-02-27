@@ -112,7 +112,7 @@ class Barge
                 foreach ($routes as $path => $route)
                     $router->addRoute($method, $path, $route);
             }
-            $uri = isset($req->header['request_uri']) ? $req->header['request_uri'] : '/';
+            $uri = isset($req->server['request_uri']) ? $req->server['request_uri'] : '/';
             $router->dispatch($uri);
         };
     }

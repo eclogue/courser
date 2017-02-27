@@ -8,10 +8,9 @@
 
 namespace Barge\Router;
 
-use Barge\Set\Config;
-use Barge\Co\Coroutine;
+use Barge\Http\Request;
+use Barge\Http\Response;
 use Barge\Co\Compose;
-use Barge\Co\Gear;
 
 class Router
 {
@@ -29,8 +28,6 @@ class Router
 
     private $groups = [];
 
-    private $stack = [];
-
     public static $allowMethods = [
         'get',
         'post',
@@ -40,7 +37,7 @@ class Router
         'patch',
     ];
 
-    public function __construct($request, $response)
+    public function __construct(Request $request, Response $response)
     {
         $this->request = $request;
         $this->response = $response;
@@ -71,7 +68,6 @@ class Router
     public function addRoute($method, $route, $callback)
     {
         $method = strtolower($method);
-//        $route = rtrim($route, '/');
         $pattern = $this->getPattern($route);
         if (substr(strlen($route) - 2, 1) === '*') {
             $pattern .= '';
@@ -123,9 +119,10 @@ class Router
     {
         $method = strtolower($method);
         if (!in_array($method, $this->request->methods)) return false;
-        if ($path === '/') { // without params
+        if ($path === '/') {
             return isset($this->routes[$method][$path]) ? $this->routes[$method][$path] : false;
         }
+        if(!count($this->patterns)) return false;
         foreach ($this->patterns as $regex => $pattern) {
             preg_match($pattern, $path, $match);
             if (!$match) continue;
@@ -172,52 +169,26 @@ class Router
             return 404;
         }
 
-        $this->middlewares = array_merge($this->middlewares, $found);
-        $this->middleware();
-        return true; // @todo
+        $this->compose($this->middlewares);
+        $this->compose($found);
+        return true;
     }
 
 
-    private function middleware()
+    private function compose($middleware)
     {
         $compose = new Compose();
-        foreach ($this->middlewares as $index => $middleware) {
-            $gen = $middleware($this->request, $this->response);
+        foreach ($middleware as $md) {
+            $gen = $md($this->request, $this->response);
             $compose->push($gen);
         }
         $compose->run();
     }
 
 
-    public
-    function handleError($err)
+    public function handleError($err)
     {
         throw $err;
-    }
-
-    private
-    function handle($callback)
-    {
-        try {
-            if (is_array($callback)) {
-                $obj = null;
-                $method = null;
-                foreach ($callback as $class => $action) {
-                    $method = $action;
-                    $key = 'Barge.classes.' . $class;
-                    $obj = Config::get($key);
-                    if (!$obj) {
-                        $obj = new $class();
-                        Config::set($key, $obj);
-                    }
-                    yield call_user_func_array([$obj, $method], [$this->request, $this->response]);
-                }
-            } else {
-                yield $callback($this->request, $this->response);
-            }
-        } catch (\Exception $err) {
-            $this->handleError($err);
-        }
     }
 
 

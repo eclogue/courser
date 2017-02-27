@@ -41,6 +41,7 @@ class Compose
             if($this->first) {
                 $this->first = false;
                 $this->value = $co->current();
+                $this->push($co);
                 continue;
             }
             if ($this->value) {
