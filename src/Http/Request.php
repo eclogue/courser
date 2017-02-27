@@ -13,7 +13,7 @@ use Barge\Http\Header;
 class Request
 {
 
-    private $params = [];
+    public $params = [];
 
     public $paramNames = [];
 

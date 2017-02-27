@@ -39,7 +39,7 @@ class HttpServer
 
     public function mount($req, $res)
     {
-        if (!is_file($req->server['request_uri'])) {
+        if ($req->server['request_uri'] !== '/favicon.ico') {
             $env = $this->config;
             $app = Barge::run($env);
             $app($req, $res);
