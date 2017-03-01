@@ -1,6 +1,6 @@
 <?php
 
-namespace Barge\Set;
+namespace Courser\Set;
 
 class Config
 {

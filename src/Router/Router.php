@@ -6,11 +6,11 @@
  * Time: 上午12:34
  */
 
-namespace Barge\Router;
+namespace Courser\Router;
 
-use Barge\Http\Request;
-use Barge\Http\Response;
-use Barge\Co\Compose;
+use Courser\Http\Request;
+use Courser\Http\Response;
+use Courser\Co\Compose;
 
 class Router
 {

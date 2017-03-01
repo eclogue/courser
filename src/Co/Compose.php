@@ -7,7 +7,7 @@
  * @time      : 上午10:15
  */
 
-namespace Barge\Co;
+namespace Courser\Co;
 
 
 class Compose

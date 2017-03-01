@@ -7,10 +7,10 @@
  * @time      : 下午3:49
  */
 
-namespace Barge\Model;
+namespace Courser\Model;
 
-use Barge\Set\Config;
-use Barge\Model\Redis;
+use Courser\Set\Config;
+use Courser\Model\Redis;
 
 class Cache
 {

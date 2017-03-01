@@ -7,7 +7,7 @@
  * @time      : 下午4:51
  */
 
-namespace Barge\Model;
+namespace Courser\Model;
 
 
 class Redis

@@ -1,6 +1,6 @@
 {
-    "name": "shipmen/Barge",
-    "description": "light and faster php rest micro framework",
+    "name": "racecourse/courser",
+    "description": "light and faster php rest lib",
     "version": "0.0.1",
     "license": "MIT",
     "authors": [
@@ -16,7 +16,7 @@
     "repositories": [
         {
             "type": "vcs",
-            "url": "https://github.com/shipmen/Barge"
+            "url": "https://github.com/racecourse/courser"
         }
     ],
     "require": {

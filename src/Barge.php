@@ -6,15 +6,15 @@
  * Date: 2016/11/14
  * Time: 下午10:41
  */
-namespace Barge;
+namespace Courser;
 
-use Barge\Set\Config;
-use Barge\Router\Router;
-use Barge\Http\Request;
-use Barge\Http\Response;
+use Courser\Set\Config;
+use Courser\Router\Router;
+use Courser\Http\Request;
+use Courser\Http\Response;
 
 
-class Barge
+class Courser
 {
     public $env = [];
 
@@ -92,12 +92,12 @@ class Barge
 
     public static function createApplication($env)
     {
-        return new Barge($env);
+        return new Courser($env);
     }
 
     public static function __callStatic($name, $args)
     {
-        if (is_callable(['Barge', $name])) {
+        if (is_callable(['Courser', $name])) {
             self::$routes[$name] = $args;
         }
     }
@@ -105,7 +105,7 @@ class Barge
     public static function run($env = [])
     {
         return function($req, $res) use($env) {
-            $app = Barge::createApplication($env);
+            $app = Courser::createApplication($env);
             $router = $app->createContext($req, $res);
             $router->addMiddleware(self::$middleware);
             foreach (self::$routes as $method => $routes) {

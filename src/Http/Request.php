@@ -5,10 +5,10 @@
  * Date: 2015/4/12
  * Time: 15:23
  */
-namespace Barge\Http;
+namespace Courser\Http;
 
-use Barge\Http\StdObject;
-use Barge\Http\Header;
+use Courser\Http\StdObject;
+use Courser\Http\Header;
 
 class Request
 {

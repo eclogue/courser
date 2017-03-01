@@ -1,7 +1,7 @@
 <?php
-namespace Barge\Model;
+namespace Courser\Model;
 
-use Barge\Model\Parse;
+use Courser\Model\Parse;
 
 class DB
 {
