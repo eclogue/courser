@@ -1,10 +1,10 @@
-# Barge
+# Course
 
 A fast and lighter PHP micro framework use swoole.The greatest truths are the simplest.
  `Entities should not be multiplied unnecessarily.`
 
 ### Installation
-`composer require Barge`
+`composer require Course`
 `composer require crane`
 ### Get start
 
@@ -15,7 +15,7 @@ Create a new file server.php.
 ```php
 <?php
 require('./vendor/autoload.php');
-use Barge\Barge;
+use Course\Course;
 $config = [
     'server' => [
         'host' => '0.0.0.0',
@@ -23,22 +23,22 @@ $config = [
     ]
 ];
 
-Barge::use(function($req, $res) {
+Course::use(function($req, $res) {
    yield;
    echo "this middleware 1 \n";
 });
 
-Barge::use(function($req, $res) {
+Course::use(function($req, $res) {
     yield;
     echo "this middleware 2 \n";
 });
-Barge::get('/', function($req, $res) {
+Course::get('/', function($req, $res) {
     $html = "<h1> fuck world</h1>";
     $res->header('Content-Type', 'text/html');
     $res->send($html);
 });
 
-$server = new \Barge\Server\HttpServer($config);
+$server = new \Course\Server\HttpServer($config);
 
 $server->start();
 ?>
@@ -125,7 +125,7 @@ $condition = [
  - [中文文档]()
  - [English document]()
  - [Example]()
- - [FAQ](https://github.com/shipmen/Barge/issues)
+ - [FAQ](https://github.com/shipmen/Course/issues)
  
 ### Coding...
 
