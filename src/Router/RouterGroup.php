@@ -6,7 +6,7 @@
  * Time: 下午9:28
  */
 
-namespace Barge\Router;
+namespace Courser\Router;
 
 
 class RouterGroup

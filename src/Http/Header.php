@@ -7,7 +7,7 @@
  * @time      : 下午8:02
  */
 
-namespace Barge\Http;
+namespace Courser\Http;
 
 
 class Header
