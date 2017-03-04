@@ -3,3 +3,5 @@
 app/
 vendor/
 node_modules/
+composer.lock
+auth.json
