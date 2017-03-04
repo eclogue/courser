@@ -11,16 +11,19 @@
         }
     ],
     "autoload": {
-        "psr-4": {"Barge\\": "src/"}
+        "psr-4": {"Courser\\": "src/"}
     },
     "repositories": [
         {
             "type": "vcs",
             "url": "https://github.com/racecourse/courser"
+        },
+        {
+            "type": "composer",
+            "url": "https://packagist.phpcomposer.com"
         }
     ],
     "require": {
-        "monolog/monolog": "^1.22",
-        "pimple/pimple": "~3.0"
+        "lcobucci/jwt": "^3.2"
     }
 }
