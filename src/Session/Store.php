@@ -22,25 +22,25 @@ class Store
 
     private $issuer;
 
-    public $audience;
+    private $audience;
 
-    public $id = '';
+    private $id = '';
 
-    public $expired = 1800;
+    private $expired = 1800;
 
-    public $request;
+    private $request;
 
-    public $response;
+    private $response;
 
-    public $cookieName = 'courser::sess';
+    private $cookieName = 'courser::sess';
 
-    public $sigName = 'courser::sess.sig';
+    private $sigName = 'courser::sess.sig';
 
-    public $value = [];
+    private $value = [];
 
     private $token;
 
-    public $options = [];
+    private $options = [];
 
     private $first = false;
 
@@ -60,12 +60,17 @@ class Store
         return new Sha256();
     }
 
-    public function getToken($data)
+    public function setId ($id)
+    {
+        $this->id = $id;
+    }
+
+    public function getToken($data, $id)
     {
         $signer = $this->signer();
         $token = (new Builder())->setIssuer($this->issuer)
             ->setAudience($this->audience)
-            ->setId($this->id, true)
+            ->setId($id, true)
             ->setIssuedAt(time())
             ->setNotBefore(time())
             ->setExpiration(time() + $this->expired)
@@ -94,8 +99,11 @@ class Store
 
     public function get($key)
     {
-        $token = $this->request->cookie[$this->cookieName];
+
         if (!$this->first) {
+            $cookie = ($this->request->cookie);
+            $token = isset($cookie[$this->cookieName]) ? $cookie[$this->cookieName] : null;
+            if (!$token) return null;
             $value = $this->validate($token);
             if (!$value) {
                 $this->response->cookie($this->cookieName, '', -1);
@@ -111,32 +119,45 @@ class Store
     }
 
 
-    public function set($value)
+    public function set($key, $value)
     {
-        return $this->value = array_merge($this->value, $value);
+        echo "set cookie $key => $value \n";
+        $this->value[$key] = $value;
+        $this->save();
     }
 
     public function save()
     {
-        $this->getId();
-        $token = $this->getToken($this->value);
-        $this->response->cookie($this->cookieName, $token, $this->expired, ...$this->options);
+        echo "this is sissss sava \n";
+        $token = $this->getToken($this->value, $this->id);
+        $this->response->res->cookie($this->cookieName, $token, time() + 100000, ...$this->options);
     }
 
     public function generateId()
     {
         $sId = md5(uniqid('sess:', true));
-        $this->request->cookie[$this->sigName] = $sId;
+        $this->response->res->cookie[$this->sigName] = $sId;
         return $this->id = $sId;
     }
 
     public function getId()
     {
         if (!$this->id) {
-            $this->id = $this->request->cookie[$this->sigName];
+            $cookie = ($this->request->cookie);
+            if (isset($cookie[$this->sigName])) {
+                $this->id = $cookie[$this->sigName];
+            } else {
+                $id = $this->generateId();
+                ($this->request->cookie)[$this->sigName] = $id;
+            }
         }
 
         return $this->id;
+    }
+
+    public function __destruct()
+    {
+        $this->save();
     }
 
 
