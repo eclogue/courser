@@ -29,10 +29,25 @@ class Request
 
     public $req = '';
 
+    public $cookie = [];
+
+
+    public $files = [];
+
+    private $callable = [];
+
 
     public function setRequest($req)
     {
+        $reflection = new \ReflectionClass($req);
+        $methods = $reflection->getMethods(\ReflectionMethod::IS_PUBLIC);
+        foreach ($methods as $key => $method) {
+            $this->callable[] = $method->getName();
+        }
         $this->req = $req;
+        $this->cookie = $req->cookie;
+        $this->server = $req->server;
+        $this->files = isset($req->files) ? $req->files : [];
         $this->method = $req->server['request_method'];
     }
 
@@ -94,10 +109,10 @@ class Request
      * */
     public function body($key)
     {
-        if($this->header('content-type') === 'application/x-www-form-urlencoded') {
+        if ($this->header('content-type') === 'application/x-www-form-urlencoded') {
             return $this->req->post($key);
         } else {
-            if($this->body === null) {
+            if ($this->body === null) {
                 if (function_exists('mb_parse_str'))
                     mb_parse_str(file_get_contents('php://input'), $this->body);
                 else
@@ -106,6 +121,8 @@ class Request
                 return isset($this->body[$key]) ? $this->body[$key] : null;
             }
         }
+
+        return null;
     }
 
     public function query($key)
@@ -119,4 +136,26 @@ class Request
         return $this;
     }
 
+
+    public function __get($name)
+    {
+        if (isset($this->req->$name)) return $this->req->$name;
+
+        return null;
+    }
+
+    public function __set($name, $value)
+    {
+
+        return $this->req->$name = $value;
+    }
+
+    public function __call($func, $params)
+    {
+        if(isset($this->callable[$func])) {
+            return call_user_func_array([$this->req, $func], $params);
+        }
+
+        return false;
+    }
 }

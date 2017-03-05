@@ -8,165 +8,98 @@
  */
 namespace Courser\Session;
 
-use Lcobucci\JWT\Builder;
-use Lcobucci\JWT\ValidationData;
-use Lcobucci\JWT\Signer\Hmac\Sha256;
-use Lcobucci\JWT\Parser;
+use Courser\Session\Store;
 
 
 class Session
 {
-    public $config = [];
+    private $config = [];
 
-    public $store;
+    private $store;
 
-    private $cookieKey = 'COURSER::SESS';
+    private $prefix = '{course:session}';
 
-    private $key = 'some key';
+    private $sessionKey = 'courser::sess';
 
-    public $expired = 3600;
 
-    protected $request;
+    private $sId;
 
-    protected $response;
+    public static $session;
 
-    public function __construct($config)
+    public function __construct($config = [])
     {
-        $this->config = $this->init($config);
-        $this->store = $this->config['store'];
-        $this->expired = $this->config['expired'];
-
-        $signer = new Sha256();
-        $data = [
-            'username' => 'fuck',
-            'password' => '123123123123',
-        ];
-        $token = (new Builder())->setIssuer('http://example.com')// Configures the issuer (iss claim)
-        ->setAudience('http://example.org')// Configures the audience (aud claim)
-        ->setId('4f1g23a12aa', true)// Configures the id (jti claim), replicating as a header item
-        ->setIssuedAt(time())// Configures the time that the token was issue (iat claim)
-        ->setNotBefore(time() + 60)// Configures the time that the token can be used (nbf claim)
-        ->setExpiration(time() + 3600)// Configures the expiration time of the token (nbf claim)
-        ->set('uid', $data)// Configures a new claim, called "uid"
-        ->sign($signer, $this->key)// creates a signature using "testing" as key
-        ->getToken(); // Retrieves the generated token
-
-        $len = $token->__toString();
-        $token = (new Parser())->parse((string)$len); // Parses from a string
-//        $token->getHeaders(); // Retrieves the token header
-//        $token->getClaims(); // Retrieves the token claims
-        echo $token->getHeader('jti'); // will print "4f1g23a12aa"
-        echo $token->getClaim('iss'); // will print "http://example.com"
-        var_dump($token->getClaim('uid')); // will print "1
-        echo $token->getClaim('aud') .PHP_EOL;
-        echo $token->getClaim('exp'). PHP_EOL;
-        echo $token->getClaim('iat') .PHP_EOL;
-
-        echo strlen($len);
-        var_dump($token->verify($signer, 'testing 1')); // false, because the key is different
-        var_dump($token->verify($signer, 'testing')); // true, because the key is the same
+        $this->config = $this->format($config);
     }
 
-    public function __invoke($req, $res)
+    public function format($config)
     {
-        $this->request = $req;
-        $this->response = $res;
-        $key = $this->cookieKey;
-        $signKey = $this->cookieKey . '.sig';
-        $sId = $req->cookie[$signKey];
-        if (!$sId) $sId = $this->generateSig();
-    }
-
-    private function init($config)
-    {
-        $config['expired'] = isset($config['expired']) ?: 1800;
-        $config['domain'] = isset($config['domain']) ?: '';
-        $config['store'] = isset($config['store']) ?: null;
+        $config['store'] = isset($config['store']) ? $config['store'] : null;
+        $config['expired'] = isset($config['expired']) ? $config['expired'] : 1800;
+        $config['expired'] = time() + $config['expired'];
+        $config['options'] = isset($config['options']) ? $config['options'] : [];
 
         return $config;
     }
 
-    public function signer()
+
+    public function __invoke($req, $res)
     {
-        return new Sha256();
+        if($this->config['store'] === 'php'){
+            $req->session = $_SESSION;
+        } else if(isset($this->config['store'])) {
+            $this->store = $this->config['store'];
+        }else {
+            $this->store = new Store($req, $res, $this->config);
+            if(!$this->sId) $this->create($res);
+            $this->store->setId($this->sId);
+        }
+
+//        var_dump($this->store);
+        $req->session = $this;
     }
 
-    public function token($sId, $data)
+    static public function getSession($config)
     {
-        $signer = $this->signer();
-        $issuer = $this->config['audience'] ?: $this->request->sever['http_host'];
-        $audience = $this->config['domain'] ?: $issuer;
-        $token = (new Builder())->setIssuer($issuer)
-            ->setAudience($audience)
-            ->setId($sId, true)
-            ->setIssuedAt(time())
-            ->setNotBefore(time())
-            ->setExpiration(time() + $this->expired)
-            ->set('data', $data)
-            ->sign($signer, $this->key)
-            ->getToken();
+        if(!self::$session) {
+            self::$session = new self($config);
+        }
 
-        return $token->__toString();
+        return self::$session;
     }
 
-
-    public function save()
+    public function __get($key)
     {
-
+        $key = $this->prefix . $key;
+        echo "$key --=-=-=>\n";
+        return $this->store->get($key);
     }
 
-
-    public function getSessionId()
+    public function __set($name, $value)
     {
-        return $this->request->cookie[$this->key];
+        $name = $this->prefix . $name;
+        echo "$name~~~~~~ $value \n";
+        return $this->store->set($name, $value);
     }
 
-    public function setSig($sId)
-    {
-        return $this->request->cookie[$this->key] = $sId;
+    public function sessionId($req) {
+        if(!$this->sId) {
+            $this->sId = $req->cookie[$this->sessionKey];
+        }
+
+        return $this->sId;
     }
 
-
-    public function getSigKey()
+    public function create($res)
     {
-        return $this->cookieKey . '.sig';
+        $this->sId = $this->generateId($res);
     }
 
-    public function getSig()
-    {
-        $key = $this->getSigKey();
-        return $this->request->cookie[$key];
-    }
-
-    public function get()
-    {
-        $token = $this->request->cookie[$this->cookieKey];
-        if (!$token) return null;
-        $sig = $this->getSig();
-        if (!$sig) return null;
-
-
-    }
-
-    public function validate($token)
-    {
-        $token = (new Parser())->parse((string) $token); // Parses from a string
-        $token->getHeaders(); // Retrieves the token header
-        $token->getClaims(); // Retrieves the token claims
-        echo $token->getHeader('jti'); // will print "4f1g23a12aa"
-        echo $token->getClaim('iss'); // will print "http://example.com"
-        var_dump($token->getClaim('uid'));
-    }
-
-    public function set($value)
-    {
-
-    }
-
-    public function generateSig()
+    public function generateId($res)
     {
         $sId = md5(uniqid('sess:', true));
-        $this->setSig($sId);
+        echo "****** sId: :::: $sId {$this->config['expired']} \n";
+        echo $this->sessionKey .PHP_EOL;
+        $res->res->cookie($this->sessionKey, $sId, time() + 11111);
         return $sId;
     }
 }

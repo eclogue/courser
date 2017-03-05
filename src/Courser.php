@@ -40,7 +40,7 @@ class Courser
 
     }
 
-    public static function use ($callable)
+    public static function used ($callable)
     {
         self:: $middleware[] = $callable;
     }
