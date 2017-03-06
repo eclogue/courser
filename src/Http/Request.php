@@ -45,7 +45,7 @@ class Request
             $this->callable[] = $method->getName();
         }
         $this->req = $req;
-        $this->cookie = $req->cookie;
+        $this->cookie = isset($req->cookie) ? $req->cookie : [];
         $this->server = $req->server;
         $this->files = isset($req->files) ? $req->files : [];
         $this->method = $req->server['request_method'];

@@ -1,7 +1,7 @@
 # Course
 
-A fast and lighter PHP micro framework use swoole.The greatest truths are the simplest.
- `Entities should not be multiplied unnecessarily.`
+A fast and lighter PHP micro framework used swoole.The greatest truths are the simplest,
+ `entities should not be multiplied unnecessarily.` Born with natural beauty.
 
 ### Installation
 `composer require Course`
