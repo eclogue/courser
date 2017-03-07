@@ -90,12 +90,13 @@ class Store
     public function getToken($data, $id)
     {
         $signer = $this->signer();
+        $time = time();
         $token = (new Builder())->setIssuer($this->config['issuer'])
             ->setAudience($this->config['audience'])
             ->setId($id, true)
-            ->setIssuedAt(time())
-            ->setNotBefore(time())
-            ->setExpiration(time() + $this->config['expired'])
+            ->setIssuedAt($time)
+            ->setNotBefore($time)
+            ->setExpiration($time + $this->config['expired'])
             ->set('data', $data)
             ->sign($signer, $this->key)
             ->getToken();
@@ -109,13 +110,10 @@ class Store
     public function validate($token)
     {
         $token = (new Parser())->parse((string)$token); // Parses from a string
-        var_dump($token->getClaim('exp'));
-        var_dump($token->getHeader('jti'));
-        var_dump($token->getClaim('iss'));
-        var_dump($token->getClaim('data'));
-        var_dump($token->getClaim('aud'));
-
-//        if ($token->getClaim('exp') >= time() + $this->expired) return false;
+        $created = $token->getClaim('iat');
+        $time = time();
+        if($created > $time) return false;
+        if ($token->getClaim('exp') <= $time) return false;
         if ($token->getHeader('jti') !== $this->id) return false;
         if ($token->getClaim('iss') !== $this->config['issuer']) return false;// will print "http://example.com"
         if ($token->getClaim('aud') !== $this->config['audience']) return false;
@@ -154,7 +152,7 @@ class Store
     public function save()
     {
         $token = $this->getToken($this->value, $this->id);
-        $this->response->res->cookie($this->cookieName, $token, time() + 100000, ...$this->options);
+        $this->response->res->cookie($this->cookieName, $token, time() + $this->config['expired'], ...$this->options);
     }
 
 }

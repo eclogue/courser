@@ -10,34 +10,71 @@ namespace Courser\Http;
 use Courser\Http\StdObject;
 use Courser\Http\Header;
 
+/*
+ * Http request extend swoole_http_request
+ * the main properties and method are base on swoole
+ * see https://wiki.swoole.com/wiki/page/328.html
+ * */
 class Request
 {
 
     public $params = [];
-
+    /*
+     * @var array
+     * */
     public $paramNames = [];
 
+    /*
+     * @var array
+     * */
     public $methods = [];
 
-    public $body = null;
+    /*
+     * @var array
+     * */
+    public $body = [];
 
+    /*
+     * @var array
+     * */
     public $header = [];
 
+    /*
+     * @var array
+     * */
     public $server = [];
 
-    public $method = '';
+    /*
+     * @var string
+     * */
+    public $method = 'get';
 
-    public $req = '';
+    /*
+     * @var object
+     * */
+    public $req;
 
+    /*
+     * @var array
+     * */
     public $cookie = [];
 
-
+    /*
+    * @var array
+    * */
     public $files = [];
 
+    /*
+     * @var array
+     * */
     private $callable = [];
 
-
-    public function setRequest($req)
+    /*
+     * set request context
+     * @param object $req  \Swoole\Http\Request
+     * @return void
+     * */
+    public function setRequest(\Swoole\Http\Request $req)
     {
         $reflection = new \ReflectionClass($req);
         $methods = $reflection->getMethods(\ReflectionMethod::IS_PUBLIC);
@@ -52,7 +89,7 @@ class Request
     }
 
     /*
-     * 活取当前http求情的method
+     * get request context method
      * */
     public function getMethod()
     {
@@ -61,7 +98,9 @@ class Request
 
 
     /*
-     * 活取所有http请求参数
+     * get all params
+     *
+     * @return array
      * */
     public function getParams()
     {
@@ -69,7 +108,7 @@ class Request
     }
 
     /*
-     * 添加请求参数名
+     * add param name
      * @param string $name
      * @return void
      * */
@@ -78,6 +117,12 @@ class Request
         $this->paramNames[] = $name;
     }
 
+    /*
+     * set param
+     * @param string $key
+     * @param string $val
+     * @return void
+     * */
     public function setParam($key, $val)
     {
         if (in_array($key, $this->paramNames))
@@ -95,10 +140,16 @@ class Request
         return $this->req->header($name) ?: null;
     }
 
-
-    public function cookie()
+    /*
+     * get cookie by key
+     * @param string $key
+     * @return mixed
+     * */
+    public function cookie($key)
     {
+        if (isset($this->cookie[$key])) return $this->cookie[$key];
 
+        return null;
     }
 
     /*
@@ -125,9 +176,22 @@ class Request
         return null;
     }
 
+    /*
+     * get url query param by name
+     * @param string $key
+     * @return mixed
+     * */
     public function query($key)
     {
         return $this->req->get($key) ?: null;
+    }
+
+    /*
+     * check request js json request or not
+     * */
+    public function isJson()
+    {
+        return true;
     }
 
 
@@ -152,7 +216,7 @@ class Request
 
     public function __call($func, $params)
     {
-        if(isset($this->callable[$func])) {
+        if (isset($this->callable[$func])) {
             return call_user_func_array([$this->req, $func], $params);
         }
 
