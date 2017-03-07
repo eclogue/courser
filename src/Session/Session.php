@@ -32,7 +32,6 @@ class Session
     {
         $config['store'] = isset($config['store']) ? $config['store'] : null;
         $config['expired'] = isset($config['expired']) ? $config['expired'] : 1800;
-        $config['expired'] = time() + $config['expired'];
         $config['options'] = isset($config['options']) ? $config['options'] : [];
         if(!empty($config['sessionIdName'])) {
             $this->sessionKey = $config['sessionIdName'];
@@ -51,8 +50,6 @@ class Session
         }else {
             $this->store = new Store($req, $res, $this->config);
             $this->create($res, $req);
-            echo PHP_EOL;
-            echo $this->sId . "sssssssssssssssId\n";
             $this->store->setId($this->sId);
         }
 
@@ -71,14 +68,12 @@ class Session
     public function __get($key)
     {
         $key = $this->prefix . $key;
-        echo "$key --=-=-=>\n";
         return $this->store->get($key);
     }
 
     public function __set($name, $value)
     {
         $name = $this->prefix . $name;
-        echo "$name~~~~~~ $value \n";
         return $this->store->set($name, $value);
     }
 
@@ -93,10 +88,11 @@ class Session
     public function create($res, $req)
     {
         if($this->sId) return $this->sId;
-        if(isset($req->cookie[$this->sessionKey])){
+        if(!empty($req->cookie[$this->sessionKey])){
             return $this->sId = $req->cookie[$this->sessionKey];
         }
-        $res->res->cookie($this->sessionKey, $this->sId, time() + 11111);
+        $this->sId = md5(uniqid('courser:sessId', true));
+        $res->res->cookie($this->sessionKey, $this->sId, time() + $this->config['expired']);
         return $this->sId;
     }
 
