@@ -44,19 +44,17 @@ class Router
 //        $this->queue = new \SplQueue();
     }
 
-    public function setContainer($container)
-    {
-        $this->container = $container;
-    }
-
     public function group($group, $callable, $scope = null)
     {
-        $group = rtrim($group) . '/';
-        if (substr(strlen($group) - 1, 1) !== '*') $group .= '*';
+        $group = rtrim($group, '/') ?: '/';
+//        if (substr(strlen($group) - 1, 1) !== '*') $group .= '*';
         $pattern = $this->getPattern($group);
         $pattern = "#^$pattern#";
-        if ($callable instanceof \Closure && $scope) {
-            $callable = $callable->bindTo($scope, $scope);
+        if ($callable instanceof \Closure) {
+            if($scope)
+                $callable = $callable->bindTo($scope, $scope);
+            else
+                $callable = $callable->bindTo($this);
         }
         $this->groups[$pattern][] = $callable;
     }

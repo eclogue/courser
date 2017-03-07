@@ -40,7 +40,7 @@ class Courser
 
     }
 
-    public static function used ($callable)
+    public static function used($callable)
     {
         self:: $middleware[] = $callable;
     }
@@ -51,9 +51,6 @@ class Courser
     }
 
 
-    public static function group($group, $callback) {
-        self::$group[$group] = $callback;
-    }
 
     public static function post($route, $callback)
     {
@@ -75,12 +72,18 @@ class Courser
     {
         self::$routes['option'][$route] = $callback;
     }
+
 //
     public static function all($route, $callback)
     {
         foreach (Router::$allowMethods as $method) {
             self::$method($route, $callback);
         }
+    }
+
+    public static function group($group, $callback)
+    {
+        self::$group[$group] = $callback;
     }
 
 
@@ -104,7 +107,7 @@ class Courser
 
     public static function run($env = [])
     {
-        return function($req, $res) use($env) {
+        return function($req, $res) use ($env) {
             $app = Courser::createApplication($env);
             $router = $app->createContext($req, $res);
             $router->addMiddleware(self::$middleware);
