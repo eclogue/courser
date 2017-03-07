@@ -16,7 +16,6 @@ class RouterGroup
 
     public $groups = [];
 
-    public $container = [];
 
     public function __construct($group, $callable)
     {
