@@ -3,3 +3,4 @@
 app/
 vendor/
 node_modules/
+auth.json
