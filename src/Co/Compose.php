@@ -7,7 +7,7 @@
  * @time      : 上午10:15
  */
 
-namespace Barge\Co;
+namespace Courser\Co;
 
 
 class Compose
@@ -41,6 +41,7 @@ class Compose
             if($this->first) {
                 $this->first = false;
                 $this->value = $co->current();
+                $this->push($co);
                 continue;
             }
             if ($this->value) {

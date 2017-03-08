@@ -7,7 +7,7 @@
  * @time      : 下午5:26
  */
 
-namespace Barge\Set;
+namespace Courser\Set;
 
 
 class Set

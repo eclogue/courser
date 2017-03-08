@@ -6,15 +6,15 @@
  * Date: 2016/11/14
  * Time: 下午10:41
  */
-namespace Barge;
+namespace Courser;
 
-use Barge\Set\Config;
-use Barge\Router\Router;
-use Barge\Http\Request;
-use Barge\Http\Response;
+use Courser\Set\Config;
+use Courser\Router\Router;
+use Courser\Http\Request;
+use Courser\Http\Response;
 
 
-class Barge
+class Courser
 {
     public $env = [];
 
@@ -40,7 +40,7 @@ class Barge
 
     }
 
-    public static function use ($callable)
+    public static function used($callable)
     {
         self:: $middleware[] = $callable;
     }
@@ -51,9 +51,6 @@ class Barge
     }
 
 
-    public static function group($group, $callback) {
-        self::$group[$group] = $callback;
-    }
 
     public static function post($route, $callback)
     {
@@ -75,12 +72,19 @@ class Barge
     {
         self::$routes['option'][$route] = $callback;
     }
+
 //
     public static function all($route, $callback)
     {
         foreach (Router::$allowMethods as $method) {
             self::$method($route, $callback);
         }
+    }
+
+    public static function group($group, $callback)
+    {
+        self::$group[$group] = $callback;
+
     }
 
 
@@ -92,27 +96,30 @@ class Barge
 
     public static function createApplication($env)
     {
-        return new Barge($env);
+        return new Courser($env);
     }
 
     public static function __callStatic($name, $args)
     {
-        if (is_callable(['Barge', $name])) {
+        if (is_callable(['Courser', $name])) {
             self::$routes[$name] = $args;
         }
     }
 
     public static function run($env = [])
     {
-        return function($req, $res) use($env) {
-            $app = Barge::createApplication($env);
+        return function($req, $res) use ($env) {
+            $app = Courser::createApplication($env);
             $router = $app->createContext($req, $res);
+            foreach (static::$group as $namespace => $callable) {
+                $router->group($namespace, $callable);
+            }
             $router->addMiddleware(self::$middleware);
             foreach (self::$routes as $method => $routes) {
                 foreach ($routes as $path => $route)
                     $router->addRoute($method, $path, $route);
             }
-            $uri = isset($req->header['request_uri']) ? $req->header['request_uri'] : '/';
+            $uri = isset($req->server['request_uri']) ? $req->server['request_uri'] : '/';
             $router->dispatch($uri);
         };
     }

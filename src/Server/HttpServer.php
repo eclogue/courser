@@ -6,11 +6,11 @@
  * Time: 下午10:29
  */
 
-namespace Barge\Server;
+namespace Courser\Server;
 
-use Barge\Barge;
+use Courser\Courser;
 use Swoole\Http\Server;
-use Barge\Set\Config;
+use Courser\Set\Config;
 
 class HttpServer
 {
@@ -39,9 +39,9 @@ class HttpServer
 
     public function mount($req, $res)
     {
-        if (!is_file($req->server['request_uri'])) {
+        if ($req->server['request_uri'] !== '/favicon.ico') {
             $env = $this->config;
-            $app = Barge::run($env);
+            $app = Courser::run($env);
             $app($req, $res);
         }
     }
@@ -53,7 +53,7 @@ class HttpServer
         $config = [
             'daemonize' => false,
             'dispatch_mode' => 3,
-            'log_file' => $tmpDir . '/Barge.log',
+            'log_file' => $tmpDir . '/Courser.log',
             'upload_tmp_dir'=> $tmpDir,
         ];
         $config = array_merge($config, Config::get('server', []));

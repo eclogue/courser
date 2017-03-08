@@ -6,7 +6,7 @@
  * Time: 下午9:28
  */
 
-namespace Barge\Router;
+namespace Courser\Router;
 
 
 class RouterGroup
@@ -16,7 +16,6 @@ class RouterGroup
 
     public $groups = [];
 
-    public $container = [];
 
     public function __construct($group, $callable)
     {

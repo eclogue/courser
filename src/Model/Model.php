@@ -7,10 +7,10 @@
  * @date      : 2016/11/30
  * @time      : 上午10:54
  */
-namespace Barge\Model;
+namespace Courser\Model;
 
-use Barge\Model\DB;
-use Barge\Model\Cache;
+use Courser\Model\DB;
+use Courser\Model\Cache;
 
 abstract class Model
 {

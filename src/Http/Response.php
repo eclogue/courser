@@ -6,10 +6,8 @@
  * Time: 上午12:12
  */
 
-namespace Barge\Http;
+namespace Courser\Http;
 
-use Barge\Http\StdObject;
-use Barge\Http\Header;
 
 class Response
 {
@@ -24,6 +22,8 @@ class Response
 
     public $res;
 
+    public $body;
+
     public function __construct()
     {
         $this->header = new Header(array());
@@ -31,13 +31,14 @@ class Response
     }
 
 
-    public function setResponse($response)
+    public function setResponse(\Swoole\Http\Response $response)
     {
         $this->res = $response;
     }
 
 
-    public function status($code) {
+    public function status($code)
+    {
         $this->statusCode = $code;
 
         return $this;
@@ -50,7 +51,8 @@ class Response
     }
 
 
-    public function getHeaders() {
+    public function getHeaders()
+    {
         return $this->header;
     }
 
@@ -58,26 +60,17 @@ class Response
     {
         if (is_array($data)) {
             $data = json_decode($data);
+        } else {
+            $data = (array)$data;
         }
 
         $this->end($data);
     }
 
 
-    public function setETag($ETag)
-    {
-        preg_match('/^(W\/)?"/', $ETag, $match);
-        if (!$match) {
-            $ETag = '"' . $ETag . '"';
-        }
-        $this->header('ETag', $ETag);
-    }
-
-
-
     public function end($data)
     {
-        foreach($this->headers as $key => $value) {
+        foreach ($this->headers as $key => $value) {
             $this->res->header($key, $value);
         }
         $this->res->status($this->statusCode);
@@ -95,9 +88,14 @@ class Response
         $this->res->sendFile($file);
     }
 
-    public function getHeader()
+    public function write($data)
     {
+        $this->req->write($data);
+    }
 
+    public function getHeader($key)
+    {
+        return isset($this->headers[$key]) ? $this->headers[$key] : null;
     }
 
     public function __invoke($string)
@@ -109,16 +107,14 @@ class Response
     {
         $output = sprintf(
             'HTTP/%s %s %s',
-//            $this->getProtocolVersion(),
             $this->statusCode
-//            $this->getReasonPhrase()
         );
-        $output .= PHP_EOL;
-        foreach ($this->getHeaders() as $name => $values) {
-            $output .= sprintf('%s: %s', $name, $this->getHeaderLine($name)) . PHP_EOL;
-        }
-        $output .= PHP_EOL;
-        $output .= (string)$this->getBody();
+//        $output .= PHP_EOL;
+//        foreach ($this->getHeaders() as $name => $values) {
+//            $output .= sprintf('%s: %s', $name, $this->getHeaderLine($name)) . PHP_EOL;
+//        }
+//        $output .= PHP_EOL;
+//        $output .= (string)$this->getBody();
         return $output;
     }
 
