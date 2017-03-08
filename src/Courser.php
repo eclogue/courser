@@ -84,6 +84,7 @@ class Courser
     public static function group($group, $callback)
     {
         self::$group[$group] = $callback;
+
     }
 
 
@@ -110,6 +111,9 @@ class Courser
         return function($req, $res) use ($env) {
             $app = Courser::createApplication($env);
             $router = $app->createContext($req, $res);
+            foreach (static::$group as $namespace => $callable) {
+                $router->group($namespace, $callable);
+            }
             $router->addMiddleware(self::$middleware);
             foreach (self::$routes as $method => $routes) {
                 foreach ($routes as $path => $route)
