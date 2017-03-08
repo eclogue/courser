@@ -4,8 +4,7 @@ A fast and lighter PHP micro framework used swoole.The greatest truths are the s
  `entities should not be multiplied unnecessarily.` Born with natural beauty.
 
 ### Installation
-`composer require Course`
-`composer require crane`
+`composer require racecourse/courser` or git clone https://github.com/racecourse/courser
 ### Get start
 
 `composer install` 
@@ -47,29 +46,50 @@ now run `php server.php`, visit 127.0.0.1:5001
 
 ### Router
 
-```php
 
- # basic /users/11
- $app->get('/users/:id', function($req, $res) {
+```php
+<?php
+# basic /users/11
+Course::get('/users/:id', function($req, $res) {
     var_dump($req->params['id']); // id must be integer
- });
- # use array
- $app->get('users/*', [function($req, $res) {
+    yield 1000;
+});
+Course::get('/users/:id', function($req, $res) {
+    $value = (yield); // $value === 1000;
+    $res->send($value);
+});
+# use array
+Course::get('users/*', [function($req, $res) {
     /* do something*/
-  }, function($req, $res) {
+}, function($req, $res) {
     /*...todo*/
-  }]);
- 
-  # use namespace
-  $app->put('/user/{username}', ['MyNamespace\Controller', 'action']);
-  
-  # use group
-  
-  $app->group('/admin',  [ // match all `/admin` prefix uri: /admin/1;/admin/user/1
-    function($req, $res) { /*...*/},
-    ['MyNamespace\Controller', 'todo'],
-  ]);
+}]);
+
+# use namespace
+Course::put('/user/{username}', ['MyNamespace\Controller', 'action']);
+
+# use group
+
+Course::group('/admin/{username}',  function() {
+    // [Notice: In group `$this` is bind to Courser\Router, don't use Courser::[method]()]
+    
+    $this->used(function($req, $res) { // Add group middleware
+        // todo
+        // this middleware is mount at /admin/{username} scope, have not effect outside of this group.
+    });
+    $this->get('/test/:id', function($req, $res) {
+        yield 1;
+    });
+});
  ```
+ 
+### Middleware
+    
+   Use `Courser::used(function($req, $res) {});` to add a middleware.
+   Course's middleware is like [koa](https://github.com/koajs/koa).In koa, everything is middleware.
+   But Courser split middleware and user business. Middleware are mount at group scope;The default group 
+   is the root '/';
+   A middleware must be a callable function or a instance that have `__invoke` function;
  
 ### Model
  
@@ -101,23 +121,6 @@ $condition = [
     
     Just kidding.
      
-    `webbench -c 200 -t 20 http://127.0.0.1:5001/`
-   >
-    Transactions:		       16340 hits
-    Availability:		      100.00 %
-    Elapsed time:		       19.13 secs
-    Data transferred:	        0.16 MB
-    Response time:		        0.00 secs
-    Transaction rate:	      854.16 trans/sec
-    Throughput:		        0.01 MB/sec
-    Concurrency:		        1.20
-    Successful transactions:       16340
-    Failed transactions:	           0
-    Longest transaction:	        0.11
-    Shortest transaction:	        0.00
-    Memery:		       `24MB`
-    CPU:		       `14%`
-
 
 
 ### Community
