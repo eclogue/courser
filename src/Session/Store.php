@@ -126,6 +126,7 @@ class Store
     {
         if (!$this->first) {
             $cookie = $this->request->cookie;
+            var_dump($cookie);
             $token = isset($cookie[$this->cookieName]) ? $cookie[$this->cookieName] : null;
             if (!$token) return null;
             $value = $this->validate($token);
@@ -151,6 +152,7 @@ class Store
 
     public function save()
     {
+        var_dump(time(), $this->config['expired']);
         $token = $this->getToken($this->value, $this->id);
         $this->response->res->cookie($this->cookieName, $token, time() + $this->config['expired'], ...$this->options);
     }

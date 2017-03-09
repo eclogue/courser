@@ -1,11 +1,12 @@
 <?php
-
 /**
- * Created by PhpStorm.
- * User: bugbear
- * Date: 2016/11/14
- * Time: 下午10:41
+ * @license   https://github.com/Init/licese.md
+ * @copyright Copyright (c) 2017
+ * @author    : bugbear
+ * @date      : 2017/2/20
+ * @time      : 上午10:15
  */
+
 namespace Courser;
 
 use Courser\Set\Config;
@@ -16,12 +17,26 @@ use Courser\Http\Response;
 
 class Courser
 {
+    /*
+     * instance env
+     * @var array
+     * */
     public $env = [];
 
+    /*
+     * global middle ware
+     * @var array
+     * */
     public static $middleware = [];
 
+    /*
+     * @var array
+     * */
     public static $routes = [];
 
+    /*
+     * @var array
+     * */
     public static $group = [];
 
 
@@ -30,7 +45,12 @@ class Courser
         $this->env = $env;
     }
 
-
+    /*
+     * create request context set req and response
+     * @param object $req Swoole\Http\Request
+     * @param object $res Swoole\Http\Response
+     * @return object self
+     * */
     public function createContext($req, $res)
     {
         $router = new Router(new Request, new Response);
@@ -40,60 +60,106 @@ class Courser
 
     }
 
+    /*
+     * add a middleware
+     * @param function | object $callable callable function
+     * @return void
+     * */
     public static function used($callable)
     {
         self:: $middleware[] = $callable;
     }
 
+    /*
+     * add get method route
+     * @param string $route
+     * @param function | array
+     * @return void
+     * */
     public static function get($route, $callback)
     {
         self::$routes['get'][$route] = $callback;
     }
 
 
-
+    /*
+     * add a post method route
+     * @param string $route
+     * @param function | array
+     *
+     * @return void
+     * */
     public static function post($route, $callback)
     {
         self::$routes['post'][$route] = $callback;
     }
 
+    /*
+     * add a put method route
+     * @param string $route
+     * @param function | array
+     * @return void
+     * */
     public function put($route, $callback)
     {
         self::$routes['put'][$route] = $callback;
     }
 
+    /*
+     * add a delete method route
+     * @param string $route
+     * @param function | array
+     * @return void
+     * */
     public static function delete($route, $callback)
     {
         self::$routes['delete'][$route] = $callback;
     }
 
-
+    /*
+     * add a option method route
+     * @param string $route
+     * @param function | array
+     * @return void
+     * */
     public static function option($route, $callback)
     {
         self::$routes['option'][$route] = $callback;
     }
 
-//
-    public static function all($route, $callback)
+    // @fixme
+    public static function any($route, $callback)
     {
         foreach (Router::$allowMethods as $method) {
             self::$method($route, $callback);
         }
     }
 
+    /*
+     * add a group route,the callback param is bind to router instance
+     * it should use $this->$method to add route
+     * @param string $group
+     * @param function | array $callable
+     *
+     * @return void
+     * */
     public static function group($group, $callback)
     {
         self::$group[$group] = $callback;
 
     }
 
-
+    // @todo
     public function listen($port)
     {
         Config::set('port', $port);
-
     }
 
+    /*
+     * create a new instance
+     * @param array $env
+     * @return object
+     * */
     public static function createApplication($env)
     {
         return new Courser($env);
@@ -106,6 +172,11 @@ class Courser
         }
     }
 
+    /*
+     * run app handle request
+     * @param array $env
+     * @return void
+     * */
     public static function run($env = [])
     {
         return function($req, $res) use ($env) {
@@ -123,5 +194,4 @@ class Courser
             $router->dispatch($uri);
         };
     }
-
 }

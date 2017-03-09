@@ -76,16 +76,16 @@ class Request
      * */
     public function setRequest(\Swoole\Http\Request $req)
     {
-        $reflection = new \ReflectionClass($req);
-        $methods = $reflection->getMethods(\ReflectionMethod::IS_PUBLIC);
-        foreach ($methods as $key => $method) {
-            $this->callable[] = $method->getName();
-        }
         $this->req = $req;
         $this->cookie = isset($req->cookie) ? $req->cookie : [];
         $this->server = $req->server;
         $this->files = isset($req->files) ? $req->files : [];
         $this->method = $req->server['request_method'];
+        $reflection = new \ReflectionClass($req);
+        $methods = $reflection->getMethods(\ReflectionMethod::IS_PUBLIC);
+        foreach ($methods as $key => $method) {
+            $this->callable[] = $method->getName();
+        }
     }
 
     /*
