@@ -57,6 +57,10 @@ class HttpServer
             'upload_tmp_dir'=> $tmpDir,
         ];
         $config = array_merge($config, Config::get('server', []));
+        $timeZone = Config::get('time.zone');
+        if(!$timeZone) {
+            ini_set('date.timezone','Asia/Shanghai');
+        }
         $this->server->set($config);
         $this->server->on('Request', [$this, 'mount']);
         $this->server->start();

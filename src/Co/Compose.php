@@ -12,10 +12,19 @@ namespace Courser\Co;
 
 class Compose
 {
+    /*
+     * @var object SplQueue
+     * */
     protected $queue;
 
+    /*
+     * @var boolean
+     * */
     protected $first = true;
 
+    /*
+     * $var mixed
+     * */
     private $value = null;
 
 
@@ -24,12 +33,20 @@ class Compose
         $this->queue = new \SplQueue();
     }
 
+    /*
+     * push a generator enqueue
+     * @param object $co instance of generator
+     * @return void
+     * */
     public function push($co)
     {
         $this->queue->enqueue($co);
     }
 
-
+    /*
+     * execute composer of generator
+     *
+     * */
     public function run()
     {
         while (!$this->queue->isEmpty()) {

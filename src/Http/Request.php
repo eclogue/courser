@@ -7,15 +7,14 @@
  */
 namespace Courser\Http;
 
-use Courser\Http\StdObject;
-use Courser\Http\Header;
+use Courser\Interfaces\RequestInterface;
 
 /*
  * Http request extend swoole_http_request
  * the main properties and method are base on swoole
  * see https://wiki.swoole.com/wiki/page/328.html
  * */
-class Request
+class Request extends RequestAbstract implements RequestInterface
 {
 
     public $params = [];
@@ -74,18 +73,18 @@ class Request
      * @param object $req  \Swoole\Http\Request
      * @return void
      * */
-    public function setRequest(\Swoole\Http\Request $req)
+    public function setRequest($req)
     {
-        $reflection = new \ReflectionClass($req);
-        $methods = $reflection->getMethods(\ReflectionMethod::IS_PUBLIC);
-        foreach ($methods as $key => $method) {
-            $this->callable[] = $method->getName();
-        }
         $this->req = $req;
         $this->cookie = isset($req->cookie) ? $req->cookie : [];
         $this->server = $req->server;
         $this->files = isset($req->files) ? $req->files : [];
         $this->method = $req->server['request_method'];
+        $reflection = new \ReflectionClass($req);
+        $methods = $reflection->getMethods(\ReflectionMethod::IS_PUBLIC);
+        foreach ($methods as $key => $method) {
+            $this->callable[] = $method->getName();
+        }
     }
 
     /*

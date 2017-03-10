@@ -9,12 +9,13 @@
 
 namespace Courser\Session;
 
+use Courser\Interfaces\StoreInterface;
 use Lcobucci\JWT\Builder;
 use Lcobucci\JWT\Signer\Hmac\Sha256;
 use Lcobucci\JWT\Parser;
 
 
-class Store
+class Store implements StoreInterface
 {
 
     private $id = '';
@@ -54,13 +55,13 @@ class Store
         if (!isset($config['audience'])) {
             $config['issuer'] = 'https://github.com/racecourse/crane';
         }
-        if(!isset($config['expired'])) {
+        if (!isset($config['expired'])) {
             $config['expired'] = 1800;
         }
-        if(!isset($config['options'])) {
+        if (!isset($config['options'])) {
             $config['options'] = [];
         }
-        if(!isset($config['key'])) {
+        if (!isset($config['key'])) {
             throw new \Exception('Session store must provide a private key');
         }
 
@@ -68,8 +69,9 @@ class Store
     }
 
 
-    public static function getStore($req, $res, $config){
-        if(!self::$store) {
+    public static function getStore($req, $res, $config)
+    {
+        if (!self::$store) {
             return static::$store = new static($req, $res, $config);
         }
 
@@ -112,7 +114,7 @@ class Store
         $token = (new Parser())->parse((string)$token); // Parses from a string
         $created = $token->getClaim('iat');
         $time = time();
-        if($created > $time) return false;
+        if ($created > $time) return false;
         if ($token->getClaim('exp') <= $time) return false;
         if ($token->getHeader('jti') !== $this->id) return false;
         if ($token->getClaim('iss') !== $this->config['issuer']) return false;// will print "http://example.com"
@@ -122,7 +124,7 @@ class Store
     }
 
 
-    public function get($key)
+    public function get($key = '')
     {
         if (!$this->first) {
             $cookie = $this->request->cookie;
@@ -138,7 +140,7 @@ class Store
         }
 
         if (empty($this->value)) return null;
-
+        if (!$key) return $this->value;
         return isset($this->value[$key]) ? $this->value[$key] : null;
     }
 
@@ -151,6 +153,7 @@ class Store
 
     public function save()
     {
+        var_dump(time(), $this->config['expired']);
         $token = $this->getToken($this->value, $this->id);
         $this->response->res->cookie($this->cookieName, $token, time() + $this->config['expired'], ...$this->options);
     }
