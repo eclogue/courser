@@ -64,4 +64,9 @@ abstract class RequestAbstract
      * */
     private $callable = [];
 
+    public function setRequest($request)
+    {
+        $this->req = $request;
+    }
+
 }

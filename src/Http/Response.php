@@ -46,7 +46,7 @@ class Response extends ResponseAbstract implements ResponseInterface
      * @param object $req  \Swoole\Http\Request
      * @return void
      * */
-    public function setResponse(\Swoole\Http\Response $response)
+    public function setResponse($response)
     {
         $this->res = $response;
     }

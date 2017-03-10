@@ -73,7 +73,7 @@ class Request extends RequestAbstract implements RequestInterface
      * @param object $req  \Swoole\Http\Request
      * @return void
      * */
-    public function setRequest(\Swoole\Http\Request $req)
+    public function setRequest($req)
     {
         $this->req = $req;
         $this->cookie = isset($req->cookie) ? $req->cookie : [];

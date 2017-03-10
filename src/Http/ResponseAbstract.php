@@ -39,4 +39,8 @@ abstract class ResponseAbstract implements ResponseInterface
      * */
     public $body;
 
+    public function setResponse($response) {
+        $this->res = $response;
+    }
+
 }

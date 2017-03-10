@@ -12,12 +12,6 @@ namespace Courser\Interfaces;
 
 interface ResponseInterface
 {
-    /*
-     * set request context
-     * @param object $req  \Swoole\Http\Request
-     * @return void
-     * */
-    public function setResponse($response);
 
 
     public function status($code);
