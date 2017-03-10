@@ -2,8 +2,9 @@
 
 namespace Courser\Http;
 
+use Courser\Interfaces\ResponseInterface;
 
-class Response
+class Response extends ResponseAbstract implements ResponseInterface
 {
 
     public $response = '';
@@ -152,12 +153,6 @@ class Response
             'HTTP/%s %s %s',
             $this->statusCode
         );
-//        $output .= PHP_EOL;
-//        foreach ($this->getHeaders() as $name => $values) {
-//            $output .= sprintf('%s: %s', $name, $this->getHeaderLine($name)) . PHP_EOL;
-//        }
-//        $output .= PHP_EOL;
-//        $output .= (string)$this->getBody();
         return $output;
     }
 

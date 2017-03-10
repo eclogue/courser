@@ -7,15 +7,14 @@
  */
 namespace Courser\Http;
 
-use Courser\Http\StdObject;
-use Courser\Http\Header;
+use Courser\Interfaces\RequestInterface;
 
 /*
  * Http request extend swoole_http_request
  * the main properties and method are base on swoole
  * see https://wiki.swoole.com/wiki/page/328.html
  * */
-class Request
+class Request extends RequestAbstract implements RequestInterface
 {
 
     public $params = [];
