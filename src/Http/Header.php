@@ -13,7 +13,7 @@ namespace Courser\Http;
 class Header
 {
 
-    protected static $messages = [
+    public static $messages = [
         100 => 'Continue',
         101 => 'Switching Protocols',
         102 => 'Processing',

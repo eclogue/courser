@@ -17,6 +17,7 @@ use Courser\Http\Response;
 
 class Courser
 {
+    public static $notFounds = [];
     /*
      * instance env
      * @var array
@@ -147,6 +148,16 @@ class Courser
     {
         self::$group[$group] = $callback;
 
+    }
+
+    /*
+     * add 404 not found handle
+     * @param function $callback access params same as route
+     * @return void
+     * */
+    public static function notFound($callback)
+    {
+        self::$notFounds[] = $callback;
     }
 
     // @todo

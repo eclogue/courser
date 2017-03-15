@@ -8,6 +8,7 @@
 
 namespace Courser\Router;
 
+use Courser\Courser;
 use Courser\Http\Request;
 use Courser\Http\Response;
 use Courser\Co\Compose;
@@ -179,7 +180,7 @@ class Router
         $method = $this->request->method;
         $found = $this->mapRoute($method, $uri);
         if (!$found) {
-            return $this->response->status(404)->send('Not Found');
+           return $this->compose(Courser::$notFounds);
         }
 
         $md = [];

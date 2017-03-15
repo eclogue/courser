@@ -91,31 +91,7 @@ Course::group('/admin/{username}',  function() {
    is the root '/';
    A middleware must be a callable function or a instance that have `__invoke` function;
  
-### Model
- 
- used like mongo shell
- 
-  ```php
-  $user = new Model('user');
 
-$condition = [
-    'id' => ['$gt' => 1, '$lt' => 100, '$neq' => 23],
-    '$or' => [
-        'email' => 'aaxx@scac.com',
-        'status' => '1',
-    ],
-    'age' => ['$lt' => 70]
-];
-  $user->field('*')
-    ->where($condition)
-    ->order(['id' => 'desc'])
-    ->skip(100)
-    ->limit(10)
-    ->select();
-// execute sql: SELECT * FROM `user` WHERE (`id`>'1' and `id`<'100' and `id`!='23') or (`email`='aaxx@scac.com' and `status`='1') and (`age`<'70') ORDER BY `id` DESC limit 10 offset 100;
-
-   ```
--------
 
 ### Benchmark
     
