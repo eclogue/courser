@@ -1,9 +1,10 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: crab
- * Date: 15-10-15
- * Time: 上午12:34
+ * @license   https://github.com/Init/licese.md
+ * @copyright Copyright (c) 2017
+ * @author    : bugbear
+ * @date      : 2017/2/20
+ * @time      : 上午10:15
  */
 
 namespace Courser\Router;
@@ -114,18 +115,17 @@ class Router
     {
         $this->addRoute('get', $route, $callback);
     }
-//
-//    public function post($route, $callback) {
-//        $this->addRoute('post', $route, $callback);
-//    }
-//
-//    public function put($route, $callback) {
-//        $this->addRoute('put', $route, $callback);
-//    }
-//
-//    public function delete($route, $callback) {
-//        $this->addRoute('delete', $route, $callback);
-//    }
+    public function post($route, $callback) {
+        $this->addRoute('post', $route, $callback);
+    }
+
+    public function put($route, $callback) {
+        $this->addRoute('put', $route, $callback);
+    }
+
+    public function delete($route, $callback) {
+        $this->addRoute('delete', $route, $callback);
+    }
 
     public function used($middleware)
     {
