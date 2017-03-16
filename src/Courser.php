@@ -17,6 +17,7 @@ use Courser\Http\Response;
 
 class Courser
 {
+    public static $notFounds = [];
     /*
      * instance env
      * @var array
@@ -149,6 +150,16 @@ class Courser
 
     }
 
+    /*
+     * add 404 not found handle
+     * @param function $callback access params same as route
+     * @return void
+     * */
+    public static function notFound($callback)
+    {
+        self::$notFounds[] = $callback;
+    }
+
     // @todo
     public function listen($port)
     {
@@ -188,7 +199,8 @@ class Courser
             $router->addMiddleware(self::$middleware);
             foreach (self::$routes as $method => $routes) {
                 foreach ($routes as $path => $route)
-                    $router->addRoute($method, $path, $route);
+                    if(strcasecmp($method, $req->server['request_method']))
+                        $router->addRoute($method, $path, $route);
             }
             $uri = isset($req->server['request_uri']) ? $req->server['request_uri'] : '/';
             $router->dispatch($uri);

@@ -4,6 +4,7 @@ namespace Courser\Set;
 
 class Config
 {
+    public static $env = 'dev';
 
     private static $_config = [];
 
@@ -16,6 +17,7 @@ class Config
     public static function get($key, $default = '')
     {
         if (strpos($key, '.')) {
+            $key = self::$env . '.' . $key;
             $indexes = explode('.', $key);
             $temp = '';
             foreach ($indexes as $key => $index) {
@@ -26,10 +28,11 @@ class Config
                         $temp = self::$_config[$index];
                     }
                 } else {
-                    if (!isset($temp[$index]))
+                    if (!isset($temp[$index])) {
                         return $default;
-                    else
+                    } else {
                         $temp = $temp[$index];
+                    }
                 }
 
             }
@@ -42,6 +45,11 @@ class Config
             return $default;
 
         }
+    }
+
+    public static function setENV($env = 'dev')
+    {
+        self::$env = $env;
     }
 
     public static function set($key, $val = '')
