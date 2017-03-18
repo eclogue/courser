@@ -10,6 +10,7 @@
 namespace Courser\Router;
 
 use Courser\Courser;
+use Courser\Helper\Util;
 use Courser\Http\Request;
 use Courser\Http\Response;
 use Courser\Co\Compose;
@@ -52,7 +53,7 @@ class Router
         if ($group === '/') return null;
         $group = '/' . trim($group, '/');
         $prefix = $group;
-        if(strlen($prefix) > 1) {
+        if (strlen($prefix) > 1) {
             $prefix .= '/*';
         }
         $pattern = $this->getPattern($prefix);
@@ -115,15 +116,19 @@ class Router
     {
         $this->addRoute('get', $route, $callback);
     }
-    public function post($route, $callback) {
+
+    public function post($route, $callback)
+    {
         $this->addRoute('post', $route, $callback);
     }
 
-    public function put($route, $callback) {
+    public function put($route, $callback)
+    {
         $this->addRoute('put', $route, $callback);
     }
 
-    public function delete($route, $callback) {
+    public function delete($route, $callback)
+    {
         $this->addRoute('delete', $route, $callback);
     }
 
@@ -180,16 +185,16 @@ class Router
         $method = $this->request->method;
         $found = $this->mapRoute($method, $uri);
         if (!$found) {
-           return $this->compose(Courser::$notFounds);
+            return $this->compose(Courser::$notFounds);
         }
 
         $md = [];
         foreach ($this->middlewares as $key => $middleware) {
-            if($key === '/') {
+            if ($key === '/') {
                 $md = array_merge($md, $middleware);
             } else {
                 preg_match($key, $uri, $match);
-                if($match) $md = array_merge($md, $middleware);
+                if ($match) $md = array_merge($md, $middleware);
             }
         }
 
@@ -203,11 +208,20 @@ class Router
     {
         $compose = new Compose();
         foreach ($middleware as $md) {
-            if(is_array($md)) {
-                $this->compose($md);
+            if (is_array($md)) {
+                if (Util::isIndexArray($md)) {
+                    $this->compose($md);
+                }
+                $gen = array_map(function($key, $value) {
+                    $ctrl = new $key($this->request, $this->response);
+                    $ctrl->$value();
+                    return $ctrl;
+                }, $md);
+            } else {
+                if (!is_callable($md)) continue;
+                $gen = $md($this->request, $this->response);
             }
-            if(!is_callable($md)) continue;
-            $gen = $md($this->request, $this->response);
+
             $compose->push($gen);
         }
         $compose->run();
