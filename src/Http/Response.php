@@ -85,7 +85,7 @@ class Response extends ResponseAbstract implements ResponseInterface
     public function json($data)
     {
         if (is_array($data)) {
-            $data = json_decode($data);
+            $data = json_encode($data);
         } else {
             $data = (array)$data;
         }

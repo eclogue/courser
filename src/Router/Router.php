@@ -208,21 +208,24 @@ class Router
     {
         $compose = new Compose();
         foreach ($middleware as $md) {
+            $gen = null;
             if (is_array($md)) {
                 if (Util::isIndexArray($md)) {
                     $this->compose($md);
+                    continue;
                 }
-                $gen = array_map(function($key, $value) {
-                    $ctrl = new $key($this->request, $this->response);
-                    $ctrl->$value();
-                    return $ctrl;
-                }, $md);
+                foreach ($md as $class => $action) {
+//                    $class = str_replace('\\', '\\\\', $class);
+                    $ctrl = new $class($this->request, $this->response);
+                    $gen = $ctrl->$action();
+                }
             } else {
                 if (!is_callable($md)) continue;
                 $gen = $md($this->request, $this->response);
             }
-
-            $compose->push($gen);
+            if($gen instanceof \Generator) {
+                $compose->push($gen);
+            }
         }
         $compose->run();
     }
