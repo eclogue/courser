@@ -10,7 +10,7 @@ namespace Courser\Server;
 
 use Courser\Courser;
 use Swoole\Http\Server;
-use Courser\Set\Config;
+use Courser\Helper\Config;
 
 class HttpServer
 {

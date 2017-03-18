@@ -1,6 +1,6 @@
 <?php
 
-namespace Courser\Set;
+namespace Courser\Helper;
 
 class Config
 {

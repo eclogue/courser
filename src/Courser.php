@@ -9,7 +9,7 @@
 
 namespace Courser;
 
-use Courser\Set\Config;
+use Courser\Helper\Config;
 use Courser\Router\Router;
 use Courser\Http\Request;
 use Courser\Http\Response;
