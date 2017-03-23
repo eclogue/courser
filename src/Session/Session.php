@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Created by PhpStorm.
  * User: bugbear
@@ -84,6 +83,11 @@ class Session
         }
 
         return $this->sId;
+    }
+
+    public function save()
+    {
+        $this->store->save();
     }
 
     public function create($res, $req)
