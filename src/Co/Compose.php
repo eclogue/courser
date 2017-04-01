@@ -52,7 +52,6 @@ class Compose
         while (!$this->queue->isEmpty()) {
             $co = $this->queue->dequeue();
             if (!$co instanceof \Generator) {
-                $this->value = $co;
                 continue;
             }
             if($this->first) {

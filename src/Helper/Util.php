@@ -16,6 +16,6 @@ class Util
     {
         if (!is_array($array)) return false;
         $keys = array_keys($array);
-        return is_numeric($keys[0]);
+        return isset($keys[0]) && is_numeric($keys[0]);
     }
 }

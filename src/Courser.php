@@ -199,7 +199,7 @@ class Courser
             $router->addMiddleware(self::$middleware);
             foreach (self::$routes as $method => $routes) {
                 foreach ($routes as $path => $route)
-                    if(strcasecmp($method, $req->server['request_method']))
+                    if(!strcasecmp($method, $req->server['request_method']))
                         $router->addRoute($method, $path, $route);
             }
             $uri = isset($req->server['request_uri']) ? $req->server['request_uri'] : '/';

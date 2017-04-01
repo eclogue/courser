@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Created by PhpStorm.
  * User: bugbear
@@ -68,7 +67,6 @@ class Session
     public function __get($key)
     {
         $key = $this->prefix . $key;
-        var_dump($key);
         return $this->store->get($key);
     }
 
@@ -84,6 +82,11 @@ class Session
         }
 
         return $this->sId;
+    }
+
+    public function save()
+    {
+        $this->store->save();
     }
 
     public function create($res, $req)

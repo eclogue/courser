@@ -136,7 +136,7 @@ class Request extends RequestAbstract implements RequestInterface
      * */
     public function header($name)
     {
-        return $this->req->header($name) ?: null;
+        return $this->req->header[$name] ?: null;
     }
 
     /*
@@ -160,19 +160,14 @@ class Request extends RequestAbstract implements RequestInterface
     public function body($key)
     {
         if ($this->header('content-type') === 'application/x-www-form-urlencoded') {
-            return $this->req->post($key);
+            $this->body = $this->req->post;
         } else {
-            if ($this->body === null) {
-                if (function_exists('mb_parse_str'))
-                    mb_parse_str(file_get_contents('php://input'), $this->body);
-                else
-                    parse_str(file_get_contents('php://input'), $this->body);
-            } else {
-                return isset($this->body[$key]) ? $this->body[$key] : null;
+            if (empty($this->body)) {
+                $this->body = json_decode($this->req->rawContent(), true);
             }
         }
 
-        return null;
+        return isset($this->body[$key]) ? $this->body[$key] : null;
     }
 
     /*

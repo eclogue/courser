@@ -183,11 +183,6 @@ class Router
     {
         $uri = $uri ? rtrim($uri) . '/' : '/';
         $method = $this->request->method;
-        $found = $this->mapRoute($method, $uri);
-        if (!$found) {
-            return $this->compose(Courser::$notFounds);
-        }
-
         $md = [];
         foreach ($this->middlewares as $key => $middleware) {
             if ($key === '/') {
@@ -197,8 +192,12 @@ class Router
                 if ($match) $md = array_merge($md, $middleware);
             }
         }
-
         $this->compose($md);
+        if ($this->response->finish) return true;
+        $found = $this->mapRoute($method, $uri);
+        if (!$found) {
+            return $this->compose(Courser::$notFounds);
+        }
         $this->compose($found);
         return true;
     }
@@ -208,21 +207,26 @@ class Router
     {
         $compose = new Compose();
         foreach ($middleware as $md) {
+            $gen = null;
             if (is_array($md)) {
                 if (Util::isIndexArray($md)) {
                     $this->compose($md);
+                    continue;
                 }
-                $gen = array_map(function($key, $value) {
-                    $ctrl = new $key($this->request, $this->response);
-                    $ctrl->$value();
-                    return $ctrl;
-                }, $md);
+                foreach ($md as $class => $action) {
+                    $ctrl = new $class($this->request, $this->response);
+                    $gen = $ctrl->$action();
+                }
             } else {
                 if (!is_callable($md)) continue;
                 $gen = $md($this->request, $this->response);
             }
-
-            $compose->push($gen);
+            if ($gen instanceof \Generator) {
+                $compose->push($gen);
+            }
+            if ($this->response->finish) {
+                break;
+            }
         }
         $compose->run();
     }

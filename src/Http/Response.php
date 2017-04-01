@@ -34,6 +34,8 @@ class Response extends ResponseAbstract implements ResponseInterface
      * */
     public $body;
 
+    public $finish = false;
+
 
     public function __construct()
     {
@@ -85,7 +87,7 @@ class Response extends ResponseAbstract implements ResponseInterface
     public function json($data)
     {
         if (is_array($data)) {
-            $data = json_decode($data);
+            $data = json_encode($data);
         } else {
             $data = (array)$data;
         }
@@ -98,8 +100,12 @@ class Response extends ResponseAbstract implements ResponseInterface
      * finish request
      * @param mix $data
      * */
-    public function end($data)
+    public function end($data = '')
     {
+        if($this->finish) {
+            throw new \Exception('Request has been response, check your code for response');
+        }
+        $this->finish = true;
         foreach ($this->headers as $key => $value) {
             $this->res->header($key, $value);
         }
@@ -111,7 +117,7 @@ class Response extends ResponseAbstract implements ResponseInterface
      * send string and finish request
      * @param mix $data
      * */
-    public function send($str)
+    public function send($str = '')
     {
         $this->end($str);
     }
