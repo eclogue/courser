@@ -183,11 +183,6 @@ class Router
     {
         $uri = $uri ? rtrim($uri) . '/' : '/';
         $method = $this->request->method;
-        $found = $this->mapRoute($method, $uri);
-        if (!$found) {
-            return $this->compose(Courser::$notFounds);
-        }
-
         $md = [];
         foreach ($this->middlewares as $key => $middleware) {
             if ($key === '/') {
@@ -197,8 +192,12 @@ class Router
                 if ($match) $md = array_merge($md, $middleware);
             }
         }
-
         $this->compose($md);
+        if($this->response->finish) return true;
+        $found = $this->mapRoute($method, $uri);
+        if (!$found) {
+            return $this->compose(Courser::$notFounds);
+        }
         $this->compose($found);
         return true;
     }
@@ -215,7 +214,6 @@ class Router
                     continue;
                 }
                 foreach ($md as $class => $action) {
-//                    $class = str_replace('\\', '\\\\', $class);
                     $ctrl = new $class($this->request, $this->response);
                     $gen = $ctrl->$action();
                 }
@@ -225,6 +223,9 @@ class Router
             }
             if($gen instanceof \Generator) {
                 $compose->push($gen);
+            }
+            if($this->response->finish) {
+                break;
             }
         }
         $compose->run();

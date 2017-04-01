@@ -67,7 +67,6 @@ class Session
     public function __get($key)
     {
         $key = $this->prefix . $key;
-        var_dump($key);
         return $this->store->get($key);
     }
 
