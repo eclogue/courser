@@ -193,7 +193,7 @@ class Router
             }
         }
         $this->compose($md);
-        if($this->response->finish) return true;
+        if ($this->response->finish) return true;
         $found = $this->mapRoute($method, $uri);
         if (!$found) {
             return $this->compose(Courser::$notFounds);
@@ -221,10 +221,10 @@ class Router
                 if (!is_callable($md)) continue;
                 $gen = $md($this->request, $this->response);
             }
-            if($gen instanceof \Generator) {
+            if ($gen instanceof \Generator) {
                 $compose->push($gen);
             }
-            if($this->response->finish) {
+            if ($this->response->finish) {
                 break;
             }
         }
