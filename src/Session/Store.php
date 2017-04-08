@@ -38,6 +38,10 @@ class Store implements StoreInterface
 
     public static $store;
 
+    /*
+     * @todo  去掉 jwt 使用 sign session
+     *
+     * */
     public function __construct($req, $res, $config)
     {
         $this->request = $req;

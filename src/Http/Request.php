@@ -14,14 +14,11 @@ use Courser\Interfaces\RequestInterface;
  * the main properties and method are base on swoole
  * see https://wiki.swoole.com/wiki/page/328.html
  * */
+
 class Request extends RequestAbstract implements RequestInterface
 {
 
     public $params = [];
-    /*
-     * @var array
-     * */
-    public $paramNames = [];
 
     /*
      * @var array
@@ -124,8 +121,7 @@ class Request extends RequestAbstract implements RequestInterface
      * */
     public function setParam($key, $val)
     {
-        if (in_array($key, $this->paramNames))
-            $this->params[$key] = $val;
+        $this->params[$key] = $val;
     }
 
 

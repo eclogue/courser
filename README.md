@@ -15,29 +15,33 @@ Create a new file server.php.
 <?php
 require('./vendor/autoload.php');
 use Course\Course;
+use Courser\Helper\Config;
+
+Config::set($config);
+$app = new \Courser('dev');
 $config = [
     'server' => [
         'host' => '0.0.0.0',
-        'port' => '5001'
-    ]
+        'port' => '5001',
+    ],
 ];
 
-Course::use(function($req, $res) {
+$app->use(function($req, $res) {
    yield;
    echo "this middleware 1 \n";
 });
 
-Course::use(function($req, $res) {
+$app->use(function($req, $res) {
     yield;
     echo "this middleware 2 \n";
 });
-Course::get('/', function($req, $res) {
+$app->get('/', function($req, $res) {
     $html = "<h1> fuck world</h1>";
     $res->header('Content-Type', 'text/html');
     $res->send($html);
 });
 
-$server = new \Course\Server\HttpServer($config);
+$server = new \Course\Server\HttpServer($app);
 
 $server->start();
 ?>
@@ -49,30 +53,31 @@ now run `php server.php`, visit 127.0.0.1:5001
 
 ```php
 <?php
+
 # basic /users/11
-Course::get('/users/:id', function($req, $res) {
+$app->get('/users/:id', function($req, $res) {
     var_dump($req->params['id']); // id must be integer
     yield 1000;
 });
-Course::get('/users/:id', function($req, $res) {
+$app->get('/users/:id', function($req, $res) {
     $value = (yield); // $value === 1000;
     $res->send($value);
 });
 # use array
-Course::get('users/*', [function($req, $res) {
+$app->get('users/*', [function($req, $res) {
     /* do something*/
 }, function($req, $res) {
     /*...todo*/
 }]);
 
 # use namespace
-Course::put('/user/{username}', ['MyNamespace\Controller', 'action']);
+$app->put('/user/{username}', ['MyNamespace\Controller', 'action']);
 
 # use group
 
-Course::group('/admin/{username}',  function() {
-    // [Notice: In group `$this` is bind to Courser\Router, don't use Courser::[method]()]
-    
+$app->group('/admin/{username}',  function() {
+    // [Notice]: In group `$this` is bind to Courser,
+    // middleware define in group just have effect on the router of group scope 
     $this->used(function($req, $res) { // Add group middleware
         // todo
         // this middleware is mount at /admin/{username} scope, have not effect outside of this group.
@@ -84,11 +89,8 @@ Course::group('/admin/{username}',  function() {
  ```
  
 ### Middleware
-    
-   Use `Courser::used(function($req, $res) {});` to add a middleware.
-   Course's middleware is like [koa](https://github.com/koajs/koa).In koa, everything is middleware.
-   But Courser split middleware and user business. Middleware are mount at group scope;The default group 
-   is the root '/';
+>  Course's middleware look like [koa](https://github.com/koajs/koa).In koa, everything is middleware.
+   But Courser split middleware and user business. 
    A middleware must be a callable function or a instance that have `__invoke` function;
  
 
