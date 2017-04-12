@@ -9,7 +9,6 @@
 
 namespace Courser\Router;
 
-use Courser\Courser;
 use Courser\Helper\Util;
 use Courser\Http\Request;
 use Courser\Http\Response;
@@ -17,21 +16,17 @@ use Courser\Co\Compose;
 
 class Router
 {
-    public $routes = [];
-
-    public $patterns = [];
-
     public $request;
 
     public $response;
 
-    public $middlewares = [];
+    public $middleware = [];
 
-    public $container = [];
+    public $callable = [];
 
-    private $groups = [];
+    public $paramNames = [];
 
-    private $namespace = '/';
+    public $env = 'dev';
 
     public static $allowMethods = [
         'get',
@@ -48,105 +43,26 @@ class Router
         $this->response = $response;
     }
 
-    public function group($group, $callable)
-    {
-        if ($group === '/') return null;
-        $group = '/' . trim($group, '/');
-        $prefix = $group;
-        if (strlen($prefix) > 1) {
-            $prefix .= '/*';
-        }
-        $pattern = $this->getPattern($prefix);
-        $this->namespace = '#^' . $pattern . '#';
-        $this->groups[$this->namespace] = $group;
-        if ($callable instanceof \Closure) {
-            $callable = $callable->bindTo($this);
-        }
-        $callable();
-        $this->resetNamespace();
-    }
-
-    private function resetNamespace()
-    {
-        $this->namespace = '/';
-    }
-
     /*
      * $route
      *
      * */
-    public function addRoute($method, $route, $callback)
+    public function add($callback)
     {
-
-        $method = strtolower($method);
-        $route = '/' . trim($route, '/') . '/';
-        if ($this->namespace !== '/' && isset($this->groups[$this->namespace])) {
-            $route = $this->groups[$this->namespace] . $route;
-        }
-        $pattern = $this->getPattern($route);
-        if ($pattern) {
-            $this->patterns[$route] = '#^' . $pattern . '#';
-        }
-        $this->routes[$method][$route] = $this->isIndexArray($callback) ? $callback : [$callback];
-        $this->request->methods[] = strtolower($method);
+        $this->callable = array_merge($this->callable, $callback);
     }
 
-    public function isIndexArray($node)
-    {
-        if (!is_array($node)) return false;
-        $keys = array_keys($node);
-        return is_numeric($keys[0]);
+    public function used($middleware) {
+        $this->middleware = array_merge($this->middleware, $middleware);
     }
 
-
-    private function getPattern($route)
+    public function setParam($name, $value)
     {
-        return preg_replace_callback('#:([\w]+)|{([\w]+)}|(\*)#', array($this, 'mapPattern'), $route);
+        $this->request->setParam($name, $value);
     }
 
-    public function addMiddleware($middleware, $namespace = '')
-    {
-        if ($namespace) {
-            $this->namespace = $namespace;
-        }
-        $this->middlewares[$this->namespace][] = $middleware;
-    }
-
-    public function get($route, $callback)
-    {
-        $this->addRoute('get', $route, $callback);
-    }
-
-    public function post($route, $callback)
-    {
-        $this->addRoute('post', $route, $callback);
-    }
-
-    public function put($route, $callback)
-    {
-        $this->addRoute('put', $route, $callback);
-    }
-
-    public function delete($route, $callback)
-    {
-        $this->addRoute('delete', $route, $callback);
-    }
-
-    public function used($middleware)
-    {
-        $this->addMiddleware($middleware, $this->namespace);
-    }
-
-    private function mapPattern($match)
-    {
-        $name = array_pop($match);
-        $type = $match[0][0];
-        if ($type === '*') {
-            return '(.*)';
-        }
-        $type = $type === ':' ? '\d' : '\w';
-        $this->request->addParamName($name);
-        return "(?P<$name>[$type]+)";
+    public function method($method) {
+        $this->request->method = $method;
     }
 
     public function __invoke()
@@ -154,51 +70,12 @@ class Router
         // TODO: Implement __invoke() method.
     }
 
-    public function mapRoute($method, $path)
+
+    public function handle()
     {
-        $method = strtolower($method);
-        if (!in_array($method, $this->request->methods)) return false;
-        if ($path === '/') {
-            return isset($this->routes[$method][$path]) ? $this->routes[$method][$path] : false;
-        }
-        if (!count($this->patterns)) return false;
-        foreach ($this->patterns as $regex => $pattern) {
-            preg_match($pattern, $path, $match);
-            if (!$match) continue;
-            foreach ($match as $param => $value) {
-                if (in_array($param, $this->request->paramNames)) {
-                    if (is_string($param)) {
-                        $this->request->setParam($param, $value);
-                    }
-                }
-            }
-            return $this->routes[$method][$regex];
-        }
-
-        return false;
-    }
-
-
-    public function dispatch($uri)
-    {
-        $uri = $uri ? rtrim($uri) . '/' : '/';
-        $method = $this->request->method;
-        $md = [];
-        foreach ($this->middlewares as $key => $middleware) {
-            if ($key === '/') {
-                $md = array_merge($md, $middleware);
-            } else {
-                preg_match($key, $uri, $match);
-                if ($match) $md = array_merge($md, $middleware);
-            }
-        }
-        $this->compose($md);
+        $this->compose($this->middleware);
         if ($this->response->finish) return true;
-        $found = $this->mapRoute($method, $uri);
-        if (!$found) {
-            return $this->compose(Courser::$notFounds);
-        }
-        $this->compose($found);
+        $this->compose($this->callable);
         return true;
     }
 

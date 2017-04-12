@@ -16,8 +16,8 @@ class Config
      * */
     public static function get($key, $default = '')
     {
+        $key = self::$env . '.' . $key;
         if (strpos($key, '.')) {
-            $key = self::$env . '.' . $key;
             $indexes = explode('.', $key);
             $temp = '';
             foreach ($indexes as $key => $index) {
@@ -54,6 +54,8 @@ class Config
 
     public static function set($key, $val = '')
     {
+        $env = self::$env;
+        self::$_config[$env] = [];
         if (is_string($key)) {
             if (strpos($key, '.')) {
                 $indexes = explode('.', $key);
@@ -62,14 +64,14 @@ class Config
                     $temp .= '[' . $index . ']';
                 }
 
-                self::$_config{$temp} = $val;
+                self::$_config[$env]{$temp} = $val;
 
             } else {
-                self::$_config[$key] = $val;
+                self::$_config[$env][$key] = $val;
 
             }
         } elseif (is_array($key) && $val === '') {
-            self::$_config = array_merge(self::$_config, $key);
+            self::$_config[$env] = array_merge(self::$_config[$env], $key);
         } else {
             return false;
         }
