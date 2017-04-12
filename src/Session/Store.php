@@ -142,7 +142,6 @@ class Store implements StoreInterface
             }
             $this->value = (array)$value;
         }
-
         if (empty($this->value)) return null;
         if (!$key) return $this->value;
         return isset($this->value[$key]) ? $this->value[$key] : null;
@@ -157,7 +156,6 @@ class Store implements StoreInterface
 
     public function save()
     {
-        var_dump(time(), $this->config['expired']);
         $token = $this->getToken($this->value, $this->id);
         $this->response->res->cookie($this->cookieName, $token, time() + $this->config['expired'], ...$this->options);
     }

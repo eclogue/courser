@@ -99,7 +99,8 @@ class Courser
     {
         $md = [];
         if(empty($this->middleware)) return $md;
-        $apply = array_splice($this->middleware, $deep - 1);
+        $tmp = $this->middleware;
+        $apply = array_splice($tmp, $deep - 1);
         foreach ($apply as $index => $middleware) {
             $group = '#^' . $middleware['group'] . '(.*)#';
             preg_match($group, $uri, $match);
@@ -115,7 +116,6 @@ class Courser
         $route = trim($this->group . $route, '/');
         $route = implode('/', [$route]);
         $route = '/' . $route;
-        echo $route . PHP_EOL;
         $scope = count($this->middleware);
         list($pattern, $params) = $this->getPattern($route);
         if ($pattern) {
@@ -269,8 +269,6 @@ class Courser
         $uri = $uri ?: '/';
         return function($req, $res) use ($uri) {
             $router = $this->createContext($req, $res);
-            $middleware = $this->mapMiddleware($uri);
-            $router->used($middleware);
             $router = $this->mapRoute($router->request->method, $uri, $router);
             if (empty($router->callable)) {
                 $router->add($this->notFounds);

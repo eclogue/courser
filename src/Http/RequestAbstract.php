@@ -64,6 +64,11 @@ abstract class RequestAbstract
      * */
     private $callable = [];
 
+    /*
+     * @var array
+     * */
+    public $query = [];
+
     public function setRequest($request)
     {
         $this->req = $request;

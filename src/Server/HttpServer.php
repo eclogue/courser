@@ -39,12 +39,10 @@ class HttpServer
     public function mount($req, $res)
     {
         try {
-            if ($req->server['request_uri'] !== '/favicon.ico') {
-                $app = $this->app->run($req->server['request_uri']);
-                $app($req, $res);
-            }
+            $app = $this->app->run($req->server['request_uri']);
+            $app($req, $res);
         } catch (\Exception $e) {
-            $req->end('');
+            $req->status(500)->end('<h3> Courser Server Error~!</h3>');
         }
     }
 
@@ -56,12 +54,12 @@ class HttpServer
             'daemonize' => false,
             'dispatch_mode' => 3,
             'log_file' => $tmpDir . '/Courser.log',
-            'upload_tmp_dir'=> $tmpDir,
+            'upload_tmp_dir' => $tmpDir,
         ];
         $config = array_merge($config, Config::get('server', []));
         $timeZone = Config::get('time.zone');
-        if(!$timeZone) {
-            ini_set('date.timezone','Asia/Shanghai');
+        if (!$timeZone) {
+            ini_set('date.timezone', 'Asia/Shanghai');
         }
         $this->server->set($config);
         $this->server->on('Request', [$this, 'mount']);

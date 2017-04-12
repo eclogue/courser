@@ -77,6 +77,7 @@ class Request extends RequestAbstract implements RequestInterface
         $this->server = $req->server;
         $this->files = isset($req->files) ? $req->files : [];
         $this->method = $req->server['request_method'];
+        $this->query = isset($req->get) ? $req->get : [];
         $reflection = new \ReflectionClass($req);
         $methods = $reflection->getMethods(\ReflectionMethod::IS_PUBLIC);
         foreach ($methods as $key => $method) {
@@ -173,7 +174,7 @@ class Request extends RequestAbstract implements RequestInterface
      * */
     public function query($key)
     {
-        return $this->req->get($key) ?: null;
+        return isset($this->query[$key]) ? $this->query[$key] : null;
     }
 
     /*
