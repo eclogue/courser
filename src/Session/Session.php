@@ -8,6 +8,7 @@
 namespace Courser\Session;
 
 
+
 class Session
 {
     private $config = [];

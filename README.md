@@ -101,7 +101,7 @@ Course::group('/admin/{username}',  function() {
 
 ### Community
 
- - [中文文档]()
+ - [中文文档](https://superbogy.gitbooks.io/courser/content/)
  - [English document]()
  - [Example]()
  - [FAQ](https://github.com/shipmen/Course/issues)

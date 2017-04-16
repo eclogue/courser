@@ -9,7 +9,7 @@
 
 namespace Courser;
 
-use Courser\Helper\Config;
+use Courser\Helper\Util;
 use Courser\Router\Router;
 use Courser\Http\Request;
 use Courser\Http\Response;
@@ -17,7 +17,7 @@ use Courser\Http\Response;
 
 class Courser
 {
-    public static $notFounds = [];
+    public $notFounds = [];
     /*
      * instance env
      * @var array
@@ -28,20 +28,30 @@ class Courser
      * global middle ware
      * @var array
      * */
-    public static $middleware = [];
+    public $middleware = [];
 
     /*
      * @var array
      * */
-    public static $routes = [];
+    public $routes = [];
 
     /*
      * @var array
      * */
-    public static $group = [];
+    public $group = '/';
+
+    public $stack = [];
+
+    private $methods = [
+        'get',
+        'post',
+        'delete',
+        'put',
+        'options'
+    ];
 
 
-    public function __construct($env = [])
+    public function __construct($env = 'dev')
     {
         $this->env = $env;
     }
@@ -58,7 +68,6 @@ class Courser
         $router->response->setResponse($res);
         $router->request->setRequest($req);
         return $router;
-
     }
 
     /*
@@ -66,74 +75,12 @@ class Courser
      * @param function | object $callable callable function
      * @return void
      * */
-    public static function used($callable)
+    public function used($callable)
     {
-        self:: $middleware[] = $callable;
-    }
-
-    /*
-     * add get method route
-     * @param string $route
-     * @param function | array
-     * @return void
-     * */
-    public static function get($route, $callback)
-    {
-        self::$routes['get'][$route] = $callback;
-    }
-
-
-    /*
-     * add a post method route
-     * @param string $route
-     * @param function | array
-     *
-     * @return void
-     * */
-    public static function post($route, $callback)
-    {
-        self::$routes['post'][$route] = $callback;
-    }
-
-    /*
-     * add a put method route
-     * @param string $route
-     * @param function | array
-     * @return void
-     * */
-    public function put($route, $callback)
-    {
-        self::$routes['put'][$route] = $callback;
-    }
-
-    /*
-     * add a delete method route
-     * @param string $route
-     * @param function | array
-     * @return void
-     * */
-    public static function delete($route, $callback)
-    {
-        self::$routes['delete'][$route] = $callback;
-    }
-
-    /*
-     * add a option method route
-     * @param string $route
-     * @param function | array
-     * @return void
-     * */
-    public static function option($route, $callback)
-    {
-        self::$routes['option'][$route] = $callback;
-    }
-
-    // @fixme
-    public static function any($route, $callback)
-    {
-        foreach (Router::$allowMethods as $method) {
-            self::$method($route, $callback);
-        }
+        $this->middleware[] = [
+            'group' => $this->group,
+            'middleware' => $callable
+        ];
     }
 
     /*
@@ -144,26 +91,170 @@ class Courser
      *
      * @return void
      * */
-    public static function group($group, $callback)
+    public function group($group, $callback)
     {
-        self::$group[$group] = $callback;
-
+        if (!is_string($group)) throw new \Exception('Group name must be string');
+        $group = rtrim($group, '/');
+        $this->group = $group;
+        if ($callback instanceof \Closure) {
+            $callback = $callback->bindTo($this);
+        }
+        $callback();
+        $this->group = '/';
     }
+
+    public function mapMiddleware($uri, $deep = 1)
+    {
+        $md = [];
+        if(empty($this->middleware)) return $md;
+        $tmp = $this->middleware;
+        $apply = array_splice($tmp, $deep - 1);
+        foreach ($apply as $index => $middleware) {
+            $group = '#^' . $middleware['group'] . '(.*)#';
+            preg_match($group, $uri, $match);
+            if (empty($match)) continue;
+            $md[] = $middleware['middleware'];
+        }
+        return $md;
+    }
+
+    public function addRoute($method, $route, $callback)
+    {
+        $method = strtolower($method);
+        $route = trim($this->group . $route, '/');
+        $route = implode('/', [$route]);
+        $route = '/' . $route;
+        $scope = count($this->middleware);
+        list($pattern, $params) = $this->getPattern($route);
+        if ($pattern) {
+            $pattern = '#^' . $pattern . '$#';
+        }
+        $callback = Util::isIndexArray($callback) ? $callback : [$callback];
+        $this->routes[$method][] = [
+            'route' => $route,
+            'params' => $params,
+            'pattern' => $pattern,
+            'callable' => $callback,
+            'scope' => $scope,
+        ];
+    }
+
+    public function mapRoute($method, $uri, $router)
+    {
+        $method = strtolower($method);
+        if (empty($this->routes[$method])) return $router;
+        foreach ($this->routes[$method] as $route) {
+            preg_match($route['pattern'], $uri, $match);
+            if (empty($match)) continue;
+            if ($route['scope']) {
+                $middleware = $this->mapMiddleware($uri, $route['scope']);
+                if(!empty($middleware)) $router->used($middleware);
+            }
+            $router->method($method);
+            $router->add($route['callable']);
+            $router->paramNames = array_merge($router->paramNames, $route['params']);
+            foreach ($match as $param => $value) {
+                if (in_array($param, $router->paramNames)) {
+                    if (is_string($param)) $router->setParam($param, $value);
+                }
+            }
+        }
+        return $router;
+    }
+
+    private function getPattern($route)
+    {
+        $params = [];
+        $regex = preg_replace_callback('#:([\w]+)|{([\w]+)}|(\*)#',
+            function($match) use (&$params) {
+                $name = array_pop($match);
+                $type = $match[0][0];
+                if ($type === '*') {
+                    return '(.*)';
+                }
+                $type = $type === ':' ? '\d' : '\w';
+                $params[] = $name;
+                return "(?P<$name>[$type]+)";
+            },
+            $route);
+        return [$regex, $params];
+    }
+
+
+    /*
+     * add get method route
+     * @param string $route
+     * @param function | array
+     * @return void
+     * */
+    public function get($route, $callback)
+    {
+        $this->addRoute('get', $route, $callback);
+    }
+
+
+    /*
+     * add a post method route
+     * @param string $route
+     * @param function | array
+     *
+     * @return void
+     * */
+    public function post($route, $callback)
+    {
+        $this->addRoute('post', $route, $callback);
+    }
+
+    /*
+     * add a put method route
+     * @param string $route
+     * @param function | array
+     * @return void
+     * */
+    public function put($route, $callback)
+    {
+        $this->addRoute('put', $route, $callback);
+    }
+
+    /*
+     * add a delete method route
+     * @param string $route
+     * @param function | array
+     * @return void
+     * */
+    public function delete($route, $callback)
+    {
+        $this->addRoute('delete', $route, $callback);
+    }
+
+    /*
+     * add a option method route
+     * @param string $route
+     * @param function | array
+     * @return void
+     * */
+    public function options($route, $callback)
+    {
+        $this->addRoute('options', $route, $callback);
+    }
+
+    // @fixme
+    public function any($route = '/', $callback)
+    {
+        foreach ($this->methods as $method) {
+            $this->$method($route, $callback);
+        }
+    }
+
 
     /*
      * add 404 not found handle
      * @param function $callback access params same as route
      * @return void
      * */
-    public static function notFound($callback)
+    public function notFound($callback)
     {
-        self::$notFounds[] = $callback;
-    }
-
-    // @todo
-    public function listen($port)
-    {
-        Config::set('port', $port);
+        $this->notFounds[] = $callback;
     }
 
     /*
@@ -176,34 +267,21 @@ class Courser
         return new Courser($env);
     }
 
-    public static function __callStatic($name, $args)
-    {
-        if (is_callable(['Courser', $name])) {
-            self::$routes[$name] = $args;
-        }
-    }
-
     /*
      * run app handle request
      * @param array $env
      * @return void
      * */
-    public static function run($env = [])
+    public function run($uri)
     {
-        return function($req, $res) use ($env) {
-            $app = Courser::createApplication($env);
-            $router = $app->createContext($req, $res);
-            foreach (static::$group as $namespace => $callable) {
-                $router->group($namespace, $callable);
+        $uri = $uri ?: '/';
+        return function($req, $res) use ($uri) {
+            $router = $this->createContext($req, $res);
+            $router = $this->mapRoute($router->request->method, $uri, $router);
+            if (empty($router->callable)) {
+                $router->add($this->notFounds);
             }
-            $router->addMiddleware(self::$middleware);
-            foreach (self::$routes as $method => $routes) {
-                foreach ($routes as $path => $route)
-                    if(!strcasecmp($method, $req->server['request_method']))
-                        $router->addRoute($method, $path, $route);
-            }
-            $uri = isset($req->server['request_uri']) ? $req->server['request_uri'] : '/';
-            $router->dispatch($uri);
+            $router->handle();
         };
     }
 }

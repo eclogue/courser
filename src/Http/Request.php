@@ -14,14 +14,11 @@ use Courser\Interfaces\RequestInterface;
  * the main properties and method are base on swoole
  * see https://wiki.swoole.com/wiki/page/328.html
  * */
+
 class Request extends RequestAbstract implements RequestInterface
 {
 
     public $params = [];
-    /*
-     * @var array
-     * */
-    public $paramNames = [];
 
     /*
      * @var array
@@ -80,6 +77,7 @@ class Request extends RequestAbstract implements RequestInterface
         $this->server = $req->server;
         $this->files = isset($req->files) ? $req->files : [];
         $this->method = $req->server['request_method'];
+        $this->query = isset($req->get) ? $req->get : [];
         $reflection = new \ReflectionClass($req);
         $methods = $reflection->getMethods(\ReflectionMethod::IS_PUBLIC);
         foreach ($methods as $key => $method) {
@@ -124,10 +122,17 @@ class Request extends RequestAbstract implements RequestInterface
      * */
     public function setParam($key, $val)
     {
-        if (in_array($key, $this->paramNames))
-            $this->params[$key] = $val;
+        $this->params[$key] = $val;
     }
 
+    /*
+     * get param by name
+     * @param string $name
+     * @return mix
+     * */
+     public function param($name) {
+         return isset($this->params[$name]) ? $this->params[$name] : null;
+     }
 
     /*
      * get request header by field name
@@ -177,7 +182,7 @@ class Request extends RequestAbstract implements RequestInterface
      * */
     public function query($key)
     {
-        return $this->req->get($key) ?: null;
+        return isset($this->query[$key]) ? $this->query[$key] : null;
     }
 
     /*
