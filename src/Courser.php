@@ -42,6 +42,14 @@ class Courser
 
     public $stack = [];
 
+    private $methods = [
+        'get',
+        'post',
+        'delete',
+        'put',
+        'options'
+    ];
+
 
     public function __construct($env = 'dev')
     {
@@ -225,16 +233,16 @@ class Courser
      * @param function | array
      * @return void
      * */
-    public function option($route, $callback)
+    public function options($route, $callback)
     {
-        $this->addRoute('option', $route, $callback);
+        $this->addRoute('options', $route, $callback);
     }
 
     // @fixme
-    public static function any($route, $callback)
+    public function any($route = '/', $callback)
     {
-        foreach (Router::$allowMethods as $method) {
-            self::$method($route, $callback);
+        foreach ($this->methods as $method) {
+            $this->$method($route, $callback);
         }
     }
 
