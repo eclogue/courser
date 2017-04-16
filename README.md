@@ -126,7 +126,7 @@ Total:        107  206  42.1    203     352
 
 ### Community
 
- - [中文文档]()
+ - [中文文档](https://superbogy.gitbooks.io/courser/content/)
  - [English document]()
  - [Example]()
  - [FAQ](https://github.com/shipmen/Course/issues)
