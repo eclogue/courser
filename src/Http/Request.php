@@ -125,6 +125,14 @@ class Request extends RequestAbstract implements RequestInterface
         $this->params[$key] = $val;
     }
 
+    /*
+     * get param by name
+     * @param string $name
+     * @return mix
+     * */
+     public function param($name) {
+         return isset($this->params[$name]) ? $this->params[$name] : null;
+     }
 
     /*
      * get request header by field name
