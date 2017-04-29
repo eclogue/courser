@@ -11,19 +11,26 @@
         }
     ],
     "autoload": {
-        "psr-4": {"Courser\\": "src/"}
+        "psr-4": {
+            "Courser\\": "src/"
+        }
     },
-    "repositories": [
-        {
+    "repositories": {
+        "0": {
             "type": "vcs",
             "url": "https://github.com/racecourse/courser"
         },
-        {
+        "1": {
+            "type": "composer",
+            "url": "https://packagist.phpcomposer.com"
+        },
+        "packagist": {
             "type": "composer",
             "url": "https://packagist.phpcomposer.com"
         }
-    ],
+    },
     "require": {
-        "lcobucci/jwt": "^3.2"
+        "lcobucci/jwt": "^3.2",
+        "pimple/pimple": "^3.0"
     }
 }

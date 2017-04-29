@@ -9,10 +9,12 @@
 
 namespace Courser;
 
+use Courser\Helper\Config;
 use Courser\Helper\Util;
 use Courser\Router\Router;
 use Courser\Http\Request;
 use Courser\Http\Response;
+use Pimple\Container;
 
 
 class Courser
@@ -50,10 +52,23 @@ class Courser
         'options'
     ];
 
+    public $container = [];
 
     public function __construct($env = 'dev')
     {
         $this->env = $env;
+        $container = new Container();
+        $container['courser.request'] = $container->factory(function ($c) {
+            return new Request();
+        });
+        $container['courser.response'] = $container->factory(function ($c) {
+            return new Response();
+        });
+        $container['courser.router'] = $container->factory(function ($c) {
+            return new Router($c['courser.request'], $c['courser.response']);
+        });
+        $this->container = $container;
+        spl_autoload_register([$this, 'loader']);
     }
 
     /*
@@ -64,7 +79,7 @@ class Courser
      * */
     public function createContext($req, $res)
     {
-        $router = new Router(new Request, new Response);
+        $router = $this->container['courser.router'];
         $router->response->setResponse($res);
         $router->request->setRequest($req);
         return $router;
@@ -106,7 +121,7 @@ class Courser
     public function mapMiddleware($uri, $deep = 1)
     {
         $md = [];
-        if(empty($this->middleware)) return $md;
+        if (empty($this->middleware)) return $md;
         $tmp = $this->middleware;
         $apply = array_splice($tmp, $deep - 1);
         foreach ($apply as $index => $middleware) {
@@ -148,7 +163,7 @@ class Courser
             if (empty($match)) continue;
             if ($route['scope']) {
                 $middleware = $this->mapMiddleware($uri, $route['scope']);
-                if(!empty($middleware)) $router->used($middleware);
+                if (!empty($middleware)) $router->used($middleware);
             }
             $router->method($method);
             $router->add($route['callable']);
@@ -166,7 +181,7 @@ class Courser
     {
         $params = [];
         $regex = preg_replace_callback('#:([\w]+)|{([\w]+)}|(\*)#',
-            function($match) use (&$params) {
+            function ($match) use (&$params) {
                 $name = array_pop($match);
                 $type = $match[0][0];
                 if ($type === '*') {
@@ -275,7 +290,7 @@ class Courser
     public function run($uri)
     {
         $uri = $uri ?: '/';
-        return function($req, $res) use ($uri) {
+        return function ($req, $res) use ($uri) {
             $router = $this->createContext($req, $res);
             $router = $this->mapRoute($router->request->method, $uri, $router);
             if (empty($router->callable)) {
@@ -283,5 +298,31 @@ class Courser
             }
             $router->handle();
         };
+    }
+
+    /*
+     * @desc 自动加载类，依赖于配置文件
+     * @param $className 加载的类名，文件名需和类名一致
+     * @return include file;
+     * */
+    public function loader($class)
+    {
+        $instance = $this->container[$class];
+        if (is_object($instance)) {
+            return $instance;
+        }
+
+        return null;
+    }
+
+    public function import()
+    {
+        $loader = Config::get('courser.loader');
+        foreach ($loader as $alias => $namespace) {
+            $this->container[$alias] = function ($c) use ($namespace) {
+                return new $namespace();
+            };
+        }
+
     }
 }
