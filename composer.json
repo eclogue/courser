@@ -32,5 +32,6 @@
     "require": {
         "lcobucci/jwt": "^3.2",
         "pimple/pimple": "^3.0"
-    }
+    },
+    "minimum-stability": "stable"
 }
