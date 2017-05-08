@@ -56,11 +56,19 @@ class Router
         $this->middleware = array_merge($this->middleware, $middleware);
     }
 
+    /**
+     * @param $name
+     * @param $value
+     * @return void
+     */
     public function setParam($name, $value)
     {
         $this->request->setParam($name, $value);
     }
 
+    /**
+     * @param $method
+     */
     public function method($method) {
         $this->request->method = $method;
     }
@@ -79,8 +87,11 @@ class Router
         return true;
     }
 
-
-    private function compose($middleware)
+    /**
+     * handle request stack
+     * @param $middleware
+     */
+    public function compose($middleware)
     {
         $compose = new Compose();
         foreach ($middleware as $md) {

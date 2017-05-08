@@ -1,7 +1,7 @@
 # Course
 
-A fast and lighter PHP micro framework used swoole.The greatest truths are the simplest,
- `entities should not be multiplied unnecessarily.` Born with natural beauty.
+A fast and lighter PHP micro framework base on swoole.I believe that `The greatest truths are the simplest,
+ entities should not be multiplied unnecessarily.` Courser born with natural beauty.
 
 ### Installation
 `composer require racecourse/courser` or git clone https://github.com/racecourse/courser
@@ -17,15 +17,14 @@ require('./vendor/autoload.php');
 use Course\Course;
 use Courser\Helper\Config;
 
-Config::set($config);
-$app = new \Courser('dev');
 $config = [
     'server' => [
         'host' => '0.0.0.0',
         'port' => '5001',
     ],
 ];
-
+Config::set($config);
+$app = new \Courser('dev');
 $app->use(function($req, $res) {
    yield;
    echo "this middleware 1 \n";
@@ -89,15 +88,15 @@ $app->group('/admin/{username}',  function() {
 ```
  
 ### Middleware
->  Course's middleware look like [koa](https://github.com/koajs/koa).In koa, everything is middleware.
-   But Courser split middleware and user business. 
+>  Course's middleware look like [koa](https://github.com/koajs/koa).In koa, everything is middleware,
+   but Courser split middleware and user business. 
    A middleware must be a callable function or a instance that have `__invoke` function;
 
 
 ### Benchmark
  Just kidding.
- env: ubuntu docker on mac,PHP 7.0.15-0ubuntu0.16.04.4 (cli) ( NTS )
-
+ Env: docker on mac, ubuntu16.10 PHP 7.0.15-0ubuntu0.16.04.4 (cli) ( NTS )
+ Notice: don't test benchmark on mac
 >
 ```
 Server Software:        swoole-http-server

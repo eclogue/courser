@@ -141,7 +141,8 @@ class Request extends RequestAbstract implements RequestInterface
      * */
     public function header($name)
     {
-        return $this->req->header[$name] ?: null;
+        $header = $this->req->header;
+        return isset($header[$name]) ? $header[$name] : null;
     }
 
     /*
