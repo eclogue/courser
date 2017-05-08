@@ -6,7 +6,6 @@
  * @date      : 2017/2/20
  * @time      : 上午10:15
  */
-
 namespace Courser;
 
 use Courser\Helper\Config;
@@ -16,8 +15,7 @@ use Courser\Http\Request;
 use Courser\Http\Response;
 use Pimple\Container;
 
-
-class Courser
+class App
 {
     public $notFounds = [];
     /*
@@ -41,9 +39,15 @@ class Courser
      * @var array
      * */
     public $group = '/';
-
+    /*
+     * @var array
+     * routes stack
+     * */
     public $stack = [];
-
+    /*
+     * @var $methods
+     * allow method
+     * */
     private $methods = [
         'get',
         'post',
@@ -51,6 +55,11 @@ class Courser
         'put',
         'options'
     ];
+    /*
+     * @var $exception array
+     * custom exception handle
+     * */
+    public static $exception = [];
 
     public $container = [];
 
@@ -68,7 +77,8 @@ class Courser
             return new Router($c['courser.request'], $c['courser.response']);
         });
         $this->container = $container;
-        spl_autoload_register([$this, 'loader']);
+        $this->import();
+        spl_autoload_register([$this, 'loader'], true, true);
     }
 
     /*
@@ -108,7 +118,9 @@ class Courser
      * */
     public function group($group, $callback)
     {
-        if (!is_string($group)) throw new \Exception('Group name must be string');
+        if (!is_string($group)) {
+            throw new \Exception('Group name must be string');
+        }
         $group = rtrim($group, '/');
         $this->group = $group;
         if ($callback instanceof \Closure) {
@@ -121,13 +133,17 @@ class Courser
     public function mapMiddleware($uri, $deep = 1)
     {
         $md = [];
-        if (empty($this->middleware)) return $md;
+        if (empty($this->middleware)) {
+            return $md;
+        }
         $tmp = $this->middleware;
         $apply = array_splice($tmp, $deep - 1);
         foreach ($apply as $index => $middleware) {
             $group = '#^' . $middleware['group'] . '(.*)#';
             preg_match($group, $uri, $match);
-            if (empty($match)) continue;
+            if (empty($match)) {
+                continue;
+            }
             $md[] = $middleware['middleware'];
         }
         return $md;
@@ -157,20 +173,28 @@ class Courser
     public function mapRoute($method, $uri, $router)
     {
         $method = strtolower($method);
-        if (empty($this->routes[$method])) return $router;
+        if (empty($this->routes[$method])) {
+            return $router;
+        }
         foreach ($this->routes[$method] as $route) {
             preg_match($route['pattern'], $uri, $match);
-            if (empty($match)) continue;
+            if (empty($match)) {
+                continue;
+            }
             if ($route['scope']) {
                 $middleware = $this->mapMiddleware($uri, $route['scope']);
-                if (!empty($middleware)) $router->used($middleware);
+                if (!empty($middleware)) {
+                    $router->used($middleware);
+                }
             }
             $router->method($method);
             $router->add($route['callable']);
             $router->paramNames = array_merge($router->paramNames, $route['params']);
             foreach ($match as $param => $value) {
                 if (in_array($param, $router->paramNames)) {
-                    if (is_string($param)) $router->setParam($param, $value);
+                    if (is_string($param)) {
+                        $router->setParam($param, $value);
+                    }
                 }
             }
         }
@@ -254,7 +278,7 @@ class Courser
     }
 
     // @fixme
-    public function any($route = '/', $callback)
+    public function any($route, $callback)
     {
         foreach ($this->methods as $method) {
             $this->$method($route, $callback);
@@ -262,9 +286,10 @@ class Courser
     }
 
 
-    /*
+    /**
      * add 404 not found handle
-     * @param function $callback access params same as route
+     *
+     * @param  callable $callback params same as route
      * @return void
      * */
     public function notFound($callback)
@@ -272,14 +297,40 @@ class Courser
         $this->notFounds[] = $callback;
     }
 
+    /**
+     * set error handle
+     *
+     * @param $env
+     * @return void
+     */
+    public function exception($callback)
+    {
+        static::$exception[] = $callback;
+    }
+
+    public function handleError($req, $res, $err)
+    {
+        $request = $this->container['courser.request'];
+        $request->setRequest($req);
+        $response = $this->container['courser.response'];
+        $response->setResponse($res);
+        if (empty(static::$exception)) {
+            throw $err;
+        }
+        foreach (static::$exception as $callback) {
+            $callback($request, $response, $err);
+        }
+    }
+
     /*
      * create a new instance
+     *
      * @param array $env
      * @return object
      * */
     public static function createApplication($env)
     {
-        return new Courser($env);
+        return new App($env);
     }
 
     /*
@@ -307,6 +358,15 @@ class Courser
      * */
     public function loader($class)
     {
+        echo "loader::::" . $class . PHP_EOL;
+        $alias = Config::get('courser.loader');
+        if(isset($alias[$class])) {
+            class_alias($alias[$class], $class);
+        }
+        $class = $this->alias($class);
+        if(!$this->container->offsetExists($class)) {
+            return null;
+        }
         $instance = $this->container[$class];
         if (is_object($instance)) {
             return $instance;
@@ -315,14 +375,20 @@ class Courser
         return null;
     }
 
+    private function alias($name) {
+        return 'courser.loader.' . $name;
+    }
+
     public function import()
     {
         $loader = Config::get('courser.loader');
+        echo "import ------->" . json_encode($loader);
         foreach ($loader as $alias => $namespace) {
-            $this->container[$alias] = function ($c) use ($namespace) {
+            $alias = $this->alias($alias);
+            $this->container[$alias] = function ($c) use ($alias, $namespace) {
+                call_user_func_array($namespace . '::initialize', array($alias, $c));
                 return new $namespace();
             };
         }
-
     }
 }

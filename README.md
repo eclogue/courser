@@ -17,15 +17,14 @@ require('./vendor/autoload.php');
 use Course\Course;
 use Courser\Helper\Config;
 
-Config::set($config);
-$app = new \Courser('dev');
 $config = [
     'server' => [
         'host' => '0.0.0.0',
         'port' => '5001',
     ],
 ];
-
+Config::set($config);
+$app = new \Courser('dev');
 $app->use(function($req, $res) {
    yield;
    echo "this middleware 1 \n";

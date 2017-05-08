@@ -6,9 +6,7 @@
  * @date      : 2017/2/20
  * @time      : 上午10:15
  */
-
 namespace Courser\Co;
-
 
 class Compose
 {
@@ -54,7 +52,7 @@ class Compose
             if (!$co instanceof \Generator) {
                 continue;
             }
-            if($this->first) {
+            if ($this->first) {
                 $this->first = false;
                 $this->value = $co->current();
                 $this->push($co);
@@ -72,5 +70,4 @@ class Compose
             }
         }
     }
-
 }
