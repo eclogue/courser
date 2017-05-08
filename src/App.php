@@ -358,7 +358,6 @@ class App
      * */
     public function loader($class)
     {
-        echo "loader::::" . $class . PHP_EOL;
         $alias = Config::get('courser.loader');
         if(isset($alias[$class])) {
             class_alias($alias[$class], $class);
@@ -382,7 +381,6 @@ class App
     public function import()
     {
         $loader = Config::get('courser.loader');
-        echo "import ------->" . json_encode($loader);
         foreach ($loader as $alias => $namespace) {
             $alias = $this->alias($alias);
             $this->container[$alias] = function ($c) use ($alias, $namespace) {
