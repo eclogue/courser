@@ -14,7 +14,7 @@ Create a new file server.php.
 ```php
 <?php
 require('./vendor/autoload.php');
-use Course\Course;
+use Course\App;
 use Courser\Helper\Config;
 
 $config = [
@@ -24,7 +24,7 @@ $config = [
     ],
 ];
 Config::set($config);
-$app = new \Courser('dev');
+$app = new App('dev');
 $app->use(function($req, $res) {
    yield;
    echo "this middleware 1 \n";

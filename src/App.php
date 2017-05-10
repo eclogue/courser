@@ -61,7 +61,15 @@ class App
      * */
     public static $exception = [];
 
+    /**
+     * @var array|Container
+     */
     public $container = [];
+
+    /**
+     * @var array
+     */
+    public $loader = [];
 
     public function __construct($env = 'dev')
     {
@@ -77,8 +85,7 @@ class App
             return new Router($c['courser.request'], $c['courser.response']);
         });
         $this->container = $container;
-        $this->import();
-        spl_autoload_register([$this, 'loader'], true, true);
+        spl_autoload_register([$this, 'load'], true, true);
     }
 
     /*
@@ -356,9 +363,9 @@ class App
      * @param $className 加载的类名，文件名需和类名一致
      * @return include file;
      * */
-    public function loader($class)
+    public function load($class)
     {
-        $alias = Config::get('courser.loader');
+        $alias = $this->loader;
         if(isset($alias[$class])) {
             class_alias($alias[$class], $class);
         }
@@ -378,13 +385,12 @@ class App
         return 'courser.loader.' . $name;
     }
 
-    public function import()
+    public function import($loader)
     {
-        $loader = Config::get('courser.loader');
         foreach ($loader as $alias => $namespace) {
             $alias = $this->alias($alias);
             $this->container[$alias] = function ($c) use ($alias, $namespace) {
-                call_user_func_array($namespace . '::initialize', array($alias, $c));
+                call_user_func_array($namespace . '::make', array($alias, $c));
                 return new $namespace();
             };
         }
