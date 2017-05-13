@@ -123,11 +123,8 @@ class App
      *
      * @return void
      * */
-    public function group($group, $callback)
+    public function group(string $group, $callback)
     {
-        if (!is_string($group)) {
-            throw new \Exception('Group name must be string');
-        }
         $group = rtrim($group, '/');
         $this->group = $group;
         if ($callback instanceof \Closure) {
@@ -137,26 +134,13 @@ class App
         $this->group = '/';
     }
 
-    public function mapMiddleware($uri, $deep = 1)
-    {
-        $md = [];
-        if (empty($this->middleware)) {
-            return $md;
-        }
-        $tmp = $this->middleware;
-        $apply = array_splice($tmp, $deep - 1);
-        foreach ($apply as $index => $middleware) {
-            $group = '#^' . $middleware['group'] . '(.*)#';
-            preg_match($group, $uri, $match);
-            if (empty($match)) {
-                continue;
-            }
-            $md[] = $middleware['middleware'];
-        }
-        return $md;
-    }
-
-    public function addRoute($method, $route, $callback)
+    /**
+     * add a route to stack
+     * @param string $method
+     * @param string $route
+     * @param callable $callback
+     */
+    public function addRoute(string $method, string $route, $callback)
     {
         $method = strtolower($method);
         $route = trim($this->group . $route, '/');
@@ -177,6 +161,36 @@ class App
         ];
     }
 
+    /**
+     * @param string $uri
+     * @param int $deep
+     * @return array
+     */
+    public function mapMiddleware($uri, $deep = 1)
+    {
+        $md = [];
+        if (empty($this->middleware)) {
+            return $md;
+        }
+        $tmp = $this->middleware;
+        $apply = array_splice($tmp, $deep - 1);
+        foreach ($apply as $index => $middleware) {
+            $group = '#^' . $middleware['group'] . '(.*)#';
+            preg_match($group, $uri, $match);
+            if (empty($match)) {
+                continue;
+            }
+            $md[] = $middleware['middleware'];
+        }
+        return $md;
+    }
+
+    /**
+     * @param string $method
+     * @param string $uri
+     * @param string $router
+     * @return mixed
+     */
     public function mapRoute($method, $uri, $router)
     {
         $method = strtolower($method);
