@@ -343,16 +343,6 @@ class App
         }
     }
 
-    /*
-     * create a new instance
-     *
-     * @param array $env
-     * @return object
-     * */
-    public static function createApplication($env)
-    {
-        return new App($env);
-    }
 
     /*
      * run app handle request
@@ -370,6 +360,24 @@ class App
             }
             $router->handle();
         };
+    }
+
+    /**
+     * import custom files keep to psr-4
+     * @param $loader
+     */
+    public function import($loader)
+    {
+        $this->loader = $loader;
+        foreach ($loader as $alias => $namespace) {
+            $alias = $this->alias($alias);
+            $this->container[$alias] = function ($c) use ($alias, $namespace) {
+                if(is_callable([$namespace, 'make'])) {
+                    call_user_func_array($namespace . '::make', array($alias, $c));
+                }
+                return new $namespace();
+            };
+        }
     }
 
     /*
@@ -397,16 +405,5 @@ class App
 
     private function alias($name) {
         return 'courser.loader.' . $name;
-    }
-
-    public function import($loader)
-    {
-        foreach ($loader as $alias => $namespace) {
-            $alias = $this->alias($alias);
-            $this->container[$alias] = function ($c) use ($alias, $namespace) {
-                call_user_func_array($namespace . '::make', array($alias, $c));
-                return new $namespace();
-            };
-        }
     }
 }

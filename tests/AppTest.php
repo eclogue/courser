@@ -10,6 +10,7 @@
 namespace Courser\Tests;
 
 use Courser\App;
+use PHPUnit\Framework\Exception;
 use PHPUnit\Framework\TestCase;
 use Courser\Tests\Entity\Response;
 use Courser\Tests\Entity\Request;
@@ -33,13 +34,15 @@ class AppTest extends TestCase
         $this->assertInstanceOf('Courser\Http\Response', $app->container['courser.response']);
     }
 
-//    public function testCreateContext() {
-//        $app = new App();
-//        $req = new Request();
-//        $res = new Response();
-//        $router = $app->createContext($req, $res);
-//        $this->assertInstanceOf('Courser\Router\Router', $router);
-//    }
+    public function testCreateContext() {
+        $app = new App();
+        $uri = '/';
+        $method = 'get';
+        $req = $this->requestProvider($method, $uri);
+        $res = $this->responseProvider();
+        $router = $app->createContext($req, $res);
+        $this->assertInstanceOf('Courser\Router\Router', $router);
+    }
 
     public function testUsed()
     {
@@ -206,6 +209,78 @@ class AppTest extends TestCase
         $this->assertTrue(!empty($app->routes['delete']));
         $this->assertTrue(!empty($app->routes['options']));
     }
+
+    public function testNotFound()
+    {
+        $app = new App();
+        $callable = function ($req, $res) {
+
+        };
+        $app->notFound($callable);
+        $this->assertContains($callable, $app->notFounds);
+    }
+
+    public function testException()
+    {
+        $app = new App();
+        $callable = function ($req, $res) {
+
+        };
+        $app->exception($callable);
+        $this->assertContains($callable, App::$exception);
+    }
+
+    public function testHandleError()
+    {
+        $app = new App();
+        $self = $this;
+        $handle = function ($req, $res, $err) use ($self) {
+            $self->assertInstanceOf(\Courser\Http\Request::class, $req);
+            $self->assertInstanceOf(\Courser\Http\Response::class, $res);
+            $self->assertInstanceOf(\Exception::class, $err);
+        };
+        $handle = $handle->bindTo($app, $app);
+        $app->exception($handle);
+        $uri = '/';
+        $method = 'get';
+        $req = $this->requestProvider($method, $uri);
+        $res = $this->responseProvider();
+        $err = new Exception();
+        $app->handleError($req, $res, $err);
+    }
+
+    public function testRun() // @todo
+    {
+        $app = new App();
+        $uri = '/';
+        $run = $app->run($uri);
+        $this->assertInstanceOf(\Closure::class, $run);
+
+    }
+
+    public function testImport() {
+        $app = new App();
+        $loader = [
+            'TestImport' => 'Courser\Tests\Entity\Test',
+        ];
+        $app->import($loader);
+        $this->assertTrue(class_exists('TestImport'));
+        return $app;
+    }
+
+
+
+    public function testAlias()
+    {
+        $app = new App();
+        $func = function ($name) {
+            return $this->alias($name);
+        };
+        $func = $func->bindTo($app, $app);
+        $alias = $func('Test');
+        $this->assertEquals('courser.loader.Test', $alias);
+    }
+
 
     public function requestProvider($method, $uri)
     {
