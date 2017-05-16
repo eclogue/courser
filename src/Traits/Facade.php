@@ -21,7 +21,7 @@ trait Facade
     public static $instance = null;
 
 
-    public static function initialize($name, $container)
+    public static function make($name, $container)
     {
         static::$name = $name;
         if (empty(self::$container)) {

@@ -8,7 +8,6 @@
 
 namespace Courser\Server;
 
-use Courser\App;
 use Swoole\Http\Server;
 use Courser\Helper\Config;
 

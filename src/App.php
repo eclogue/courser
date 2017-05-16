@@ -61,7 +61,15 @@ class App
      * */
     public static $exception = [];
 
+    /**
+     * @var array|Container
+     */
     public $container = [];
+
+    /**
+     * @var array
+     */
+    public $loader = [];
 
     public function __construct($env = 'dev')
     {
@@ -77,8 +85,7 @@ class App
             return new Router($c['courser.request'], $c['courser.response']);
         });
         $this->container = $container;
-        $this->import();
-        spl_autoload_register([$this, 'loader'], true, true);
+        spl_autoload_register([$this, 'load'], true, true);
     }
 
     /*
@@ -116,11 +123,8 @@ class App
      *
      * @return void
      * */
-    public function group($group, $callback)
+    public function group(string $group, $callback)
     {
-        if (!is_string($group)) {
-            throw new \Exception('Group name must be string');
-        }
         $group = rtrim($group, '/');
         $this->group = $group;
         if ($callback instanceof \Closure) {
@@ -130,26 +134,13 @@ class App
         $this->group = '/';
     }
 
-    public function mapMiddleware($uri, $deep = 1)
-    {
-        $md = [];
-        if (empty($this->middleware)) {
-            return $md;
-        }
-        $tmp = $this->middleware;
-        $apply = array_splice($tmp, $deep - 1);
-        foreach ($apply as $index => $middleware) {
-            $group = '#^' . $middleware['group'] . '(.*)#';
-            preg_match($group, $uri, $match);
-            if (empty($match)) {
-                continue;
-            }
-            $md[] = $middleware['middleware'];
-        }
-        return $md;
-    }
-
-    public function addRoute($method, $route, $callback)
+    /**
+     * add a route to stack
+     * @param string $method
+     * @param string $route
+     * @param callable $callback
+     */
+    public function addRoute(string $method, string $route, $callback)
     {
         $method = strtolower($method);
         $route = trim($this->group . $route, '/');
@@ -170,6 +161,36 @@ class App
         ];
     }
 
+    /**
+     * @param string $uri
+     * @param int $deep
+     * @return array
+     */
+    public function mapMiddleware($uri, $deep = 1)
+    {
+        $md = [];
+        if (empty($this->middleware)) {
+            return $md;
+        }
+        $tmp = $this->middleware;
+        $apply = array_splice($tmp, $deep - 1);
+        foreach ($apply as $index => $middleware) {
+            $group = '#^' . $middleware['group'] . '(.*)#';
+            preg_match($group, $uri, $match);
+            if (empty($match)) {
+                continue;
+            }
+            $md[] = $middleware['middleware'];
+        }
+        return $md;
+    }
+
+    /**
+     * @param string $method
+     * @param string $uri
+     * @param string $router
+     * @return mixed
+     */
     public function mapRoute($method, $uri, $router)
     {
         $method = strtolower($method);
@@ -322,16 +343,6 @@ class App
         }
     }
 
-    /*
-     * create a new instance
-     *
-     * @param array $env
-     * @return object
-     * */
-    public static function createApplication($env)
-    {
-        return new App($env);
-    }
 
     /*
      * run app handle request
@@ -351,14 +362,32 @@ class App
         };
     }
 
+    /**
+     * import custom files keep to psr-4
+     * @param $loader
+     */
+    public function import($loader)
+    {
+        $this->loader = $loader;
+        foreach ($loader as $alias => $namespace) {
+            $alias = $this->alias($alias);
+            $this->container[$alias] = function ($c) use ($alias, $namespace) {
+                if(is_callable([$namespace, 'make'])) {
+                    call_user_func_array($namespace . '::make', array($alias, $c));
+                }
+                return new $namespace();
+            };
+        }
+    }
+
     /*
      * @desc 自动加载类，依赖于配置文件
      * @param $className 加载的类名，文件名需和类名一致
      * @return include file;
      * */
-    public function loader($class)
+    public function load($class)
     {
-        $alias = Config::get('courser.loader');
+        $alias = $this->loader;
         if(isset($alias[$class])) {
             class_alias($alias[$class], $class);
         }
@@ -376,17 +405,5 @@ class App
 
     private function alias($name) {
         return 'courser.loader.' . $name;
-    }
-
-    public function import()
-    {
-        $loader = Config::get('courser.loader');
-        foreach ($loader as $alias => $namespace) {
-            $alias = $this->alias($alias);
-            $this->container[$alias] = function ($c) use ($alias, $namespace) {
-                call_user_func_array($namespace . '::initialize', array($alias, $c));
-                return new $namespace();
-            };
-        }
     }
 }
