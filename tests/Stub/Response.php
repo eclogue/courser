@@ -7,7 +7,7 @@
  * @date: 2017/5/12
  * @time: 下午7:52
  */
-namespace Courser\Tests\Entity;
+namespace Courser\Tests\Stub;
 
 class Response extends \Swoole\Http\Response
 {

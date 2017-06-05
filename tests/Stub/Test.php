@@ -7,7 +7,7 @@
  * @time: 下午9:23
  */
 
-namespace Courser\Tests\Entity;
+namespace Courser\Tests\Stub;
 
 
 class Test
