@@ -12,8 +12,6 @@ namespace Courser\Tests;
 use Courser\App;
 use PHPUnit\Framework\Exception;
 use PHPUnit\Framework\TestCase;
-use Courser\Tests\Entity\Response;
-use Courser\Tests\Entity\Request;
 
 
 class AppTest extends TestCase
@@ -34,14 +32,15 @@ class AppTest extends TestCase
         $this->assertInstanceOf('Courser\Http\Response', $app->container['courser.response']);
     }
 
-    public function testCreateContext() {
+    public function testCreateContext()
+    {
         $app = new App();
         $uri = '/';
         $method = 'get';
         $req = $this->requestProvider($method, $uri);
         $res = $this->responseProvider();
         $router = $app->createContext($req, $res);
-        $this->assertInstanceOf('Courser\Router\Router', $router);
+        $this->assertInstanceOf('Courser\Router', $router);
     }
 
     public function testUsed()
@@ -258,16 +257,16 @@ class AppTest extends TestCase
 
     }
 
-    public function testImport() {
+    public function testImport()
+    {
         $app = new App();
         $loader = [
-            'TestImport' => 'Courser\Tests\Entity\Test',
+            'TestImport' => 'Courser\Tests\Stub\Test',
         ];
         $app->import($loader);
         $this->assertTrue(class_exists('TestImport'));
         return $app;
     }
-
 
 
     public function testAlias()
@@ -277,14 +276,28 @@ class AppTest extends TestCase
             return $this->alias($name);
         };
         $func = $func->bindTo($app, $app);
-        $alias = $func('Test');
-        $this->assertEquals('courser.loader.Test', $alias);
+        $alias = $func('TestImport');
+        $this->assertEquals('courser.loader.TestImport', $alias);
+        return $alias;
+    }
+
+    /**
+     * @depends testImport
+     */
+    public function testLoad($app)
+    {
+        $isNull = $app->load('BadClass');
+        $this->assertNull($isNull);
+        $name = 'TestImport';
+        $test = new \TestImport();
+        $this->assertInstanceOf($app->loader[$name], $test);
+        $this->assertInstanceOf($app->loader[$name], $app->container['courser.loader.' . $name]);
     }
 
 
     public function requestProvider($method, $uri)
     {
-        $req = new Request();
+        $req = new \Swoole\Http\Request();
         $req->cookie = [];
         $req->header = [];
         $req->get = [];
@@ -298,6 +311,6 @@ class AppTest extends TestCase
 
     public function responseProvider()
     {
-        return new Response();
+        return new \Swoole\Http\Request();
     }
 }

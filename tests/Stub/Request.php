@@ -7,7 +7,7 @@
  * @date: 2017/5/12
  * @time: 下午7:52
  */
-namespace Courser\Tests\Entity;
+namespace Courser\Tests\Stub;
 
 
 class Request extends \Swoole\Http\Request
@@ -24,6 +24,7 @@ class Request extends \Swoole\Http\Request
 
     public $files = [];
 
+
     public function rawContent() {
         return '';
     }
@@ -37,7 +38,7 @@ class Request extends \Swoole\Http\Request
     }
 
     public function status($status) {
-        return $status;
+        return true;
     }
 
     public function gzip() {
@@ -56,7 +57,8 @@ class Request extends \Swoole\Http\Request
 
     }
 
-
-
+    public function end() {
+        return true;
+    }
 
 }

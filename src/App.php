@@ -10,7 +10,7 @@ namespace Courser;
 
 use Courser\Helper\Config;
 use Courser\Helper\Util;
-use Courser\Router\Router;
+use Courser\Router;
 use Courser\Http\Request;
 use Courser\Http\Response;
 use Pimple\Container;

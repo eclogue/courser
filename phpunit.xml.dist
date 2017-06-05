@@ -26,14 +26,14 @@
             <directory>./src/</directory>
         </whitelist>
     </filter>
-    <logging>
-        <log type="coverage-html" target="./coverage/report" lowUpperBound="35"
-             highLowerBound="70"/>
-        <log type="coverage-clover" target="./coverage/coverage.xml"/>
-        <log type="coverage-php" target="./coverage/coverage.serialized"/>
-        <log type="coverage-text" target="php://stdout" showUncoveredFiles="false"/>
-        <log type="junit" target="./coverage/logfile.xml" logIncompleteSkipped="false"/>
-        <log type="testdox-html" target="./coverage/testdox.html"/>
-        <log type="testdox-text" target="./coverage/testdox.txt"/>
-    </logging>
+    <!--<logging>-->
+        <!--<log type="coverage-html" target="./coverage/report" lowUpperBound="35"-->
+             <!--highLowerBound="70"/>-->
+        <!--<log type="coverage-clover" target="./coverage/coverage.xml"/>-->
+        <!--<log type="coverage-php" target="./coverage/coverage.serialized"/>-->
+        <!--<log type="coverage-text" target="php://stdout" showUncoveredFiles="false"/>-->
+        <!--<log type="junit" target="./coverage/logfile.xml" logIncompleteSkipped="false"/>-->
+        <!--<log type="testdox-html" target="./coverage/testdox.html"/>-->
+        <!--<log type="testdox-text" target="./coverage/testdox.txt"/>-->
+    <!--</logging>-->
 </phpunit>

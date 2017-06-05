@@ -76,8 +76,8 @@ class Request extends RequestAbstract implements RequestInterface
         $this->cookie = isset($req->cookie) ? $req->cookie : [];
         $this->server = $req->server;
         $this->files = isset($req->files) ? $req->files : [];
-        $this->method = $req->server['request_method'];
-        $this->query = isset($req->get) ? $req->get : [];
+        $this->method = $req->server['request_method'] ?? 'get';
+        $this->query = $req->get ?? [];
         $reflection = new \ReflectionClass($req);
         $methods = $reflection->getMethods(\ReflectionMethod::IS_PUBLIC);
         foreach ($methods as $key => $method) {

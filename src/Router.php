@@ -7,7 +7,7 @@
  * @time      : 上午10:15
  */
 
-namespace Courser\Router;
+namespace Courser;
 
 use Courser\Helper\Util;
 use Courser\Http\Request;
@@ -45,7 +45,6 @@ class Router
 
     /*
      * $route
-     *
      * */
     public function add($callback)
     {
@@ -71,11 +70,6 @@ class Router
      */
     public function method($method) {
         $this->request->method = $method;
-    }
-
-    public function __invoke()
-    {
-        // TODO: Implement __invoke() method.
     }
 
 
