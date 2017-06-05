@@ -8,7 +8,6 @@
 
 namespace Courser\Server;
 
-use Courser\Courser;
 use Swoole\Http\Server;
 use Courser\Helper\Config;
 
@@ -41,8 +40,8 @@ class HttpServer
         try {
             $app = $this->app->run($req->server['request_uri']);
             $app($req, $res);
-        } catch (\Exception $e) {
-            $req->status(500)->end('<h3> Courser Server Error~!</h3>');
+        } catch (\Exception $err) {
+            $this->app->handleError($req, $res, $err);
         }
     }
 
