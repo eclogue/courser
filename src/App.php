@@ -8,9 +8,7 @@
  */
 namespace Courser;
 
-use Courser\Helper\Config;
 use Courser\Helper\Util;
-use Courser\Router;
 use Courser\Http\Request;
 use Courser\Http\Response;
 use Pimple\Container;
@@ -56,10 +54,10 @@ class App
         'options'
     ];
     /*
-     * @var $exception array
+     * @var $errors array
      * custom exception handle
      * */
-    public static $exception = [];
+    public static $errors = [];
 
     /**
      * @var array|Container
@@ -222,6 +220,10 @@ class App
         return $router;
     }
 
+    /**
+     * @param $route
+     * @return array
+     */
     private function getPattern($route)
     {
         $params = [];
@@ -324,21 +326,26 @@ class App
      * @param $env
      * @return void
      */
-    public function exception($callback)
+    public function error($callback)
     {
-        static::$exception[] = $callback;
+        static::$errors[] = $callback;
     }
 
+    /**
+     * @param $req
+     * @param $res
+     * @param $err
+     */
     public function handleError($req, $res, $err)
     {
         $request = $this->container['courser.request'];
         $request->setRequest($req);
         $response = $this->container['courser.response'];
         $response->setResponse($res);
-        if (empty(static::$exception)) {
+        if (empty(static::$errors)) {
             throw $err;
         }
-        foreach (static::$exception as $callback) {
+        foreach (static::$errors as $callback) {
             $callback($request, $response, $err);
         }
     }
@@ -403,6 +410,10 @@ class App
         return null;
     }
 
+    /**
+     * @param $name
+     * @return string
+     */
     private function alias($name) {
         return 'courser.loader.' . $name;
     }

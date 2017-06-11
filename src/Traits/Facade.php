@@ -10,8 +10,6 @@
 namespace Courser\Traits;
 
 
-use PHPUnit\Framework\Exception;
-
 trait Facade
 {
     public static $container = [];

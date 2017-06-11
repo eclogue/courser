@@ -41,7 +41,7 @@ class HttpServer
             $app = $this->app->run($req->server['request_uri']);
             $app($req, $res);
         } catch (\Exception $e) {
-            $req->status(500)->end('<h3> Courser Server Error~!</h3>');
+            $this->app->handleError($req, $res, $e);
         }
     }
 
