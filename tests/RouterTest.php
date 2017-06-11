@@ -84,10 +84,10 @@ class RouterTest extends TestCase
         $router->compose($router->callable);
         $this->assertEquals($router->response->finish, true);
         $router = new Router($this->request, $this->response);
-        $mds = [$md, $md];
-        $router->compose([$mds]);
-        $this->expectException(Exception::class);
         $md = 'string';
+        $router->compose([$md]);
+        $this->expectException(Exception::class);
+        $mds = [$md, $md];
         $router = new Router($this->request, $this->response);
         $router->compose([$mds]);
         $this->assertEquals($router->response->finish, false);
