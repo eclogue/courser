@@ -1,0 +1,21 @@
+sudo: false
+
+dislanguage: php
+
+php:
+  - 7.0
+  - 7.1
+services:
+  - docker
+install:
+  - docker build -t courser .
+  - docker run -d -p 127.0.0.1:5001:5001 --name courser courser
+
+before_script:
+  - composer install
+
+script:
+  - docker ps | grep -q courser
+  - composer run-script test
+
+
