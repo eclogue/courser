@@ -1,21 +1,15 @@
 sudo: false
 
 language: php
-
-php:
   - 7.0
   - 7.1
-services:
-  - docker
-install:
-  - docker build -t courser .
-  - docker run -d -p 127.0.0.1:5001:5001 --name courser courser
-
 before_script:
+  - phpenv config-rm xdebug.ini || return 0
+  - pecl instal swoole
+  - echo "extension = <extension>.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
   - composer install
 
 script:
-  - docker ps | grep -q courser
   - composer run-script test
 
 
