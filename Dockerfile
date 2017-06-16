@@ -21,7 +21,7 @@ RUN echo "extension=swoole.so" >> /etc/php/7.0/cli/conf.d/swoole.MAINTAINER
 WORKDIR $APP_DIR
 RUN git clone https://github.com/racecourse/courser
 WORKDIR $APP_DIR/courser
-# RUN composer install 
+RUN composer install -vvv
 
 
 
