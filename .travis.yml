@@ -4,8 +4,7 @@ matrix:
   fast_finish: true
 
 language: php
-  - 7.0
-  - 7.1
+  - nightly
 before_script:
   - phpenv config-rm xdebug.ini || return 0
   - pecl instal swoole
