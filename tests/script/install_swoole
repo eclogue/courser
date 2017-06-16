@@ -1,0 +1,7 @@
+#!/bin/bash
+wget https://github.com/swoole/swoole-src/archive/v1.9.13.tar.gz
+tar -zxvf v1.9.13.tar.gz
+cd swoole-src-1.9.13
+phpize
+./configure
+make && make install
