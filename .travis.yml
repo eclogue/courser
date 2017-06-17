@@ -7,7 +7,7 @@ before_install:
 #  - docker pull racecourse/courser
   - if [[ -d $HOME/docker ]]; then ls $HOME/docker/*.tar.gz | xargs -I {file} sh -c "zcat {file} | docker load"; fi
   - docker build -t courser .
-  - docker -d --name=courser courser
+  - docker run -d --name=courser courser
   - docker ps -a
 
 before_cache:
