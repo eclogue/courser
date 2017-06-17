@@ -3,7 +3,7 @@ sudo: true
 services:
   - docker
 before_install:
-  - docker build -t racecourse/courser .
+  - docker pull racecourse/courser
   - docker run -d racecourse/courser /bin/sh
   - docker ps -a
   - docker run racecourse/courser /bin/sh -c "composer run-script test"
