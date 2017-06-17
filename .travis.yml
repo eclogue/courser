@@ -1,14 +1,27 @@
-sudo: true
+sudo: required
 
 services:
   - docker
+
 before_install:
-  - docker pull racecourse/courser
-  - docker run -d racecourse/courser /bin/sh
+#  - docker pull racecourse/courser
+  - if [[ -d $HOME/docker ]]; then ls $HOME/docker/*.tar.gz | xargs -I {file} sh -c "zcat {file} | docker load"; fi
+  - docker build -t courser .
+  - docker -d --name=courser courser
   - docker ps -a
-  - docker run racecourse/courser /bin/sh -c "composer run-script test"
+
+before_cache:
+  # Save tagged docker images
+  - >
+    mkdir -p $HOME/docker && docker images -a --filter='dangling=false' --format '{{.Repository}}:{{.Tag}} {{.ID}}'
+    | xargs -n 2 -t sh -c 'test -e $HOME/docker/$1.tar.gz || docker save $0 | gzip -2 > $HOME/docker/$1.tar.gz'
 
 script:
-  - composer run-script test
+    - docker run courser /bin/bash -c "composer run-script test"
 
+
+cache:
+  bundler: true
+  directories:
+    - $HOME/docker
 
