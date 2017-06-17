@@ -1,22 +1,22 @@
 <?php
-
+/**
+ * feature will support more type of source data
+ */
 namespace Courser\Helper;
 
 class Config
 {
-    public static $env = 'dev';
-
     private static $_config = [];
 
+    public static $default = 'default.php';
+
     /*
-     * used like Config::get('redis.host') => ['redis' => ['host' => 'local']]
      * @param mixed $key
      * @param mixed $value
      * @return mixed
      * */
     public static function get($key, $default = '')
     {
-        $key = self::$env . '.' . $key;
         if (strpos($key, '.')) {
             $indexes = explode('.', $key);
             $temp = '';
@@ -47,15 +47,13 @@ class Config
         }
     }
 
-    public static function setENV($env = 'dev')
-    {
-        self::$env = $env;
-    }
-
+    /**
+     * @param $key
+     * @param mixed $val
+     * @return bool
+     */
     public static function set($key, $val = '')
     {
-        $env = self::$env;
-        self::$_config[$env] = [];
         if (is_string($key)) {
             if (strpos($key, '.')) {
                 $indexes = explode('.', $key);
@@ -63,15 +61,13 @@ class Config
                 foreach ($indexes as $key => $index) {
                     $temp .= '[' . $index . ']';
                 }
-
-                self::$_config[$env]{$temp} = $val;
-
+                self::$_config{$temp} = $val;
             } else {
-                self::$_config[$env][$key] = $val;
+                self::$_config[$key] = $val;
 
             }
         } elseif (is_array($key) && $val === '') {
-            self::$_config[$env] = array_merge(self::$_config[$env], $key);
+            self::$_config = array_merge(self::$_config, $key);
         } else {
             return false;
         }
@@ -83,5 +79,34 @@ class Config
     public static function all()
     {
         return self::$_config;
+    }
+
+    /**
+     * load config from path by env variable
+     *
+     * @param $path
+     * @return void
+     */
+    public function load($path)
+    {
+        $path = rtrim($path, '/');
+        $file = $path . '/' . static::$default;
+        $config = [];
+        if (file_exists($file)) {
+            $data = include $file;
+            if (is_array($data) && !empty($data)) {
+                $config = $data;
+            }
+        }
+        $env = getenv('env');
+        $env = $env ?? 'development';
+        $file = $path . '/' . $env . '.php';
+        if (file_exists($file)) {
+            $data = include $file;
+            if (is_array($data) && !empty($data)) {
+                $config = array_merge($config, $data);
+            }
+        }
+        static::set($config);
     }
 }

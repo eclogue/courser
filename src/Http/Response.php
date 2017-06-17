@@ -39,7 +39,7 @@ class Response extends ResponseAbstract implements ResponseInterface
 
     public function __construct()
     {
-        $this->header = new Header(array());
+        $this->headers = Header::defaultHeader();
 
     }
 
@@ -77,7 +77,7 @@ class Response extends ResponseAbstract implements ResponseInterface
      * */
     public function getHeaders()
     {
-        return $this->header;
+        return $this->headers;
     }
 
     /*
@@ -107,6 +107,7 @@ class Response extends ResponseAbstract implements ResponseInterface
         }
         $this->finish = true;
         foreach ($this->headers as $key => $value) {
+            echo $key . '==>' . $value . PHP_EOL;
             $this->res->header($key, $value);
         }
         $this->res->status($this->statusCode);

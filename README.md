@@ -1,5 +1,7 @@
 # Course
 
+![](https://travis-ci.org/racecourse/courser.svg?branch=master)
+
 A fast and lighter PHP micro framework base on swoole.I believe that `The greatest truths are the simplest,
  entities should not be multiplied unnecessarily.` Courser born with natural beauty.
 

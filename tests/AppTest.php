@@ -219,14 +219,14 @@ class AppTest extends TestCase
         $this->assertContains($callable, $app->notFounds);
     }
 
-    public function testException()
+    public function testError()
     {
         $app = new App();
         $callable = function ($req, $res) {
 
         };
-        $app->exception($callable);
-        $this->assertContains($callable, App::$exception);
+        $app->error($callable);
+        $this->assertContains($callable, App::$errors);
     }
 
     public function testHandleError()
@@ -239,7 +239,7 @@ class AppTest extends TestCase
             $self->assertInstanceOf(\Exception::class, $err);
         };
         $handle = $handle->bindTo($app, $app);
-        $app->exception($handle);
+        $app->error($handle);
         $uri = '/';
         $method = 'get';
         $req = $this->requestProvider($method, $uri);
