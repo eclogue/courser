@@ -2,11 +2,12 @@
 
 ![](https://travis-ci.org/racecourse/courser.svg?branch=master)
 
-A fast and lighter PHP micro framework base on swoole.I believe that `The greatest truths are the simplest,
+A fast and lighter PHP micro framework base on swoole. I believe that `The greatest truths are the simplest,
  entities should not be multiplied unnecessarily.` Courser born with natural beauty.
 
 ### Installation
 `composer require racecourse/courser` or git clone https://github.com/racecourse/courser
+
 ### Get start
 
 `composer install` 
@@ -51,7 +52,6 @@ now run `php server.php`, visit 127.0.0.1:5001
 
 ### Router
 
-
 ```php
 <?php
 
@@ -94,35 +94,59 @@ $app->group('/admin/{username}',  function() {
    but Courser split middleware and user business. 
    A middleware must be a callable function or a instance that have `__invoke` function;
 
+```php
+class session {
+    
+    public function set()
+    {
+      // do something ...
+    }
+    
+    public function get()
+    {
+      // ...
+    }
+    
+    public function __invoke()
+    {
+        // ...
+    }
+}
+
+$app->used(new session());
+```
+
+### Not Fund
+```php
+$app->notFound(function ($req, $res) {
+    $res->status(404)->json(['message' => 'Not Found']);
+});
+```
+### Exception
+```php
+$app->error(function ($req, $res, Exception $err) {
+   $res->status(500)->json([
+       'message' =>$err->getMessage(),
+       'code' => 10502,
+   ]);
+});
+
+```
+
+### Develop
+ I have write a tool for develop courser app ![gharry](https://github.com/racecourse/gharry)
+ It watch project file change and auto reload your server.
 
 ### Benchmark
- Just kidding.
+ Just for fun.
+ 
+ 
  Env: docker on mac, ubuntu16.10 PHP 7.0.15-0ubuntu0.16.04.4 (cli) ( NTS )
- Notice: don't test benchmark on mac
+ 
+ util: apache ab
 >
 ```
-Server Software:        swoole-http-server
-Server Hostname:        127.0.0.1
-Server Port:            5001
-Document Path:          /test
-Document Length:        10 bytes
-Concurrency Level:      2000
-Time taken for tests:   5.260 seconds
-Complete requests:      50000
-Failed requests:        0
-Total transferred:      7900000 bytes
-HTML transferred:       500000 bytes
-Requests per second:    9505.09 [#/sec] (mean)
-Time per request:       210.414 [ms] (mean)
-Time per request:       0.105 [ms] (mean, across all concurrent requests)
-Transfer rate:          1466.60 [Kbytes/sec] received
-
-Connection Times (ms)
-              min  mean[+/-sd] median   max
-Connect:        0   59  35.6     58     134
-Processing:    50  147  54.6    132     348
-Waiting:       12  129  53.8    121     324
-Total:        107  206  42.1    203     352 
+Requests per second:    9801.09 [#/sec] (mean)
 ```
 
 

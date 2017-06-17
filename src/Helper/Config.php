@@ -87,7 +87,7 @@ class Config
      * @param $path
      * @return void
      */
-    public function load($path)
+    public static function load($path)
     {
         $path = rtrim($path, '/');
         $file = $path . '/' . static::$default;
