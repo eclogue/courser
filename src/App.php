@@ -171,7 +171,7 @@ class App
             return $md;
         }
         $tmp = $this->middleware;
-        $apply = array_splice($tmp, $deep - 1);
+        $apply = array_splice($tmp, 0, $deep - 1);
         foreach ($apply as $index => $middleware) {
             $group = '#^' . $middleware['group'] . '(.*)#';
             preg_match($group, $uri, $match);
@@ -192,10 +192,8 @@ class App
     public function mapRoute($method, $uri, $router)
     {
         $method = strtolower($method);
-        if (empty($this->routes[$method])) {
-            return $router;
-        }
-        foreach ($this->routes[$method] as $route) {
+        $routes = $this->routes[$method] ?? [];
+        foreach ($routes as $route) {
             preg_match($route['pattern'], $uri, $match);
             if (empty($match)) {
                 continue;
@@ -215,6 +213,11 @@ class App
                         $router->setParam($param, $value);
                     }
                 }
+            }
+        }
+        if (empty($router->callable)) {
+            foreach ($this->middleware as $key => $md) {
+                $router->add($md['middleware']);
             }
         }
         return $router;

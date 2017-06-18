@@ -48,7 +48,11 @@ class Router
      * */
     public function add($callback)
     {
-        $this->callable = array_merge($this->callable, $callback);
+        if (is_array($callback)) {
+            $this->callable = array_merge($this->callable, $callback);
+        } else if (!in_array($callback, $this->callable)) {
+            $this->callable[] = $callback;
+        }
     }
 
     public function used($middleware) {
