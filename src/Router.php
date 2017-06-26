@@ -48,11 +48,20 @@ class Router
      * */
     public function add($callback)
     {
-        $this->callable = array_merge($this->callable, $callback);
+        if (is_array($callback)) {
+            $this->callable = array_merge($this->callable, $callback);
+        } else if (!in_array($callback, $this->callable)) {
+            $this->callable[] = $callback;
+        }
     }
 
-    public function used($middleware) {
-        $this->middleware = array_merge($this->middleware, $middleware);
+    public function used($middleware)
+    {
+        if (is_array($middleware)) {
+            $this->middleware = array_merge($this->middleware, $middleware);
+        } else {
+            $this->middleware[] = $middleware;
+        }
     }
 
     /**
@@ -68,7 +77,8 @@ class Router
     /**
      * @param $method
      */
-    public function method($method) {
+    public function method($method)
+    {
         $this->request->method = $method;
     }
 
@@ -83,6 +93,7 @@ class Router
 
     /**
      * handle request stack
+     *
      * @param $middleware
      */
     public function compose($middleware)

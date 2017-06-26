@@ -134,6 +134,7 @@ class App
 
     /**
      * add a route to stack
+     *
      * @param string $method
      * @param string $route
      * @param callable $callback
@@ -171,7 +172,7 @@ class App
             return $md;
         }
         $tmp = $this->middleware;
-        $apply = array_splice($tmp, $deep - 1);
+        $apply = array_splice($tmp, 0, $deep - 1);
         foreach ($apply as $index => $middleware) {
             $group = '#^' . $middleware['group'] . '(.*)#';
             preg_match($group, $uri, $match);
@@ -192,10 +193,8 @@ class App
     public function mapRoute($method, $uri, $router)
     {
         $method = strtolower($method);
-        if (empty($this->routes[$method])) {
-            return $router;
-        }
-        foreach ($this->routes[$method] as $route) {
+        $routes = $this->routes[$method] ?? [];
+        foreach ($routes as $route) {
             preg_match($route['pattern'], $uri, $match);
             if (empty($match)) {
                 continue;
@@ -214,6 +213,13 @@ class App
                     if (is_string($param)) {
                         $router->setParam($param, $value);
                     }
+                }
+            }
+        }
+        if (empty($router->callable)) {
+            foreach ($this->middleware as $key => $md) {
+                if ($md['group'] === '/') {
+                    $router->used($md['middleware']);
                 }
             }
         }
@@ -371,6 +377,7 @@ class App
 
     /**
      * import custom files keep to psr-4
+     *
      * @param $loader
      */
     public function import($loader)
@@ -379,7 +386,7 @@ class App
         foreach ($loader as $alias => $namespace) {
             $alias = $this->alias($alias);
             $this->container[$alias] = function ($c) use ($alias, $namespace) {
-                if(is_callable([$namespace, 'make'])) {
+                if (is_callable([$namespace, 'make'])) {
                     call_user_func_array($namespace . '::make', array($alias, $c));
                 }
                 return new $namespace();
@@ -395,11 +402,11 @@ class App
     public function load($class)
     {
         $alias = $this->loader;
-        if(isset($alias[$class])) {
+        if (isset($alias[$class])) {
             class_alias($alias[$class], $class);
         }
         $class = $this->alias($class);
-        if(!$this->container->offsetExists($class)) {
+        if (!$this->container->offsetExists($class)) {
             return null;
         }
         $instance = $this->container[$class];
@@ -414,7 +421,8 @@ class App
      * @param $name
      * @return string
      */
-    private function alias($name) {
+    private function alias($name)
+    {
         return 'courser.loader.' . $name;
     }
 }

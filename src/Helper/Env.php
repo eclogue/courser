@@ -12,12 +12,7 @@ namespace Courser\Helper;
 
 class Env
 {
-    public function __construct($env = 'develop')
-    {
-        putenv('env=' . $env);
-    }
-
-    public function add($setting)
+    public static function add($setting)
     {
         if (is_array($setting)) {
             foreach ($setting as $key => $value) {
@@ -29,7 +24,7 @@ class Env
         }
     }
 
-    public function remove($name) {
+    public static function remove($name) {
         putenv($name);
     }
 }
