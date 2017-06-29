@@ -34,9 +34,7 @@ class Config
                         $temp = $temp[$index];
                     }
                 }
-
             }
-
             return $temp;
         } else {
             if (isset(self::$_config[$key]))
@@ -67,7 +65,7 @@ class Config
 
             }
         } elseif (is_array($key) && $val === '') {
-            self::$_config = array_merge(self::$_config, $key);
+            self::$_config = array_merge_recursive(self::$_config, $key);
         } else {
             return false;
         }

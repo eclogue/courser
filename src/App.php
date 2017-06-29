@@ -167,12 +167,13 @@ class App
      */
     public function mapMiddleware($uri, $deep = 1)
     {
+        $deep = $deep > 0 ?? 1;
         $md = [];
         if (empty($this->middleware)) {
             return $md;
         }
         $tmp = $this->middleware;
-        $apply = array_splice($tmp, 0, $deep - 1);
+        $apply = array_splice($tmp, 0, $deep);
         foreach ($apply as $index => $middleware) {
             $group = '#^' . $middleware['group'] . '(.*)#';
             preg_match($group, $uri, $match);

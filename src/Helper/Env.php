@@ -12,6 +12,23 @@ namespace Courser\Helper;
 
 class Env
 {
+    public static function getEnv()
+    {
+        $argument = getopt('e::h::v::', ['env::', 'help::', 'version::']);
+        foreach ($argument as $opt => $value) {
+            if ($opt === 'h' || $opt === 'help') {
+                $help = ' -e,  --env       set env variable' . PHP_EOL;
+                $help .= '-v, --version    show version' . PHP_EOL;
+                echo $help;
+            } else if ($opt === 'v' || $opt === 'version') {
+                echo "Version: alpha" . PHP_EOL;
+            } else if ($opt === 'e' || $opt === 'env') {
+                $env = 'env=' . $value;
+                putenv($env);
+            }
+        }
+    }
+
     public static function add($setting)
     {
         if (is_array($setting)) {
