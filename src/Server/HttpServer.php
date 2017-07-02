@@ -9,29 +9,41 @@
 namespace Courser\Server;
 
 use Swoole\Http\Server;
-use Courser\Helper\Config;
+use Courser\App;
 
 class HttpServer
 {
 
-    public $worker = 2;
+    protected $worker = 1;
 
-    public $task = 4;
+    protected $task = 1;
 
-    public $daemonzie = true;
+    protected $daemonzie = true;
 
-    public $server = '';
+    protected $server = '';
 
-    public $host = '127.0.0.1';
+    protected $host = '127.0.0.1';
 
-    public $port = '5001';
+    protected $port = '8179';
+
+    protected $setting = [];
 
 
-    public function __construct($app)
+    public function __construct(App $app)
     {
         $this->app = $app;
-        $this->host = Config::get('host', '127.0.0.1');
-        $this->port = Config::get('port', '5001');
+    }
+
+    public function bind($host, $port)
+    {
+        $this->host = $host;
+        $this->port = $port;
+    }
+
+    public function set($setting = [])
+    {
+        $setting = is_array($setting) ? $setting : [];
+        $this->setting = $setting;
     }
 
 
@@ -51,15 +63,12 @@ class HttpServer
         $tmpDir = sys_get_temp_dir();
         $config = [
             'daemonize' => false,
+            'http_parse_post' => false,
             'dispatch_mode' => 3,
-            'log_file' => $tmpDir . '/Courser.log',
+            'log_file' => $tmpDir . '/courser.log',
             'upload_tmp_dir' => $tmpDir,
         ];
-        $config = array_merge($config, Config::get('server', []));
-        $timeZone = Config::get('time.zone');
-        if (!$timeZone) {
-            ini_set('date.timezone', 'Asia/Shanghai');
-        }
+        $config = array_merge($config, $this->setting);
         $this->server->set($config);
         $this->server->on('Request', [$this, 'mount']);
         $this->server->start();

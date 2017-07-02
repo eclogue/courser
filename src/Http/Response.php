@@ -43,12 +43,15 @@ class Response extends ResponseAbstract implements ResponseInterface
 
     }
 
+    // ===================== PSR-7 standard =====================
+
+
     /*
      * set request context
      * @param object $req  \Swoole\Http\Request
      * @return void
      * */
-    public function setResponse($response)
+    public function createResponse($response)
     {
         $this->res = $response;
     }
@@ -107,7 +110,6 @@ class Response extends ResponseAbstract implements ResponseInterface
         }
         $this->finish = true;
         foreach ($this->headers as $key => $value) {
-            echo $key . '==>' . $value . PHP_EOL;
             $this->res->header($key, $value);
         }
         $this->res->status($this->statusCode);
@@ -162,5 +164,7 @@ class Response extends ResponseAbstract implements ResponseInterface
         );
         return $output;
     }
+
+
 
 }

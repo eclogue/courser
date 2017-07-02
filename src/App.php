@@ -95,8 +95,8 @@ class App
     public function createContext($req, $res)
     {
         $router = $this->container['courser.router'];
-        $router->response->setResponse($res);
-        $router->request->setRequest($req);
+        $router->response->createResponse($res);
+        $router->request->createRequest($req);
         return $router;
     }
 
@@ -368,7 +368,7 @@ class App
         $uri = $uri ?: '/';
         return function ($req, $res) use ($uri) {
             $router = $this->createContext($req, $res);
-            $router = $this->mapRoute($router->request->method, $uri, $router);
+            $router = $this->mapRoute($router->request->getMethod(), $uri, $router);
             if (empty($router->callable)) {
                 $router->add($this->notFounds);
             }
