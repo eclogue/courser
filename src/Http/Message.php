@@ -23,6 +23,7 @@ class Message implements MessageInterface
 
     protected $stream;
 
+
     /**
      * Retrieves the HTTP protocol version as a string.
      *
@@ -188,6 +189,7 @@ class Message implements MessageInterface
     /**
      * Return an instance with the specified message body.
      * Notice: This method is not flow the PSR-7 standard.
+     *
      * @param StreamInterface $body Body.
      * @return static
      * @throws \InvalidArgumentException When the body is not valid.
