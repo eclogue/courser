@@ -1,6 +1,6 @@
 .idea
 *.log
-app/
+example/
 vendor/
 node_modules/
 composer.lock

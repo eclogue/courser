@@ -12,6 +12,7 @@ use Courser\Helper\Util;
 use Courser\Http\Request;
 use Courser\Http\Response;
 use Pimple\Container;
+use RuntimeException;
 
 class App
 {
@@ -95,8 +96,8 @@ class App
     public function createContext($req, $res)
     {
         $router = $this->container['courser.router'];
-        $router->response->setResponse($res);
-        $router->request->setRequest($req);
+        $router->response->createResponse($res);
+        $router->request->createRequest($req);
         return $router;
     }
 
@@ -167,12 +168,13 @@ class App
      */
     public function mapMiddleware($uri, $deep = 1)
     {
+        $deep = $deep > 0 ?? 1;
         $md = [];
         if (empty($this->middleware)) {
             return $md;
         }
         $tmp = $this->middleware;
-        $apply = array_splice($tmp, 0, $deep - 1);
+        $apply = array_splice($tmp, 0, $deep);
         foreach ($apply as $index => $middleware) {
             $group = '#^' . $middleware['group'] . '(.*)#';
             preg_match($group, $uri, $match);
@@ -367,7 +369,7 @@ class App
         $uri = $uri ?: '/';
         return function ($req, $res) use ($uri) {
             $router = $this->createContext($req, $res);
-            $router = $this->mapRoute($router->request->method, $uri, $router);
+            $router = $this->mapRoute($router->request->getMethod(), $uri, $router);
             if (empty($router->callable)) {
                 $router->add($this->notFounds);
             }

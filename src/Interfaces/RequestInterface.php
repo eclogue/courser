@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @license   https://github.com/Init/licese.md
  * @copyright Copyright (c) 2017
@@ -7,10 +6,12 @@
  * @date      : 2017/3/10
  * @time      : 下午1:04
  */
-
 namespace Courser\Interfaces;
 
-interface RequestInterface
+use Psr\Http\Message\RequestInterface as ReqInterface;
+
+
+interface RequestInterface extends ReqInterface
 {
     /*
      * add param name
@@ -26,13 +27,6 @@ interface RequestInterface
      * */
     public function setParam($key, $val);
 
-
-    /*
-     * get request header by field name
-     *
-     * @param string $name
-     * */
-    public function header($name);
 
     /*
      * get cookie by key
@@ -53,8 +47,4 @@ interface RequestInterface
      * */
     public function query($key);
 
-    /*
-     * check request js json request or not
-     * */
-    public function isJson();
 }
