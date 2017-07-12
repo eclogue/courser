@@ -10,6 +10,7 @@ namespace Courser\Http;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\UriInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Swoole\Http\Request as SwooleRequest;
 
 /*
  * Http request extend swoole_http_request
@@ -72,11 +73,11 @@ class Request extends Message implements RequestInterface, ServerRequestInterfac
 
 
     /*
-     * set request context
+     * set request context @todo
      * @param object $req  \Swoole\Http\Request
      * @return void
      * */
-    public function createRequest($req)
+    public function createRequest(SwooleRequest $req)
     {
         $this->req = $req;
         $this->headers = $req->header;
