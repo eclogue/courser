@@ -12,6 +12,7 @@ use Courser\Helper\Util;
 use Courser\Http\Request;
 use Courser\Http\Response;
 use Pimple\Container;
+use RuntimeException;
 
 class App
 {

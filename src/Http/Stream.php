@@ -14,6 +14,43 @@ use Psr\Http\Message\StreamInterface;
  */
 class Stream implements StreamInterface
 {
+    protected $readable = [
+        'r',
+        'w+',
+        'r+',
+        'x+',
+        'c+',
+        'rb',
+        'w+b',
+        'r+b',
+        'x+b',
+        'c+b',
+        'rt',
+        'w+t',
+        'r+t',
+        'x+t',
+        'c+t',
+        'a+',
+    ];
+    protected $writable = [
+        'w',
+        'w+',
+        'rw',
+        'r+',
+        'x+',
+        'c+',
+        'wb',
+        'w+b',
+        'r+b',
+        'x+b',
+        'c+b',
+        'w+t',
+        'r+t',
+        'x+t',
+        'c+t',
+        'a',
+        'a+',
+    ];
     /**
      * @var resource|null
      */
@@ -93,7 +130,7 @@ class Stream implements StreamInterface
      */
     public function getSize()
     {
-        if (null === $this->resource) {
+        if ($this->resource === null) {
             return null;
         }
 
@@ -158,7 +195,7 @@ class Stream implements StreamInterface
 
         $result = fseek($this->resource, $offset, $whence);
 
-        if (0 !== $result) {
+        if ($result !== 0) {
             throw new RuntimeException('Error seeking within stream');
         }
 
@@ -178,20 +215,7 @@ class Stream implements StreamInterface
      */
     public function isWritable()
     {
-        if (!$this->resource) {
-            return false;
-        }
-
-        $meta = stream_get_meta_data($this->resource);
-        $mode = $meta['mode'];
-
-        return (
-            strstr($mode, 'x')
-            || strstr($mode, 'w')
-            || strstr($mode, 'c')
-            || strstr($mode, 'a')
-            || strstr($mode, '+')
-        );
+        return $this->resource && in_array($this->getMetadata('mode'), $this->writable);
     }
 
     /**
@@ -220,14 +244,7 @@ class Stream implements StreamInterface
      */
     public function isReadable()
     {
-        if (!$this->resource) {
-            return false;
-        }
-
-        $meta = stream_get_meta_data($this->resource);
-        $mode = $meta['mode'];
-
-        return (strstr($mode, 'r') || strstr($mode, '+'));
+        return $this->resource && in_array($this->getMetadata('mode'), $this->readable);
     }
 
     /**
@@ -262,7 +279,7 @@ class Stream implements StreamInterface
         }
 
         $result = stream_get_contents($this->resource);
-        if (false === $result) {
+        if ($result === false) {
             throw new RuntimeException('Error reading from stream');
         }
         return $result;
@@ -292,7 +309,7 @@ class Stream implements StreamInterface
      * @param string $mode Resource mode for stream target.
      * @throws InvalidArgumentException for invalid streams or resources.
      */
-    private function setStream($stream, $mode = 'r')
+    protected function setStream($stream, $mode = 'r')
     {
         $error = null;
         $resource = $stream;

@@ -5,11 +5,13 @@
  * @author: bugbear
  * @date: 2017/7/4
  * @time: 下午8:32
+ * refer http://github.com/zendframework/zend-diactoros
  */
 
 namespace Courser\Http;
 
 use InvalidArgumentException;
+use RuntimeException;
 use Psr\Http\Message\UploadedFileInterface;
 use Psr\Http\Message\StreamInterface;
 
@@ -18,37 +20,37 @@ class UploadedFile implements UploadedFileInterface
     /**
      * @var string
      */
-    private $clientFilename;
+    protected $clientFilename;
 
     /**
      * @var string
      */
-    private $clientMediaType;
+    protected $clientMediaType;
 
     /**
      * @var int
      */
-    private $error;
+    protected $error;
 
     /**
      * @var null|string
      */
-    private $file;
+    protected $file;
 
     /**
      * @var bool
      */
-    private $moved = false;
+    protected $moved = false;
 
     /**
      * @var int
      */
-    private $size;
+    protected $size;
 
     /**
      * @var null|StreamInterface
      */
-    private $stream;
+    protected $stream;
 
     /**
      * @param string|resource $streamOrFile
@@ -101,16 +103,16 @@ class UploadedFile implements UploadedFileInterface
 
     /**
      * {@inheritdoc}
-     * @throws \Exception if the upload was not successful.
+     * @throws RuntimeException if the upload was not successful.
      */
     public function getStream()
     {
         if ($this->error !== UPLOAD_ERR_OK) {
-            throw new \Exception('Cannot retrieve stream due to upload error');
+            throw new RuntimeException('Cannot retrieve stream due to upload error');
         }
 
         if ($this->moved) {
-            throw new \Exception('Cannot retrieve stream after it has already been moved');
+            throw new RuntimeException('Cannot retrieve stream after it has already been moved');
         }
 
         if ($this->stream instanceof StreamInterface) {
@@ -127,19 +129,19 @@ class UploadedFile implements UploadedFileInterface
      * @see http://php.net/is_uploaded_file
      * @see http://php.net/move_uploaded_file
      * @param string $targetPath Path to which to move the uploaded file.
-     * @throws \Exception if the upload was not successful.
+     * @throws RuntimeException if the upload was not successful.
      * @throws \InvalidArgumentException if the $path specified is invalid.
-     * @throws \Exception on any error during the move operation, or on
+     * @throws RuntimeException on any error during the move operation, or on
      *     the second or subsequent call to the method.
      */
     public function moveTo($targetPath)
     {
         if ($this->moved) {
-            throw new \Exception('Cannot move file; already moved!');
+            throw new RuntimeException('Cannot move file; already moved!');
         }
 
         if ($this->error !== UPLOAD_ERR_OK) {
-            throw new \Exception('Cannot retrieve stream due to upload error');
+            throw new RuntimeException('Cannot retrieve stream due to upload error');
         }
 
         if (!is_string($targetPath) || empty($targetPath)) {
@@ -150,7 +152,7 @@ class UploadedFile implements UploadedFileInterface
 
         $targetDirectory = dirname($targetPath);
         if (!is_dir($targetDirectory) || !is_writable($targetDirectory)) {
-            throw new \Exception(sprintf(
+            throw new RuntimeException(sprintf(
                 'The target directory `%s` does not exists or is not writable',
                 $targetDirectory
             ));
@@ -165,7 +167,7 @@ class UploadedFile implements UploadedFileInterface
             default:
                 // SAPI environment, with file present
                 if (false === move_uploaded_file($this->file, $targetPath)) {
-                    throw new \Exception('Error occurred while moving uploaded file');
+                    throw new RuntimeException('Error occurred while moving uploaded file');
                 }
                 break;
         }
@@ -218,11 +220,11 @@ class UploadedFile implements UploadedFileInterface
      *
      * @param string $path
      */
-    private function writeFile($path)
+    protected function writeFile($path)
     {
         $handle = fopen($path, 'wb+');
         if (false === $handle) {
-            throw new \Exception('Unable to write to designated path');
+            throw new RuntimeException('Unable to write to designated path');
         }
 
         $stream = $this->getStream();
