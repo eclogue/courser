@@ -106,9 +106,7 @@ class Request extends Message implements RequestInterface, ServerRequestInterfac
 
     public function __clone()
     {
-//        $this->headers = clone $this->headers;
-//        $this->attributes = clone $this->attributes;
-//        $this->body = clone $this->body;
+        $this->req = clone $this->req;
     }
 
     public function getOriginRequest()

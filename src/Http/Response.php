@@ -41,7 +41,13 @@ class Response extends Message implements ResponseInterface
     public function __construct()
     {
         $this->headers = Header::defaultHeader();
+        $this->res = null;
 
+    }
+
+    public function __clone()
+    {
+        $this->res = clone $this->res;
     }
 
     // ===================== PSR-7 standard =====================
