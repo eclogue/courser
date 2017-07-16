@@ -67,6 +67,7 @@ class HttpServer
             'dispatch_mode' => 3,
             'log_file' => $tmpDir . '/courser.log',
             'upload_tmp_dir' => $tmpDir,
+            'worker_num' => 2,
         ];
         $config = array_merge($config, $this->setting);
         $this->server->set($config);

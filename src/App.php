@@ -13,6 +13,7 @@ use Courser\Http\Request;
 use Courser\Http\Response;
 use Pimple\Container;
 use RuntimeException;
+use SebastianBergmann\CodeCoverage\Report\PHP;
 
 class App
 {
@@ -74,12 +75,12 @@ class App
     {
         $this->env = $env;
         $container = new Container();
-        $container['courser.request'] = $container->factory(function ($c) {
+        $container['courser.request'] = function ($c) {
             return new Request();
-        });
-        $container['courser.response'] = $container->factory(function ($c) {
+        };
+        $container['courser.response'] = function ($c) {
             return new Response();
-        });
+        };
         $container['courser.router'] = $container->factory(function ($c) {
             return new Router($c['courser.request'], $c['courser.response']);
         });
@@ -96,8 +97,8 @@ class App
     public function createContext($req, $res)
     {
         $router = $this->container['courser.router'];
-        $router->response->createResponse($res);
-        $router->request->createRequest($req);
+        $router->response = $router->response->createResponse($res);
+        $router->request = $router->request->createRequest($req);
         return $router;
     }
 
@@ -168,15 +169,15 @@ class App
      */
     public function mapMiddleware($uri, $deep = 1)
     {
-        $deep = $deep > 0 ?? 1;
+        $deep = $deep > 0 ? $deep : 1;
         $md = [];
         if (empty($this->middleware)) {
             return $md;
         }
         $tmp = $this->middleware;
-        $apply = array_splice($tmp, 0, $deep);
+        $apply = array_slice($tmp, 0, $deep);
         foreach ($apply as $index => $middleware) {
-            $group = '#^' . $middleware['group'] . '(.*)#';
+            $group = '#^' . $middleware['group'] . '(.*?)#';
             preg_match($group, $uri, $match);
             if (empty($match)) {
                 continue;
@@ -347,9 +348,9 @@ class App
     public function handleError($req, $res, $err)
     {
         $request = $this->container['courser.request'];
-        $request->setRequest($req);
+        $request->createRequest($req);
         $response = $this->container['courser.response'];
-        $response->setResponse($res);
+        $response->createResponse($res);
         if (empty(static::$errors)) {
             throw $err;
         }

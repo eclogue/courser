@@ -11,11 +11,8 @@ define('ROOT', dirname(dirname(__FILE__)));
 
 require ROOT . '/vendor/autoload.php';
 use Courser\App;
-use Courser\Helper\Config;
+use Ben\Config;
 use Courser\Server\HttpServer;
-use Courser\Helper\Env;
-
-Env::getEnv();
 
 
 $config = [];
@@ -47,30 +44,29 @@ $app->used(function($req, $res) {
 $app->get('/', function($req, $res) {
     $html = "<h1 style='text-align: center;font-size: 8em;margin-top: 20%'>";
     $html .= "Fuck world</h1>";
-    $res->header('Content-Type', 'text/html');
-    $res->send($html);
+    $res->withHeader('Content-Type', 'text/html')->send($html);
 });
 $app->post('/', function($req, $res) {
     var_dump($req->payload('test'));
     $html = "<h1 style='text-align: center;font-size: 8em;margin-top: 20%'>";
     $html .= "Fuck world</h1>";
-    $res->header('Content-Type', 'text/html');
+    $res->withHeader('Content-Type', 'text/html');
     $res->send($html);
 });
 $app->used(function($req, $res) {
-    $res->status(404)->json([
+    $res->withStatus(404)->json([
         'message' => 'not found',
     ]);
 });
 
 $app->error(function($req, $res, $err) {
-    $res->status(500)->json([
+    $res->withStatus(500)->json([
         'message' => $err->getMessage(),
     ]);
 });
 
 $server = new HttpServer($app);
-$server->bind('0.0.0.0', '5001');
+$server->bind('0.0.0.0', '6001');
 $server->set([
    // ... swoole setting
 ]);
