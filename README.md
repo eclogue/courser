@@ -2,8 +2,8 @@
 
 ![](https://travis-ci.org/racecourse/courser.svg?branch=master)
 
-A fast and lighter PHP micro framework base on swoole. I believe that `The greatest truths are the simplest,
- entities should not be multiplied unnecessarily.` Courser born with natural beauty.
+A fast and lighter PHP micro framework and follow the psr-7 spec.  I believe that 
+ `entities should not be multiplied unnecessarily.` Courser born with natural beauty.
 
 ### Installation
 `composer require racecourse/courser` or git clone https://github.com/racecourse/courser
@@ -17,8 +17,8 @@ Create a new file server.php.
 ```php
 <?php
 require('./vendor/autoload.php');
-use Course\App;
-use Courser\Helper\Config;
+use Courser\App;
+use Ben\Config;
 
 $config = [
     'server' => [
@@ -44,7 +44,7 @@ $app->get('/', function($req, $res) {
 });
 
 $server = new \Course\Server\HttpServer($app);
-
+$server->bind(Config::get('server.host'), Config::get('server.port'));
 $server->start();
 ?>
 ```
@@ -116,16 +116,16 @@ class session {
 $app->used(new session());
 ```
 
-### Not Fund
+### Not Found
 ```php
 $app->notFound(function ($req, $res) {
-    $res->status(404)->json(['message' => 'Not Found']);
+    $res->withStatus(404)->json(['message' => 'Not Found']);
 });
 ```
 ### Exception
 ```php
 $app->error(function ($req, $res, Exception $err) {
-   $res->status(500)->json([
+   $res->withStatus(500)->json([
        'message' =>$err->getMessage(),
        'code' => 10502,
    ]);
@@ -134,8 +134,9 @@ $app->error(function ($req, $res, Exception $err) {
 ```
 
 ### Develop
- I have write a tool for develop courser app ![gharry](https://github.com/racecourse/gharry)
+ I have write a tool for develop courser app [gharry](https://github.com/racecourse/gharry)
  It watch project file change and auto reload your server.
+ [Ben](https://github.com/racecourse/ben) is a convenient config manager， I recommend use Ben to manage use config file.
 
 ### Benchmark
  Just for fun.
