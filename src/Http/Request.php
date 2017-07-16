@@ -104,10 +104,6 @@ class Request extends Message implements RequestInterface, ServerRequestInterfac
         return $clone;
     }
 
-    public function __clone()
-    {
-        $this->req = clone $this->req;
-    }
 
     public function getOriginRequest()
     {
@@ -164,9 +160,9 @@ class Request extends Message implements RequestInterface, ServerRequestInterfac
      * @param string $name
      * @return mix
      * */
-    public function getParam($name)
+    public function getParam($name, $default = null)
     {
-        return isset($this->params[$name]) ? $this->params[$name] : null;
+        return isset($this->params[$name]) ? $this->params[$name] : $default;
     }
 
     /**
