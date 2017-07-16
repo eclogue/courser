@@ -40,12 +40,15 @@ class Response extends Message implements ResponseInterface
 
     public function __construct()
     {
-        $this->headers = Header::defaultHeader();
+        $this->headers = new Header();
         $this->res = null;
 
     }
 
-
+    public function __clone()
+    {
+        $this->headers = clone $this->headers;
+    }
     // ===================== PSR-7 standard =====================
 
     /*
@@ -83,7 +86,7 @@ class Response extends Message implements ResponseInterface
     public function withHeader($field, $value)
     {
         $clone = clone $this;
-        $clone->headers[$field] = $value;
+        $clone->headers->setHeader($field, $value);
 
         return $clone;
     }
@@ -93,7 +96,7 @@ class Response extends Message implements ResponseInterface
      * */
     public function getHeaders()
     {
-        return $this->headers;
+        return $this->headers->getHeaders();
     }
 
     /*
@@ -123,7 +126,8 @@ class Response extends Message implements ResponseInterface
         }
         $this->finish = true;
         $response = $this->getOriginResponse();
-        foreach ($this->headers as $key => $value) {
+        $headers = $this->getHeaders();
+        foreach ($headers as $key => $value) {
             $response->header($key, $value);
         }
         $response->status($this->statusCode);

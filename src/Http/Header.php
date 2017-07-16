@@ -84,9 +84,8 @@ class Header
 
     public $headers = [];
 
-    public function __construct($header, $status = 200)
+    public function __construct($status = 200)
     {
-        $this->headers[] = $header;
         $this->statusCode = $status;
     }
 
@@ -95,11 +94,27 @@ class Header
     {
         return [
             'SERVER_PROTOCOL' => 'HTTP/1.1',
-            'HTTP_ACCEPT' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'HTTP_ACCEPT' => 'text/html,application/xhtml+xml,application/xml,application/json;q=0.9,*/*;q=0.8',
             'HTTP_ACCEPT_LANGUAGE' => 'en-US,en;q=0.8',
             'HTTP_ACCEPT_CHARSET' => 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
             'X-Powered-By' => 'courser',
             'REQUEST_TIME' => time(),
         ];
     }
+
+    public function setHeader($name, $value)
+    {
+        $this->headers[$name] = $value;
+    }
+
+    public function getHeader($name)
+    {
+        return $this->headers[$name] ?? null;
+    }
+
+    public function getHeaders()
+    {
+        return $this->headers;
+    }
+
 }
