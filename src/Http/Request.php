@@ -71,29 +71,44 @@ class Request extends Message implements RequestInterface, ServerRequestInterfac
 
     protected $attributes = [];
 
+    public function __construct()
+    {
+
+    }
+
 
     /*
      * set request context @todo
      * @param object $req  \Swoole\Http\Request
      * @return void
      * */
-    public function createRequest(SwooleRequest $req)
+    public function createRequest($req)
     {
-        $this->req = $req;
-        $this->headers = $req->header;
-        $this->cookie = isset($req->cookie) ? $req->cookie : []; // @todo psr-7 standard
-        $this->server = $req->server;
-        if (!isset($this->server['http_host']) && $this->hasHeader('http_host')) {
-            $this->server['http_host'] = $this->getHeader('https_host');
+        $clone = clone $this;
+        $clone->req = $req;
+        $clone->server = $req->server ?? [];
+        $method = $clone->server['request_method'] ?? 'get';
+        $clone = $clone->withMethod($method);
+        $clone->headers = $req->header ?? [];
+        $clone->cookie = isset($req->cookie) ? $req->cookie : []; // @todo psr-7 standard
+        if (!isset($clone->server['http_host']) && $clone->hasHeader('http_host')) {
+            $clone->server['http_host'] = $clone->getHeader('https_host');
         }
-        $this->uri = new Uri($this->server);
-        $this->files = isset($req->files) ? $req->files : []; // @todo
-        $method = $req->server['request_method'] ?? 'get';
-        $this->withMethod($method);
-        $this->getRequestTarget();
-        $this->getParsedBody();
-        $this->query = $this->uri->getQuery();
-        $this->queryParams = $this->parseQuery($this->query);
+        $clone->uri = new Uri($clone->server);
+        $clone->files = isset($req->files) ? $req->files : []; // @todo
+        $clone->getRequestTarget();
+        $clone->getParsedBody();
+        $clone->query = $clone->uri->getQuery();
+        $clone->queryParams = $clone->parseQuery($clone->query);
+
+        return $clone;
+    }
+
+    public function __clone()
+    {
+//        $this->headers = clone $this->headers;
+//        $this->attributes = clone $this->attributes;
+//        $this->body = clone $this->body;
     }
 
     public function getOriginRequest()
@@ -103,8 +118,11 @@ class Request extends Message implements RequestInterface, ServerRequestInterfac
 
     protected function parseQuery($query)
     {
-        if (!is_string($query)) return [];
+        if (!is_string($query)) {
+            return [];
+        }
         parse_str($query, $output);
+
         return $output;
     }
 
@@ -272,9 +290,10 @@ class Request extends Message implements RequestInterface, ServerRequestInterfac
 
     public function withRequestTarget($requestTarget)
     {
-        $this->requestTarget = $requestTarget;
+        $clone = clone $this;
+        $clone->requestTarget = $requestTarget;
 
-        return $this->requestTarget;
+        return $clone;
     }
 
     public function getRequestTarget()
@@ -298,19 +317,23 @@ class Request extends Message implements RequestInterface, ServerRequestInterfac
      */
     public function withMethod($method)
     {
-        $this->method = $method;
+        $clone = clone $this;
+        $clone->method = $method;
+
+        return $clone;
     }
 
 
     public function withUri(UriInterface $uri, $preserveHost = false)
     {
+        $clone = clone $this;
         if (!$preserveHost) {
             if ($uri->getHost() !== '') {
-                $this->headers->set('Host', $uri->getHost());
+                $clone->headers->set('Host', $uri->getHost());
             }
         } else {
             if ($uri->getHost() !== '' && (!$this->hasHeader('Host') || $this->getHeaderLine('Host') === '')) {
-                $this->setHeader('Host', $uri->getHost());
+                $clone->setHeader('Host', $uri->getHost());
             }
         }
 
@@ -355,8 +378,9 @@ class Request extends Message implements RequestInterface, ServerRequestInterfac
      */
     public function withCookieParams(array $cookies)
     {
-        $this->cookie = array_merge($this->cookie, $cookies);
-        return $this;
+        $clone = clone $this;
+        $clone->cookie = array_merge($clone->cookie, $cookies);
+        return $clone;
     }
 
     /**
@@ -385,8 +409,10 @@ class Request extends Message implements RequestInterface, ServerRequestInterfac
      */
     public function withQueryParams(array $query)
     {
-        $this->queryParams = array_merge($this->queryParams, $query);
-        return $this;
+        $clone = clone $this;
+        $clone->queryParams = array_merge($clone->queryParams, $query);
+
+        return $clone;
     }
 
     /**
@@ -413,8 +439,9 @@ class Request extends Message implements RequestInterface, ServerRequestInterfac
      */
     public function withUploadedFiles(array $uploadedFiles)
     {
-        $this->files = array_merge($this->files, $uploadedFiles);
-        return $this;
+        $clone = clone $this;
+        $clone->files = array_merge($clone->files, $uploadedFiles);
+        return $clone;
     }
 
     /**
@@ -459,8 +486,10 @@ class Request extends Message implements RequestInterface, ServerRequestInterfac
      */
     public function withParsedBody($data)
     {
-        $this->payload = array_merge($this->payload, $data);
-        return $this;
+        $clone = clone $this;
+        $clone->payload = array_merge($clone->payload, $data);
+
+        return $clone;
     }
 
     /**
@@ -516,8 +545,10 @@ class Request extends Message implements RequestInterface, ServerRequestInterfac
      */
     public function withoutAttribute($name)
     {
-        unset($this->attributes[$name]);
-        return $this;
+        $clone = clone $this;
+        unset($clone->attributes[$name]);
+
+        return $clone;
     }
 
 

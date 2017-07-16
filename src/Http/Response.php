@@ -3,6 +3,7 @@
 namespace Courser\Http;
 
 use Psr\Http\Message\ResponseInterface;
+use RuntimeException;
 
 class Response extends Message implements ResponseInterface
 {
@@ -33,6 +34,7 @@ class Response extends Message implements ResponseInterface
 
     public $finish = false;
 
+
     protected $messages = [];
 
 
@@ -51,7 +53,9 @@ class Response extends Message implements ResponseInterface
      * */
     public function createResponse($response)
     {
-        $this->res = $response;
+        $clone = clone $this;
+        $clone->res = $response;
+        return $clone;
     }
 
     public function getOriginResponse()
@@ -60,11 +64,12 @@ class Response extends Message implements ResponseInterface
     }
 
 
-    public function status($code)
+    public function withStatus($code, $reasonPhrase = '')
     {
-        $this->statusCode = $code;
+        $clone = clone $this;
+        $clone->statusCode = $code;
 
-        return $this;
+        return $clone;
     }
 
     /*
@@ -73,9 +78,12 @@ class Response extends Message implements ResponseInterface
      * @param mixed $value
      * @return void
      * */
-    public function header($field, $value)
+    public function withHeader($field, $value)
     {
-        $this->headers[$field] = $value;
+        $clone = clone $this;
+        $clone->headers[$field] = $value;
+
+        return $clone;
     }
 
     /*
@@ -98,7 +106,7 @@ class Response extends Message implements ResponseInterface
             $data = (array)$data;
         }
 
-        $this->header('Content-Type', 'application/json');
+        $this->withHeader('Content-Type', 'application/json');
         $this->end($data);
     }
 
@@ -109,14 +117,15 @@ class Response extends Message implements ResponseInterface
     public function end($data = '')
     {
         if($this->finish) {
-            throw new \Exception('Request has been response, check your code for response');
+            throw new RuntimeException('Request has been response, check your code for response');
         }
         $this->finish = true;
+        $response = $this->getOriginResponse();
         foreach ($this->headers as $key => $value) {
-            $this->res->header($key, $value);
+            $response->header($key, $value);
         }
-        $this->res->status($this->statusCode);
-        $this->res->end($data);
+        $response->status($this->statusCode);
+        $response->end($data);
     }
 
     /*
@@ -143,7 +152,7 @@ class Response extends Message implements ResponseInterface
      * */
     public function write($data)
     {
-        $this->req->write($data);
+        $this->getOriginResponse()->write($data);
     }
 
     /*
@@ -178,31 +187,6 @@ class Response extends Message implements ResponseInterface
         return $this->statusCode;
     }
 
-    /**
-     * Return an instance with the specified status code and, optionally, reason phrase.
-     *
-     * If no reason phrase is specified, implementations MAY choose to default
-     * to the RFC 7231 or IANA recommended reason phrase for the response's
-     * status code.
-     *
-     * This method MUST be implemented in such a way as to retain the
-     * immutability of the message, and MUST return an instance that has the
-     * updated status and reason phrase.
-     *
-     * @link http://tools.ietf.org/html/rfc7231#section-6
-     * @link http://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml
-     * @param int $code The 3-digit integer result code to set.
-     * @param string $reasonPhrase The reason phrase to use with the
-     *     provided status code; if none is provided, implementations MAY
-     *     use the defaults as suggested in the HTTP specification.
-     * @return static
-     * @throws \InvalidArgumentException For invalid status code arguments.
-     */
-    public function withStatus($code, $reasonPhrase = '')
-    {
-
-        return $this;
-    }
 
     /**
      * Gets the response reason phrase associated with the status code.
