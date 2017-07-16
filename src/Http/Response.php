@@ -85,8 +85,8 @@ class Response extends Message implements ResponseInterface
      * */
     public function withHeader($field, $value)
     {
+        $this->headers->setHeader($field, $value);
         $clone = clone $this;
-        $clone->headers->setHeader($field, $value);
 
         return $clone;
     }
