@@ -48,6 +48,7 @@ class Compose
     public function run()
     {
         while (!$this->queue->isEmpty()) {
+//            var_dump(count($this->queue));
             $co = $this->queue->dequeue();
             if (!$co instanceof \Generator) {
                 continue;
@@ -55,14 +56,10 @@ class Compose
             if ($this->first) {
                 $this->first = false;
                 $this->value = $co->current();
-                $this->push($co);
+                $co->next();
                 continue;
             }
-            if ($this->value) {
-                $co->send($this->value);
-            } else {
-                $co->next();
-            }
+            $co->send($this->value);
             $this->value = $co->current();
             if ($co->valid()) {
                 $this->push($co);
