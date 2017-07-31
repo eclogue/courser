@@ -26,22 +26,32 @@ $app->used(function($req, $res) {
 });
 
 $app->used(function($req, $res) {
-    yield;
+    $f = function () {
+        $i = 0;
+        while ($i < 500000) {
+            $i++;
+        }
+    };
+    yield $f();
     echo "this middleware 2 \n";
 });
 $app->used(function($req, $res) {
     $i = 5;
     while($i) {
         $i--;
-        yield;
+        yield $i;
         echo "this middleware 3 \n";
     }
 });
 $app->used(function($req, $res) {
-    yield;
     echo "this middleware 4 \n";
+    $ret = (yield);
+    echo "d44444444 \n";
+    var_dump($ret);
+    yield 4;
 });
 $app->get('/', function($req, $res) {
+    echo "ffffffuck";
     $html = "<h1 style='text-align: center;font-size: 8em;margin-top: 20%'>";
     $html .= "Fuck world</h1>";
     $res->withHeader('Content-Type', 'text/html')->send($html);

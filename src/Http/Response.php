@@ -4,6 +4,7 @@ namespace Courser\Http;
 
 use Psr\Http\Message\ResponseInterface;
 use RuntimeException;
+use InvalidArgumentException;
 
 class Response extends Message implements ResponseInterface
 {
@@ -13,7 +14,7 @@ class Response extends Message implements ResponseInterface
     /*
      * @var array
      * */
-    protected $headers = [];
+    protected $headers;
 
     /*
      * @var integer
@@ -34,8 +35,7 @@ class Response extends Message implements ResponseInterface
 
     public $finish = false;
 
-
-    protected $messages = [];
+    protected $reasonPhrase;
 
 
     public function __construct()
@@ -49,7 +49,88 @@ class Response extends Message implements ResponseInterface
     {
         $this->headers = clone $this->headers;
     }
-    // ===================== PSR-7 standard =====================
+
+    /**
+     * Note: This method is not part of the PSR-7 standard.
+     *
+     * @return \swoole_http_response
+     */
+    public function getOriginResponse()
+    {
+        return $this->res;
+    }
+
+    /*
+     * set content-type = json,and response json
+     * @param array | iterator $data
+     * */
+    public function json($data)
+    {
+        if (is_array($data)) {
+            $data = json_encode($data);
+        } else {
+            $data = (array)$data;
+        }
+
+        $this->withHeader('Content-Type', 'application/json');
+        $this->end($data);
+    }
+
+    /*
+     * finish request
+     * Note: This method is not part of the PSR-7 standard.
+     *
+     * @param mix $data
+     * */
+    public function end($data = '')
+    {
+        if($this->finish) {
+            throw new RuntimeException('Request has been response, check your code for response');
+        }
+        $this->finish = true;
+        $response = $this->getOriginResponse();
+        $headers = $this->getHeaders();
+        foreach ($headers as $key => $value) {
+            $response->header($key, $value);
+        }
+        $response->status($this->statusCode);
+        $response->end($data);
+    }
+
+    /*
+     * send string and finish request
+     * Note: This method is not part of the PSR-7 standard.
+     *
+     * @param mix $data
+     * */
+    public function send($str = '')
+    {
+        $this->end($str);
+    }
+
+    /*
+     * send file extend swoole_http_response
+     * Note: This method is not part of the PSR-7 standard.
+     *
+     * @param string $file
+     * */
+    public function sendFile($file)
+    {
+        $this->getOriginResponse()->sendFile($file);
+    }
+
+    /*
+     * write chunk data extend from swoole_http_response
+     * Note: This method is not part of the PSR-7 standard.
+     *
+     * @param mixed $data
+     * */
+    public function write($data)
+    {
+        $this->getOriginResponse()->write($data);
+    }
+
+    // ===================== PSR-7 standard ===================== //
 
     /*
      * set request context
@@ -63,16 +144,19 @@ class Response extends Message implements ResponseInterface
         return $clone;
     }
 
-    public function getOriginResponse()
-    {
-        return $this->res;
-    }
 
 
     public function withStatus($code, $reasonPhrase = '')
     {
+        if (!is_string($reasonPhrase) && !method_exists($reasonPhrase, '__toString')) {
+            throw new InvalidArgumentException('ReasonPhrase must be a string');
+        }
         $clone = clone $this;
         $clone->statusCode = $code;
+        if ($reasonPhrase === '' && isset(Header::$messages[$code])) {
+            $reasonPhrase = Header::$messages[$code];
+        }
+        $clone->reasonPhrase = $reasonPhrase;
 
         return $clone;
     }
@@ -99,67 +183,7 @@ class Response extends Message implements ResponseInterface
         return $this->headers->getHeaders();
     }
 
-    /*
-     * set content-type = json,and response json
-     * @param array | iterator $data
-     * */
-    public function json($data)
-    {
-        if (is_array($data)) {
-            $data = json_encode($data);
-        } else {
-            $data = (array)$data;
-        }
 
-        $this->withHeader('Content-Type', 'application/json');
-        $this->end($data);
-    }
-
-    /*
-     * finish request
-     * @param mix $data
-     * */
-    public function end($data = '')
-    {
-        if($this->finish) {
-            throw new RuntimeException('Request has been response, check your code for response');
-        }
-        $this->finish = true;
-        $response = $this->getOriginResponse();
-        $headers = $this->getHeaders();
-        foreach ($headers as $key => $value) {
-            $response->header($key, $value);
-        }
-        $response->status($this->statusCode);
-        $response->end($data);
-    }
-
-    /*
-     * send string and finish request
-     * @param mix $data
-     * */
-    public function send($str = '')
-    {
-        $this->end($str);
-    }
-
-    /*
-     * send file extend swoole_http_response
-     * @param string $file
-     * */
-    public function sendFile($file)
-    {
-        $this->res->sendFile($file);
-    }
-
-    /*
-     * write chunk data extend from swoole_http_response
-     * @param mixed $data
-     * */
-    public function write($data)
-    {
-        $this->getOriginResponse()->write($data);
-    }
 
     /*
      * get header by key
@@ -210,6 +234,13 @@ class Response extends Message implements ResponseInterface
     public function getReasonPhrase()
     {
 
+        if ($this->reasonPhrase) {
+            return $this->reasonPhrase;
+        }
+        if (isset(Header::$messages[$this->statusCode])) {
+            return Header::$messages[$this->statusCode];
+        }
+        return '';
     }
 
 
