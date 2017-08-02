@@ -36,4 +36,9 @@
         <!--<log type="testdox-html" target="./coverage/testdox.html"/>-->
         <!--<log type="testdox-text" target="./coverage/testdox.txt"/>-->
     <!--</logging>-->
+    <logging>
+        <log type="coverage-clover" target="build/logs/coverage.xml"/>
+        <log type="coverage-php" target="build/logs/coverage.cov"/>
+        <log type="coverage-text" target="php://stdout" showUncoveredFiles="true"/>
+    </logging>
 </phpunit>

@@ -6,3 +6,4 @@ node_modules/
 composer.lock
 auth.json
 coverage/
+build/
