@@ -33,4 +33,8 @@ install:
   - pecl install swoole
   - composer update
 script:
+  - mkdir -p build/logs
   - vendor/bin/phpunit
+
+after_success:
+  - travis_retry php vendor/bin/coveralls
