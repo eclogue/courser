@@ -1,6 +1,7 @@
 # Course
 
 ![](https://travis-ci.org/racecourse/courser.svg?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/racecourse/courser/badge.svg)](https://coveralls.io/github/racecourse/courser)
 
 A fast and lighter PHP micro framework and follow the psr-7 spec.  I believe that 
  `entities should not be multiplied unnecessarily.` Courser born with natural beauty.
