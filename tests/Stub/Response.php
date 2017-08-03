@@ -9,7 +9,7 @@
  */
 namespace Courser\Tests\Stub;
 
-class Response extends \Swoole\Http\Response
+class Response
 {
     public $header = [];
 
@@ -25,15 +25,30 @@ class Response extends \Swoole\Http\Response
 
     public $statusCode = 200;
 
-    public function rawContent() {
+    public $fd = 1;
+
+    public function rawContent()
+    {
         return '';
     }
 
-    public function json($data) {
+    public function json($data)
+    {
         echo json_encode($data);
     }
 
-    public function status($status = 200) {
+    public function status($status = 200)
+    {
         return $this->statusCode = 200;
+    }
+
+    public function end()
+    {
+
+    }
+
+    public function write()
+    {
+
     }
 }

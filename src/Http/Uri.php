@@ -47,9 +47,9 @@ class Uri implements UriInterface
     public function __construct($server)
     {
         $server = array_change_key_case($server, CASE_LOWER);
-        $this->ip = $server['remote_addr'];
-        $this->protocolVersion = $server['server_protocol'];
-        $this->path = $server['request_uri'];
+        $this->ip = $server['remote_addr'] ?? '';
+        $this->protocolVersion = $server['server_protocol'] ?? $this->protocolVersion;
+        $this->path = $server['request_uri'] ?? '/';
         $this->fragment = $server['fragment'] ?? '';
         $this->scheme = $server['https'] ?? 'http';
         $this->user = $server['user'] ?? '';

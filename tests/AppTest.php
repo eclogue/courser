@@ -10,20 +10,15 @@
 namespace Courser\Tests;
 
 use Courser\App;
+use Courser\Tests\Stub\Request;
+use Courser\Tests\Stub\Response;
 use PHPUnit\Framework\Exception;
 use PHPUnit\Framework\TestCase;
-
+use Courser\Tests\Stub\Request as StubRequest;
+use Courser\Tests\Stub\Response as StubResponse;
 
 class AppTest extends TestCase
 {
-    public static $config = [];
-
-    public static function setupBeforeClass()
-    {
-        static::$config = [
-
-        ];
-    }
 
     public function testContainer()
     {
@@ -111,9 +106,9 @@ class AppTest extends TestCase
         $router = $app->createContext($req, $res);
         $result = $app->mapRoute($method, $uri, $router);
         $this->assertContains($callable, $result->middleware);
-        $this->assertEquals($method, $result->request->method);
+        $this->assertEquals($method, $result->request->getMethod());
         $this->assertContains('id', $result->paramNames);
-        $this->assertEquals(1, $result->request->param('id'));
+        $this->assertEquals(1, $result->request->getParam('id'));
         $uri = $uri . '/test';
         $req = $this->requestProvider($method, $uri);
         $router = $app->createContext($req, $res);
@@ -297,7 +292,7 @@ class AppTest extends TestCase
 
     public function requestProvider($method, $uri)
     {
-        $req = new \Swoole\Http\Request();
+        $req = new StubRequest();
         $req->cookie = [];
         $req->header = [];
         $req->get = [];
@@ -311,6 +306,6 @@ class AppTest extends TestCase
 
     public function responseProvider()
     {
-        return new \Swoole\Http\Request();
+        return new StubRequest();
     }
 }

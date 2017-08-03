@@ -10,12 +10,13 @@
 namespace Courser\Tests;
 
 use Courser\Router;
+use RuntimeException;
 use PHPUnit\Framework\Exception;
 use PHPUnit\Framework\TestCase;
 use Courser\Http\Request;
 use Courser\Http\Response;
 use Courser\Tests\Stub\Request as StubRequest;
-use Courser\Tests\Stub\Request as StubResponse;
+use Courser\Tests\Stub\Response as StubResponse;
 
 
 class RouterTest extends TestCase
@@ -28,9 +29,9 @@ class RouterTest extends TestCase
     public function setUp()
     {
         $this->request = new Request();
-        $this->request->setRequest(new StubRequest());
-        $this->response = new Response();
-        $this->response->setResponse(new StubResponse());
+        $this->request->createRequest(new StubRequest());
+        $response = new Response();
+        $this->response = $response->createResponse(new StubResponse());
 
     }
 
@@ -64,33 +65,46 @@ class RouterTest extends TestCase
         $router->setParam('key', 'value');
     }
 
-    public function testMethod() {
+    public function testMethod()
+    {
         $router = new Router($this->request, $this->response);
         $method = 'get';
         $router->method($method);
-        $this->assertEquals($this->request->method, $method);
+        $this->assertEquals($router->request->getMethod(), $method);
     }
 
-    /**
-     * @expectedException \Exception
-     */
     public function testCompose()
     {
         $router = new Router($this->request, $this->response);
         $md = function ($req, $res) {
-          $res->status(200)->end();
+            $res->end();
         };
         $router->add([$md]);
         $router->compose($router->callable);
         $this->assertEquals($router->response->finish, true);
-        $router = new Router($this->request, $this->response);
+        list($request, $response) = $this->serverProvider();
+        $router = new Router($request, $response);
         $md = 'string';
         $router->compose([$md]);
-        $this->expectException(Exception::class);
-        $mds = [$md, $md];
-        $router = new Router($this->request, $this->response);
-        $router->compose([$mds]);
         $this->assertEquals($router->response->finish, false);
+        $md = function ($req, $res) {
+            $res->end();
+        };
+        $mds = [$md, $md];
+        list($request, $response) = $this->serverProvider();
+        $router = new Router($request, $response);
+        $router->compose([$mds]);
+//        $this->expectException(\RuntimeException::class);
+        $this->assertEquals($router->response->finish, true);
+    }
+
+    public function serverProvider()
+    {
+        $request = new Request();
+        $request->createRequest(new StubRequest());
+        $response = new Response();
+        $response = $response->createResponse(new StubResponse());
+        return [$request, $response];
     }
 
 
