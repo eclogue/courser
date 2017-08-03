@@ -45,6 +45,18 @@ class Response extends Message implements ResponseInterface
 
     }
 
+    /*
+     * set request context
+     * @param object $req  \Swoole\Http\Request
+     * @return void
+     * */
+    public function createResponse($response)
+    {
+        $clone = clone $this;
+        $clone->res = $response;
+        return $clone;
+    }
+
     public function __clone()
     {
         $this->headers = clone $this->headers;
@@ -131,19 +143,6 @@ class Response extends Message implements ResponseInterface
     }
 
     // ===================== PSR-7 standard ===================== //
-
-    /*
-     * set request context
-     * @param object $req  \Swoole\Http\Request
-     * @return void
-     * */
-    public function createResponse($response)
-    {
-        $clone = clone $this;
-        $clone->res = $response;
-        return $clone;
-    }
-
 
 
     public function withStatus($code, $reasonPhrase = '')

@@ -10,7 +10,7 @@
 namespace Courser\Tests\Stub;
 
 
-class Request extends \Swoole\Http\Request
+class Request
 {
     public $header = [];
 
@@ -23,6 +23,8 @@ class Request extends \Swoole\Http\Request
     public $cookie = [];
 
     public $files = [];
+
+    public $fd = 1;
 
 
     public function rawContent() {

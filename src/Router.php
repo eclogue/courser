@@ -79,7 +79,7 @@ class Router
      */
     public function method($method)
     {
-        $this->request->method = $method;
+        $this->request = $this->request->withMethod($method);
     }
 
 
