@@ -5,8 +5,10 @@
 [![Latest Stable Version](https://poser.pugx.org/racecourse/courser/version)](https://packagist.org/packages/racecourse/courser)
 [![Total Downloads](https://poser.pugx.org/racecourse/courser/downloads)](https://packagist.org/packages/racecourse/courser)
 [![License](https://poser.pugx.org/racecourse/courser/license)](https://packagist.org/packages/racecourse/courser)
-A fast and lighter PHP micro framework and follow the psr-7 spec.  I believe that 
- `entities should not be multiplied unnecessarily.` Courser born with natural beauty.
+
+
+A project designed for my blog. Follow the psr-7 spec. I believe that 
+`entities should not be multiplied unnecessarily.` 
 
 ### Installation
 `composer require racecourse/courser` or git clone https://github.com/racecourse/courser
@@ -142,12 +144,7 @@ $app->error(function ($req, $res, Exception $err) {
  [Ben](https://github.com/racecourse/ben) is a convenient config manager， I recommend use Ben to manage use config file.
 
 ### Benchmark
- Just for fun.
- 
- 
- Env: docker on mac, ubuntu16.10 PHP 7.0.15-0ubuntu0.16.04.4 (cli) ( NTS )
- 
- util: apache ab
+    Higher than php-fpm.
 >
 ```
 Requests per second:    9801.09 [#/sec] (mean)
@@ -157,9 +154,9 @@ Requests per second:    9801.09 [#/sec] (mean)
 ### Community
 
  - [中文文档](https://superbogy.gitbooks.io/courser/content/)
- - [English document]()
- - [Example]()
- - [FAQ](https://github.com/shipmen/Course/issues)
+ - ~~[English document]()~~~
+ - [Example](https://github.com/racecourse/knight)
+ - [issue](https://github.com/shipmen/Course/issues)
  
 ### Coding...
 
