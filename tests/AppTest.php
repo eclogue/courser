@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @license https://github.com/racecourse/courser/licese.md
+ * @license MIT
  * @copyright Copyright (c) 2017
  * @author: bugbear
  * @date: 2017/5/12
@@ -10,8 +10,6 @@
 namespace Courser\Tests;
 
 use Courser\App;
-use Courser\Tests\Stub\Request;
-use Courser\Tests\Stub\Response;
 use PHPUnit\Framework\Exception;
 use PHPUnit\Framework\TestCase;
 use Courser\Tests\Stub\Request as StubRequest;

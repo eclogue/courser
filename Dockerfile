@@ -18,7 +18,7 @@ RUN ./configure
 RUN make && make install
 RUN echo "extension=swoole.so" >> /etc/php/7.0/cli/conf.d/swoole.ini
 WORKDIR $APP_DIR
-RUN git clone https://github.com/racecourse/courser
+RUN git clone https://github.com/eclogue/courser
 WORKDIR $APP_DIR/courser
 RUN composer install -vvv
 

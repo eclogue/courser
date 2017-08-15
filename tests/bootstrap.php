@@ -1,6 +1,6 @@
 <?php
 /**
- * @license https://github.com/racecourse/courser/licese.md
+ * @license MIT
  * @copyright Copyright (c) 2017
  * @author: bugbear
  * @date: 2017/5/13

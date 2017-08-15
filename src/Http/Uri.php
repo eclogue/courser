@@ -1,6 +1,6 @@
 <?php
 /**
- * @license https://github.com/racecourse/courser/license.md
+ * @license MIT
  * @copyright Copyright (c) 2017
  * @author: bugbear
  * @date: 2017/6/30
@@ -182,8 +182,10 @@ class Uri implements UriInterface
      */
     public function withScheme($scheme)
     {
-        $this->scheme = $scheme;
-        return $this;
+        $clone = clone $this;
+        $clone->scheme = $scheme;
+
+        return $clone;
     }
 
     /**
@@ -195,8 +197,10 @@ class Uri implements UriInterface
      */
     public function withUserInfo($user, $password = null)
     {
-        $this->user = $user;
-        $this->password = $password;
+        $clone = clone $this;
+        $clone->user = $user;
+        $clone->password = $password;
+
         return $this;
     }
 
@@ -209,8 +213,10 @@ class Uri implements UriInterface
      */
     public function withHost($host)
     {
-        $this->host = $host;
-        return $this;
+        $clone = clone $this;
+        $clone->host = $host;
+
+        return $clone;
     }
 
     /**
@@ -232,7 +238,10 @@ class Uri implements UriInterface
      */
     public function withPort($port)
     {
+        $clone = clone $this;
+        $clone->port = $port;
 
+        return $clone;
     }
 
     /**
@@ -244,8 +253,10 @@ class Uri implements UriInterface
      */
     public function withPath($path)
     {
-        $this->path = $path;
-        return $this;
+        $clone = clone $this;
+        $clone->path = $path;
+
+        return $clone;
     }
 
     /**
@@ -265,7 +276,10 @@ class Uri implements UriInterface
      */
     public function withQuery($query)
     {
-        $this->query = urlencode($query);
+        $clone = clone $this;
+        $clone->query = urlencode($query);
+
+        return $clone;
     }
 
     /**
@@ -276,8 +290,9 @@ class Uri implements UriInterface
      */
     public function withFragment($fragment)
     {
-        $this->fragment = $fragment;
-        return $this;
+        $clone = clone $this;
+        $clone->fragment = $fragment;
+        return $clone;
     }
 
     public function getBaseUrl()
