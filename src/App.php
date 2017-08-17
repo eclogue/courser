@@ -348,14 +348,14 @@ class App
     public function handleError($req, $res, $err)
     {
         $request = $this->container['courser.request'];
-        $request->createRequest($req);
+        $cloneRep = $request->createRequest($req);
         $response = $this->container['courser.response'];
-        $response->createResponse($res);
+        $cloneRes = $response->createResponse($res);
         if (empty(static::$errors)) {
             throw $err;
         }
         foreach (static::$errors as $callback) {
-            $callback($request, $response, $err);
+            $callback($cloneRep, $cloneRes, $err);
         }
     }
 
