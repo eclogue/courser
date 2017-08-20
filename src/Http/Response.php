@@ -25,7 +25,7 @@ class Response extends Message implements ResponseInterface
     /*
      * store the \Swoole\Http\Response instance
      * */
-    protected $res;
+    public $res;
 
     /*
      * send body
