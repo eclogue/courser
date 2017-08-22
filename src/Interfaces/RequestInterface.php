@@ -8,43 +8,48 @@
  */
 namespace Courser\Interfaces;
 
-use Psr\Http\Message\RequestInterface as ReqInterface;
 
-
-interface RequestInterface extends ReqInterface
+abstract class RequestInterface
 {
+    public $server = [];
+
+    public $cookie = [];
+
+    public $files = [];
+
+    public $headers = [];
+
+    public function init()
+    {
+
+    }
+
     /*
      * add param name
      * @param string $name
      * @return void
      * */
-    public function addParamName($name);
+    public function addParamName($name)
+    {
+
+    }
 
     /*
      * set param
      * @param string $key
      * @param string $val
      * */
-    public function setParam($key, $val);
+    public function setParam($key, $val) {
 
+    }
 
-    /*
-     * get cookie by key
-     * @param string $key
-     * */
-    public function cookie($key);
+    public function __call($name, $arguments)
+    {
 
-    /*
-     * get request body by param name
-     *
-     * @param string $key param name
-     * */
-    public function body($key);
+    }
 
-    /*
-     * get url query param by name
-     * @param string $key
-     * */
-    public function query($key);
+    public function __get($key, $value)
+    {
 
+    }
 }
