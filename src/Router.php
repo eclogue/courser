@@ -13,6 +13,8 @@ use Courser\Helper\Util;
 use Courser\Http\Request;
 use Courser\Http\Response;
 use Courser\Co\Compose;
+use Bulrush\Scheduler;
+use Bulrush\Poroutine;
 
 class Router
 {
@@ -27,6 +29,8 @@ class Router
     public $paramNames = [];
 
     public $env = 'dev';
+
+    protected static $scheduler;
 
     public static $allowMethods = [
         'get',
@@ -98,7 +102,7 @@ class Router
      */
     public function compose($middleware)
     {
-        $compose = new Compose();
+        $scheduler = static::getScheduler();
         foreach ($middleware as $md) {
             $gen = null;
             if (is_array($md)) {
@@ -115,13 +119,13 @@ class Router
                 $gen = $md($this->request, $this->response);
             }
             if ($gen instanceof \Generator) {
-                $compose->push($gen);
+                $scheduler->add($gen);
             }
             if ($this->response->finish) {
                 break;
             }
         }
-        $compose->run();
+        $scheduler->run();
     }
 
 
@@ -130,5 +134,14 @@ class Router
         throw $err;
     }
 
+
+    public static function getScheduler(): Scheduler
+    {
+        if (!static::$scheduler) {
+            static::$scheduler = new Scheduler();
+        }
+
+        return static::$scheduler;
+    }
 
 }
