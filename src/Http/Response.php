@@ -5,6 +5,7 @@ namespace Courser\Http;
 use Psr\Http\Message\ResponseInterface;
 use RuntimeException;
 use InvalidArgumentException;
+use Courser\Environment\Output;
 
 class Response extends Message implements ResponseInterface
 {
@@ -37,53 +38,29 @@ class Response extends Message implements ResponseInterface
 
     protected $reasonPhrase;
 
+    protected $context;
+
 
     public function __construct()
     {
         $this->headers = new Header();
-        $this->res = null;
-
+        $this->context = new Output();
     }
 
-    /*
-     * set request context
-     * @param object $req  \Swoole\Http\Request
-     * @return void
-     * */
-    public function createResponse($response)
-    {
-        $clone = clone $this;
-        $clone->res = $response;
-        return $clone;
-    }
 
     public function __clone()
     {
         $this->headers = clone $this->headers;
     }
 
-    /**
-     * Note: This method is not part of the PSR-7 standard.
-     *
-     * @return \swoole_http_response
-     */
-    public function getOriginResponse()
-    {
-        return $this->res;
-    }
 
     /*
      * set content-type = json,and response json
      * @param array | iterator $data
      * */
-    public function json($data)
+    public function json(array $data):Output
     {
-        if (is_array($data)) {
-            $data = json_encode($data);
-        } else {
-            $data = (array)$data;
-        }
-
+        $data = json_encode($data);
         $this->withHeader('Content-Type', 'application/json');
         $this->end($data);
     }
@@ -94,56 +71,32 @@ class Response extends Message implements ResponseInterface
      *
      * @param mix $data
      * */
-    public function end($data = '')
+    public function end(string $data = ''):Output
     {
-        if($this->finish) {
+        if ($this->finish) {
             throw new RuntimeException('Request has been response, check your code for response');
         }
         $this->finish = true;
-        $response = $this->getOriginResponse();
         $headers = $this->getHeaders();
         foreach ($headers as $key => $value) {
-            $response->header($key, $value);
+            $this->context->header($key, $value);
         }
-        $response->status($this->statusCode);
-        $response->end($data);
+        $this->context->status($this->statusCode);
+        $this->context->body($data);
+
+        return $this->context;
     }
 
-    /*
-     * send string and finish request
-     * Note: This method is not part of the PSR-7 standard.
-     *
-     * @param mix $data
-     * */
-    public function send($str = '')
+    /**
+     * @return Output
+     */
+    public function getContext(): Output
     {
-        $this->end($str);
+        return $this->context;
     }
 
-    /*
-     * send file extend swoole_http_response
-     * Note: This method is not part of the PSR-7 standard.
-     *
-     * @param string $file
-     * */
-    public function sendFile($file)
-    {
-        $this->getOriginResponse()->sendFile($file);
-    }
-
-    /*
-     * write chunk data extend from swoole_http_response
-     * Note: This method is not part of the PSR-7 standard.
-     *
-     * @param mixed $data
-     * */
-    public function write($data)
-    {
-        $this->getOriginResponse()->write($data);
-    }
 
     // ===================== PSR-7 standard ===================== //
-
 
     public function withStatus($code, $reasonPhrase = '')
     {
@@ -183,24 +136,18 @@ class Response extends Message implements ResponseInterface
     }
 
 
-
     /*
      * get header by key
      * */
-    public function getHeader($key)
+    public function getHeader($key, $default = null)
     {
-        return isset($this->headers[$key]) ? $this->headers[$key] : null;
+        return isset($this->headers[$key]) ? $this->headers[$key] : $default;
     }
 
-    public function __invoke($string)
-    {
-        $this->end($string);
-    }
 
     public function __toString()
     {
-        $output = ''; // @todo
-        return $output;
+        return (string)$this->context;
     }
 
     /**
@@ -241,6 +188,5 @@ class Response extends Message implements ResponseInterface
         }
         return '';
     }
-
 
 }
