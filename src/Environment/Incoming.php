@@ -1,17 +1,16 @@
 <?php
 /**
- * @license MIT
+ * @license   MIT
  * @copyright Copyright (c) 2017
- * @author: bugbear
- * @date: 2017/8/22
- * @time: 下午8:07
+ * @author    : bugbear
+ * @date      : 2017/3/10
+ * @time      : 下午1:04
  */
-
-namespace Courser\Incoming;
+namespace Courser\Environment;
 
 use InvalidArgumentException;
 
-class CGIComing
+class Incoming
 {
     public $server = [];
 
@@ -21,29 +20,32 @@ class CGIComing
 
     public $headers = [];
 
-    public $request;
-
-    public function __construct($request)
+    public function __construct($request = null)
     {
-        $this->server = array_change_key_case($_SERVER, CASE_LOWER);
-        $this->cookie = array_change_key_case($_COOKIE, CASE_LOWER);
-        $this->files = array_change_key_case($_FILES, CASE_LOWER);
-        if (!function_exists('getallheaders'))
-        {
-            $headers = [];
-            foreach ($_SERVER as $name => $value) {
-                if (substr($name, 0, 5) == 'HTTP_') {
-                    $key = strtolower(str_replace('_', ' ', substr($name, 5)));
-                    $key = str_replace(' ', '-', $key);
-                    $headers[$key] = $value;
+        if (!$request) {
+            $this->server = array_change_key_case($_SERVER, CASE_LOWER);
+            $this->cookie = array_change_key_case($_COOKIE, CASE_LOWER);
+            $this->files = array_change_key_case($_FILES, CASE_LOWER);
+            if (!function_exists('getallheaders'))
+            {
+                $headers = [];
+                foreach ($_SERVER as $name => $value) {
+                    if (substr($name, 0, 5) == 'HTTP_') {
+                        $key = strtolower(str_replace('_', ' ', substr($name, 5)));
+                        $key = str_replace(' ', '-', $key);
+                        $headers[$key] = $value;
+                    }
                 }
+                $this->headers = $headers;
+            } else {
+                $this->headers = getallheaders();
             }
-            $this->headers = $headers;
         } else {
-            $this->headers = getallheaders();
+            $this->server = $request->server;
+            $this->cookie = $request->cookie;
+            $this->files = $request->files;
+            $this->request = $request;
         }
-
-        $this->request = $request;
     }
 
     /**
@@ -77,5 +79,6 @@ class CGIComing
             throw new InvalidArgumentException($message);
         }
     }
+
 
 }

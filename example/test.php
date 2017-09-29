@@ -1,6 +1,6 @@
 <?php
 /**
- * @license   https://github.com/Init/licese.md
+ * @license   MIT
  * @copyright Copyright (c) 2017
  * @author    : bugbear
  * @date      : 2017/3/4
@@ -11,13 +11,13 @@ define('ROOT', dirname(dirname(__FILE__)));
 
 require ROOT . '/vendor/autoload.php';
 use Courser\App;
-use Ben\Config;
+//use Ben\Config;
 use Courser\Server\HttpServer;
 
 
 $config = [];
 
-Config::set($config);
+//Config::set($config);
 $app = new App();
 
 $app->used(function($req, $res) {
@@ -28,7 +28,7 @@ $app->used(function($req, $res) {
 $app->used(function($req, $res) {
     $f = function () {
         $i = 0;
-        while ($i < 500000) {
+        while ($i < 50000) {
             $i++;
         }
     };
@@ -65,7 +65,7 @@ $app->post('/', function($req, $res) {
 });
 $app->used(function($req, $res) {
     $res->withStatus(404)->json([
-        'message' => 'not found',
+        'message' => 'Not Found',
     ]);
 });
 
