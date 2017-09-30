@@ -77,4 +77,14 @@ class Output
     {
         return '';
     }
+
+    public function getHeaders()
+    {
+        return $this->header;
+    }
+
+    public function getBody()
+    {
+        return implode('', $this->content);
+    }
 }

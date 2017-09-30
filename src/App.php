@@ -97,8 +97,7 @@ class App
     public function createContext($req, $res)
     {
         $router = $this->container['courser.router'];
-        $router->response = $router->response->createResponse($res);
-        $router->request = $router->request->createRequest($req);
+        $router->createContext($req, $res);
         return $router;
     }
 
