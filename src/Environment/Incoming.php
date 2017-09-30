@@ -20,6 +20,10 @@ class Incoming
 
     public $headers = [];
 
+    public $request;
+
+    public $body = [];
+
     public function __construct($request = null)
     {
         if (!$request) {
@@ -44,8 +48,9 @@ class Incoming
             $this->server = $request->server;
             $this->cookie = $request->cookie;
             $this->files = $request->files;
-            $this->request = $request;
         }
+
+        $this->request = $request;
     }
 
     /**
@@ -56,7 +61,8 @@ class Incoming
      */
     public function __call($name, $arguments)
     {
-        if (is_callable([$this->request, $name])) {
+        var_dump($this->request->$name, $name, $arguments);
+        if (is_callable([$this->request, $name], true)) {
             return call_user_func_array([$this->request, $name], $arguments);
         } else {
             $message = 'Call undefined function of ' . get_class($this->request);
@@ -72,7 +78,7 @@ class Incoming
     public function __get($name)
     {
         if (property_exists($this->request, $name)) {
-            return $this->request[$name];
+            return $this->request->$name;
         } else {
             $message = 'Try to get Illegal property `%s` of %s';
             $message = sprintf($message, $name, get_class($this->request));

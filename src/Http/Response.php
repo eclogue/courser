@@ -10,7 +10,7 @@ use Courser\Environment\Output;
 class Response extends Message implements ResponseInterface
 {
 
-    protected $response = '';
+    protected $response;
 
     /*
      * @var array

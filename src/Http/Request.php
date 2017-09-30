@@ -10,7 +10,6 @@ namespace Courser\Http;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\UriInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Swoole\Http\Request as SwooleRequest;
 use Courser\Environment\Incoming;
 
 /*
@@ -82,13 +81,15 @@ class Request extends Message implements RequestInterface, ServerRequestInterfac
     public function createRequest($req = null)
     {
         $incoming = new Incoming($req);
+        $this->incoming = $incoming;
+
         $clone = clone $this;
 //        $clone->req = $req;
         $clone->server = $incoming->server;
         $method = $clone->server['request_method'] ?? 'get';
         $clone = $clone->withMethod($method);
         $clone->headers = $incoming->header ?? [];
-        $clone->cookie = isset($incoming->cookie) ? $incoming->cookie : []; // @todo psr-7 standard
+        $clone->cookie = $incoming->cookie ?? []; // @todo psr-7 standard
         if (!isset($clone->server['http_host']) && $clone->hasHeader('http_host')) {
             $clone->server['http_host'] = $clone->getHeader('https_host');
         }
@@ -98,7 +99,6 @@ class Request extends Message implements RequestInterface, ServerRequestInterfac
         $clone->getParsedBody();
         $clone->query = $clone->uri->getQuery();
         $clone->queryParams = $clone->parseQuery($clone->query);
-
         return $clone;
     }
 
@@ -455,7 +455,7 @@ class Request extends Message implements RequestInterface, ServerRequestInterfac
             $this->payload = $this->req->post;
         } else {
             if (empty($this->payload)) {
-                $this->payload = json_decode($this->req->rawContent(), true);
+                $this->payload = json_decode($this->incoming->rawContent(), true);
             }
         }
 
