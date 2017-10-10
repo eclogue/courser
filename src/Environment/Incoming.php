@@ -24,12 +24,15 @@ class Incoming
 
     public $body = [];
 
+    public $query = [];
+
     public function __construct($request = null)
     {
         if (!$request) {
             $this->server = array_change_key_case($_SERVER, CASE_LOWER);
             $this->cookie = array_change_key_case($_COOKIE, CASE_LOWER);
             $this->files = array_change_key_case($_FILES, CASE_LOWER);
+            $this->query = $_GET;
             if (!function_exists('getallheaders'))
             {
                 $headers = [];
@@ -48,6 +51,8 @@ class Incoming
             $this->server = $request->server;
             $this->cookie = $request->cookie;
             $this->files = $request->files;
+            $this->body = $request->rawContent();
+            $this->query = $request->get();
         }
 
         $this->request = $request;
@@ -61,7 +66,6 @@ class Incoming
      */
     public function __call($name, $arguments)
     {
-        var_dump($this->request->$name, $name, $arguments);
         if (is_callable([$this->request, $name], true)) {
             return call_user_func_array([$this->request, $name], $arguments);
         } else {
