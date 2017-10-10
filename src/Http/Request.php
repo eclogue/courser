@@ -455,7 +455,7 @@ class Request extends Message implements RequestInterface, ServerRequestInterfac
             $this->payload = $this->req->post;
         } else {
             if (empty($this->payload)) {
-                $this->payload = json_decode($this->incoming->rawContent(), true);
+                $this->payload = json_decode($this->incoming->getBody(), true);
             }
         }
 
