@@ -140,7 +140,7 @@ class App
      * @param string $route
      * @param callable $callback
      */
-    public function addRoute(string $method, string $route, $callback)
+    public function addRoute(string $method, string $route, ...$callback)
     {
         $method = strtolower($method);
         $route = trim($this->group . $route, '/');
@@ -151,7 +151,6 @@ class App
         if ($pattern) {
             $pattern = '#^' . $pattern . '$#';
         }
-        $callback = Util::isIndexArray($callback) ? $callback : [$callback];
         $this->routes[$method][] = [
             'route' => $route,
             'params' => $params,
@@ -201,6 +200,7 @@ class App
             if (empty($match)) {
                 continue;
             }
+
             if ($route['scope']) {
                 $middleware = $this->mapMiddleware($uri, $route['scope']);
                 if (!empty($middleware)) {
@@ -218,6 +218,7 @@ class App
                 }
             }
         }
+
         if (empty($router->callable)) {
             foreach ($this->middleware as $key => $md) {
                 if ($md['group'] === '/') {
@@ -225,6 +226,7 @@ class App
                 }
             }
         }
+
         return $router;
     }
 
@@ -247,6 +249,7 @@ class App
                 return "(?P<$name>[$type]+)";
             },
             $route);
+
         return [$regex, $params];
     }
 
@@ -369,6 +372,7 @@ class App
         $uri = $uri ?: '/';
         return function ($req, $res) use ($uri) {
             $router = $this->createContext($req, $res);
+
             $router = $this->mapRoute($router->request->getMethod(), $uri, $router);
             if (empty($router->callable)) {
                 $router->add($this->notFounds);

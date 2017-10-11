@@ -93,6 +93,8 @@ class Router
         }
 
         $scheduler->add($this->compose($this->callable));
+        $scheduler->run();
+
         $this->respond();
 
         return true;
