@@ -54,14 +54,13 @@ $app->get('/', function($req, $res) {
     echo "ffffffuck";
     $html = "<h1 style='text-align: center;font-size: 8em;margin-top: 20%'>";
     $html .= "Fuck world</h1>";
-    $res->withHeader('Content-Type', 'text/html')->send($html);
+    $res->withHeader('Content-Type', 'text/html')->end($html);
 });
 $app->post('/', function($req, $res) {
-    var_dump($req->payload('test'));
     $html = "<h1 style='text-align: center;font-size: 8em;margin-top: 20%'>";
     $html .= "Fuck world</h1>";
     $res->withHeader('Content-Type', 'text/html');
-    $res->send($html);
+    $res->end($html);
 });
 $app->used(function($req, $res) {
     $res->withStatus(404)->json([

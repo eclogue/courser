@@ -60,9 +60,8 @@ class Response extends Message implements ResponseInterface
      * */
     public function json(array $data):Output
     {
-        $data = json_encode($data);
         $this->withHeader('Content-Type', 'application/json');
-        $this->end($data);
+        return $this->end($data);
     }
 
     /*
@@ -71,10 +70,13 @@ class Response extends Message implements ResponseInterface
      *
      * @param mix $data
      * */
-    public function end(string $data = ''):Output
+    public function end($data = []):Output
     {
         if ($this->finish) {
             throw new RuntimeException('Request has been response, check your code for response');
+        }
+        if (!is_array($data)) {
+            $data = [$data];
         }
         $this->finish = true;
         $headers = $this->getHeaders();
