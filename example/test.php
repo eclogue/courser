@@ -42,6 +42,7 @@ $app->used(function($req, $res) {
         yield $i;
         echo "this middleware 3 \n";
     }
+    $res->json(['test' => 1]);
 });
 $app->used(function($req, $res) {
     echo "this middleware 4 \n";
@@ -49,6 +50,13 @@ $app->used(function($req, $res) {
     echo "d44444444 \n";
     var_dump($ret);
     yield 4;
+});
+
+$app->get('/', function($req, $res) {
+    echo "ffffffuck";
+    $html = "<h1 style='text-align: center;font-size: 8em;margin-top: 20%'>";
+    $html .= "Fuck world</h1>";
+    $res->withHeader('Content-Type', 'text/html')->end($html);
 });
 $app->get('/', function($req, $res) {
     echo "ffffffuck";

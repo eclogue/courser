@@ -47,7 +47,7 @@ class Output
      */
     public function body(array $data): array
     {
-        $this->content = array_merge($this->content, $data);
+        $this->content = $data;
 
         return $this->content;
     }
