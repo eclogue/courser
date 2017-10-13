@@ -52,7 +52,7 @@ class Incoming
             $this->cookie = $request->cookie;
             $this->files = $request->files;
             $this->body = $request->rawContent();
-            $this->query = $request->get();
+            $this->query = $request->get;
         }
 
         $this->request = $request;
@@ -90,5 +90,9 @@ class Incoming
         }
     }
 
+    public function getBody()
+    {
+        return $this->body;
+    }
 
 }

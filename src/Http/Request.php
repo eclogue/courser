@@ -43,10 +43,6 @@ class Request extends Message implements RequestInterface, ServerRequestInterfac
      * */
     protected $method = 'get';
 
-    /*
-     * @var object
-     * */
-    protected $req;
 
     /*
      * @var array
@@ -84,7 +80,6 @@ class Request extends Message implements RequestInterface, ServerRequestInterfac
         $this->incoming = $incoming;
 
         $clone = clone $this;
-//        $clone->req = $req;
         $clone->server = $incoming->server;
         $method = $clone->server['request_method'] ?? 'get';
         $clone = $clone->withMethod($method);
@@ -99,11 +94,12 @@ class Request extends Message implements RequestInterface, ServerRequestInterfac
         $clone->getParsedBody();
         $clone->query = $clone->uri->getQuery();
         $clone->queryParams = $clone->parseQuery($clone->query);
+
         return $clone;
     }
 
 
-    public function parseQuery($query)
+    public function parseQuery(string $query)
     {
         if (!is_string($query)) {
             return [];
@@ -219,8 +215,8 @@ class Request extends Message implements RequestInterface, ServerRequestInterfac
      */
     public function __get($name)
     {
-        if (isset($this->req->$name)) {
-            return $this->req->$name;
+        if (isset($this->incoming->$name)) {
+            return $this->incoming->$name;
         }
 
         return null;
@@ -233,7 +229,7 @@ class Request extends Message implements RequestInterface, ServerRequestInterfac
      */
     public function __set($name, $value)
     {
-        return $this->req->$name = $value;
+        return $this->incoming->$name = $value;
     }
 
     /**
@@ -243,8 +239,8 @@ class Request extends Message implements RequestInterface, ServerRequestInterfac
      */
     public function __call($func, $params)
     {
-        if (is_callable([$this->req, $func])) {
-            return call_user_func_array([$this->req, $func], $params);
+        if (is_callable([$this->incoming, $func])) {
+            return call_user_func_array([$this->incoming, $func], $params);
         }
 
         return false;
