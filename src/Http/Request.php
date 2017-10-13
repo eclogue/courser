@@ -10,7 +10,7 @@ namespace Courser\Http;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\UriInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Swoole\Http\Request as SwooleRequest;
+use Courser\Environment\Incoming;
 
 /*
  * Http request extend swoole_http_request
@@ -43,10 +43,6 @@ class Request extends Message implements RequestInterface, ServerRequestInterfac
      * */
     protected $method = 'get';
 
-    /*
-     * @var object
-     * */
-    protected $req;
 
     /*
      * @var array
@@ -57,7 +53,6 @@ class Request extends Message implements RequestInterface, ServerRequestInterfac
     * @var array
     * */
     protected $files = [];
-
 
     protected $uri;
 
@@ -71,31 +66,30 @@ class Request extends Message implements RequestInterface, ServerRequestInterfac
 
     protected $attributes = [];
 
-    public function __construct()
-    {
-
-    }
+    protected $incoming;
 
 
     /*
      * set request context @todo
-     * @param object $req  \Swoole\Http\Request
+     * @param object|null $req
      * @return void
      * */
-    public function createRequest($req)
+    public function createRequest($req = null)
     {
+        $incoming = new Incoming($req);
+        $this->incoming = $incoming;
+
         $clone = clone $this;
-        $clone->req = $req;
-        $clone->server = $req->server ?? [];
+        $clone->server = $incoming->server;
         $method = $clone->server['request_method'] ?? 'get';
         $clone = $clone->withMethod($method);
-        $clone->headers = $req->header ?? [];
-        $clone->cookie = isset($req->cookie) ? $req->cookie : []; // @todo psr-7 standard
+        $clone->headers = $incoming->header ?? [];
+        $clone->cookie = $incoming->cookie ?? []; // @todo psr-7 standard
         if (!isset($clone->server['http_host']) && $clone->hasHeader('http_host')) {
             $clone->server['http_host'] = $clone->getHeader('https_host');
         }
         $clone->uri = new Uri($clone->server);
-        $clone->files = isset($req->files) ? $req->files : []; // @todo
+        $clone->files = isset($incoming->files) ? $incoming->files : []; // @todo
         $clone->getRequestTarget();
         $clone->getParsedBody();
         $clone->query = $clone->uri->getQuery();
@@ -105,12 +99,7 @@ class Request extends Message implements RequestInterface, ServerRequestInterfac
     }
 
 
-    public function getOriginRequest()
-    {
-        return $this->req;
-    }
-
-    protected function parseQuery($query)
+    public function parseQuery(string $query)
     {
         if (!is_string($query)) {
             return [];
@@ -226,8 +215,8 @@ class Request extends Message implements RequestInterface, ServerRequestInterfac
      */
     public function __get($name)
     {
-        if (isset($this->req->$name)) {
-            return $this->req->$name;
+        if (isset($this->incoming->$name)) {
+            return $this->incoming->$name;
         }
 
         return null;
@@ -240,7 +229,7 @@ class Request extends Message implements RequestInterface, ServerRequestInterfac
      */
     public function __set($name, $value)
     {
-        return $this->req->$name = $value;
+        return $this->incoming->$name = $value;
     }
 
     /**
@@ -250,8 +239,8 @@ class Request extends Message implements RequestInterface, ServerRequestInterfac
      */
     public function __call($func, $params)
     {
-        if (is_callable([$this->req, $func])) {
-            return call_user_func_array([$this->req, $func], $params);
+        if (is_callable([$this->incoming, $func])) {
+            return call_user_func_array([$this->incoming, $func], $params);
         }
 
         return false;
@@ -462,7 +451,7 @@ class Request extends Message implements RequestInterface, ServerRequestInterfac
             $this->payload = $this->req->post;
         } else {
             if (empty($this->payload)) {
-                $this->payload = json_decode($this->req->rawContent(), true);
+                $this->payload = json_decode($this->incoming->getBody(), true);
             }
         }
 

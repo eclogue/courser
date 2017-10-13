@@ -9,10 +9,10 @@
 
 namespace Courser;
 
-use Courser\Helper\Util;
 use Courser\Http\Request;
 use Courser\Http\Response;
-use Courser\Co\Compose;
+use Bulrush\Scheduler;
+use PHP_CodeSniffer\Tokenizers\PHP;
 
 class Router
 {
@@ -26,7 +26,9 @@ class Router
 
     public $paramNames = [];
 
-    public $env = 'dev';
+    protected $context = [];
+
+    protected static $scheduler;
 
     public static $allowMethods = [
         'get',
@@ -37,10 +39,13 @@ class Router
         'patch',
     ];
 
-    public function __construct(Request $request, Response $response)
+    public function __construct($req, $res)
     {
-        $this->request = $request;
-        $this->response = $response;
+        $this->request = new Request();
+        $this->response = new Response();
+        $this->request->createRequest($req);
+        $this->context['request'] = $req;
+        $this->context['response'] = $res;
     }
 
     /*
@@ -85,9 +90,16 @@ class Router
 
     public function handle()
     {
-        $this->compose($this->middleware);
-        if ($this->response->finish) return true;
-        $this->compose($this->callable);
+        $scheduler = new Scheduler();
+        $scheduler->add($this->compose($this->middleware));
+        if ($this->response->finish) {
+            return true;
+        }
+
+        $scheduler->add($this->compose($this->callable));
+        $scheduler->run();
+        $this->respond();
+
         return true;
     }
 
@@ -98,30 +110,23 @@ class Router
      */
     public function compose($middleware)
     {
-        $compose = new Compose();
         foreach ($middleware as $md) {
-            $gen = null;
             if (is_array($md)) {
-                if (Util::isIndexArray($md)) {
-                    $this->compose($md);
-                    continue;
-                }
                 foreach ($md as $class => $action) {
                     $ctrl = new $class($this->request, $this->response);
-                    $gen = $ctrl->$action();
+                    yield $ctrl->$action();
                 }
             } else {
-                if (!is_callable($md)) continue;
-                $gen = $md($this->request, $this->response);
+                if (!is_callable($md)) {
+                    continue;
+                }
+                yield $md($this->request, $this->response);
             }
-            if ($gen instanceof \Generator) {
-                $compose->push($gen);
-            }
+
             if ($this->response->finish) {
                 break;
             }
         }
-        $compose->run();
     }
 
 
@@ -130,5 +135,27 @@ class Router
         throw $err;
     }
 
+
+    public static function getScheduler(): Scheduler
+    {
+        if (!static::$scheduler) {
+            static::$scheduler = new Scheduler();
+        }
+
+        return static::$scheduler;
+    }
+
+    public function respond()
+    {
+        $output = $this->response->getContext();
+        $response = $this->context['response'];
+        $headers = $output->getHeaders();
+        foreach($headers as  $key => $header) {
+            list($field, $value) = $header;
+            $response->header($field, $value);
+        }
+
+        return $response->end($output->getBody());
+    }
 
 }

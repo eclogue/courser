@@ -1,6 +1,6 @@
 <?php
 /**
- * @license   https://github.com/Init/licese.md
+ * @license   MIT
  * @copyright Copyright (c) 2017
  * @author    : bugbear
  * @date      : 2017/3/4
@@ -11,13 +11,13 @@ define('ROOT', dirname(dirname(__FILE__)));
 
 require ROOT . '/vendor/autoload.php';
 use Courser\App;
-use Ben\Config;
+//use Ben\Config;
 use Courser\Server\HttpServer;
 
 
 $config = [];
 
-Config::set($config);
+//Config::set($config);
 $app = new App();
 
 $app->used(function($req, $res) {
@@ -28,7 +28,7 @@ $app->used(function($req, $res) {
 $app->used(function($req, $res) {
     $f = function () {
         $i = 0;
-        while ($i < 500000) {
+        while ($i < 50000) {
             $i++;
         }
     };
@@ -42,6 +42,7 @@ $app->used(function($req, $res) {
         yield $i;
         echo "this middleware 3 \n";
     }
+//    $res->json(['test' => 1]);
 });
 $app->used(function($req, $res) {
     echo "this middleware 4 \n";
@@ -50,22 +51,28 @@ $app->used(function($req, $res) {
     var_dump($ret);
     yield 4;
 });
+
+$app->get('/test', function($req, $res) {
+    echo "ffffffuck";
+    $html = "<h1 style='text-align: center;font-size: 8em;margin-top: 20%'>";
+    $html .= "Fuck world</h1>";
+    $res->withHeader('Content-Type', 'text/html')->end($html);
+});
 $app->get('/', function($req, $res) {
     echo "ffffffuck";
     $html = "<h1 style='text-align: center;font-size: 8em;margin-top: 20%'>";
     $html .= "Fuck world</h1>";
-    $res->withHeader('Content-Type', 'text/html')->send($html);
+    $res->withHeader('Content-Type', 'text/html')->end($html);
 });
 $app->post('/', function($req, $res) {
-    var_dump($req->payload('test'));
     $html = "<h1 style='text-align: center;font-size: 8em;margin-top: 20%'>";
     $html .= "Fuck world</h1>";
     $res->withHeader('Content-Type', 'text/html');
-    $res->send($html);
+    $res->end($html);
 });
 $app->used(function($req, $res) {
     $res->withStatus(404)->json([
-        'message' => 'not found',
+        'message' => 'Not Found',
     ]);
 });
 
