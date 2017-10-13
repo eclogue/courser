@@ -12,6 +12,7 @@ namespace Courser;
 use Courser\Http\Request;
 use Courser\Http\Response;
 use Bulrush\Scheduler;
+use PHP_CodeSniffer\Tokenizers\PHP;
 
 class Router
 {
@@ -38,10 +39,13 @@ class Router
         'patch',
     ];
 
-    public function __construct(Request $request, Response $response)
+    public function __construct($req, $res)
     {
-        $this->request = $request;
-        $this->response = $response;
+        $this->request = new Request();
+        $this->response = new Response();
+        $this->request->createRequest($req);
+        $this->context['request'] = $req;
+        $this->context['response'] = $res;
     }
 
     /*
@@ -94,7 +98,6 @@ class Router
 
         $scheduler->add($this->compose($this->callable));
         $scheduler->run();
-
         $this->respond();
 
         return true;
@@ -119,6 +122,7 @@ class Router
                 }
                 yield $md($this->request, $this->response);
             }
+
             if ($this->response->finish) {
                 break;
             }
@@ -152,13 +156,6 @@ class Router
         }
 
         return $response->end($output->getBody());
-    }
-
-
-    public function createContext($req, $res)
-    {
-        $this->context['request'] = $req;
-        $this->context['response'] = $res;
     }
 
 }
