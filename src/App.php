@@ -70,17 +70,7 @@ class App
     public function __construct($env = 'dev')
     {
         $this->env = $env;
-        $container = new Container();
-//        $container['courser.request'] = $container->factory(function ($c) {
-//            return new Request();
-//        });
-//        $container['courser.response'] = $container->factory(function ($c) {
-//            return new Response();
-//        });
-//        $container['courser.router'] = $container->factory(function ($c) {
-//            return new Router($c['courser.request'], $c['courser.response']);
-//        });
-        $this->container = $container;
+        $this->container = new Container();
         spl_autoload_register([$this, 'load'], true, true);
     }
 
@@ -103,7 +93,7 @@ class App
      * @param function | object $callable callable function
      * @return void
      * */
-    public function used(callable $callable)
+    public function used($callable)
     {
         $this->middleware[] = [
             'group' => $this->group,
@@ -169,6 +159,7 @@ class App
         if (empty($this->middleware)) {
             return $md;
         }
+
         $tmp = $this->middleware;
         $apply = array_slice($tmp, 0, $deep);
         foreach ($apply as $index => $middleware) {
@@ -179,6 +170,7 @@ class App
             }
             $md[] = $middleware['middleware'];
         }
+
         return $md;
     }
 
@@ -204,6 +196,7 @@ class App
                     $router->used($middleware);
                 }
             }
+
             $router->method($method);
             $router->add($route['callable']);
             $router->paramNames = array_merge($router->paramNames, $route['params']);
@@ -257,7 +250,7 @@ class App
      * @param function | array
      * @return void
      * */
-    public function get(string $route, callable $callback)
+    public function get(string $route, $callback)
     {
         $this->addRoute('get', $route, $callback);
     }
@@ -270,7 +263,7 @@ class App
      *
      * @return void
      * */
-    public function post(string $route, callable $callback)
+    public function post(string $route, $callback)
     {
         $this->addRoute('post', $route, $callback);
     }
@@ -281,7 +274,7 @@ class App
      * @param function | array
      * @return void
      * */
-    public function put(string $route, callable $callback)
+    public function put(string $route, $callback)
     {
         $this->addRoute('put', $route, $callback);
     }
@@ -292,7 +285,7 @@ class App
      * @param function | array
      * @return void
      * */
-    public function delete(string $route, callable $callback)
+    public function delete(string $route, $callback)
     {
         $this->addRoute('delete', $route, $callback);
     }
@@ -303,13 +296,13 @@ class App
      * @param function | array
      * @return void
      * */
-    public function options(string $route, callable $callback)
+    public function options(string $route, $callback)
     {
         $this->addRoute('options', $route, $callback);
     }
 
     // @fixme
-    public function any(string $route, callable $callback)
+    public function any(string $route, $callback)
     {
         foreach ($this->methods as $method) {
             $this->$method($route, $callback);
@@ -323,7 +316,7 @@ class App
      * @param  callable $callback params same as route
      * @return void
      * */
-    public function notFound(callable $callback)
+    public function notFound($callback)
     {
         $this->notFounds[] = $callback;
     }
@@ -334,7 +327,7 @@ class App
      * @param $env
      * @return void
      */
-    public function error(callable $callback)
+    public function error($callback)
     {
         static::$errors[] = $callback;
     }
@@ -391,6 +384,7 @@ class App
                 if (is_callable([$namespace, 'make'])) {
                     call_user_func_array($namespace . '::make', array($alias, $c));
                 }
+
                 return new $namespace();
             };
         }
