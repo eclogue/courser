@@ -9,10 +9,9 @@
 
 namespace Courser;
 
-use Courser\Http\Request;
-use Courser\Http\Response;
+use Hayrick\Http\Request;
+use Hayrick\Http\Response;
 use Bulrush\Scheduler;
-use PHP_CodeSniffer\Tokenizers\PHP;
 
 class Router
 {
@@ -43,7 +42,7 @@ class Router
     {
         $this->request = new Request();
         $this->response = new Response();
-        $this->request->createRequest($req);
+        $this->request = $this->request->createRequest($req);
         $this->context['request'] = $req;
         $this->context['response'] = $res;
     }
