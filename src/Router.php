@@ -91,6 +91,7 @@ class Router
     {
         $scheduler = new Scheduler();
         $scheduler->add($this->compose($this->middleware));
+        $scheduler->run();
         if ($this->response->finish) {
             return true;
         }
@@ -150,8 +151,7 @@ class Router
         $response = $this->context['response'];
         $headers = $output->getHeaders();
         foreach($headers as  $key => $header) {
-            list($field, $value) = $header;
-            $response->header($field, $value);
+            $response->header($key, $header);
         }
 
         return $response->end($output->getBody());

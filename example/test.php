@@ -20,34 +20,34 @@ $config = [];
 //Config::set($config);
 $app = new App();
 
-$app->used(function($req, $res) {
-    yield;
-    echo "this middleware 1 \n";
-});
-
-$app->used(function($req, $res) {
-    $f = function () {
-        $i = 0;
-        while ($i < 50000) {
-            $i++;
-        }
-    };
-    yield $f();
-    echo "this middleware 2 \n";
-});
-$app->used(function($req, $res) {
-    $i = 5;
-    while($i) {
-        $i--;
-        yield $i;
-        echo "this middleware 3 \n";
-    }
-//    $res->json(['test' => 1]);
-});
-$app->used(function($req, $res) {
-    echo "this middleware 4 \n";
-    yield 4;
-});
+//$app->used(function($req, $res) {
+//    yield;
+//    echo "this middleware 1 \n";
+//});
+//
+//$app->used(function($req, $res) {
+//    $f = function () {
+//        $i = 0;
+//        while ($i < 50000) {
+//            $i++;
+//        }
+//    };
+//    yield $f();
+//    echo "this middleware 2 \n";
+//});
+//$app->used(function($req, $res) {
+//    $i = 5;
+//    while($i) {
+//        $i--;
+//        yield $i;
+//        echo "this middleware 3 \n";
+//    }
+////    $res->json(['test' => 1]);
+//});
+//$app->used(function($req, $res) {
+//    echo "this middleware 4 \n";
+//    yield 4;
+//});
 
 $app->get('/test', function($req, $res) {
     $html = "<h1 style='text-align: center;font-size: 8em;margin-top: 20%'>";
@@ -56,9 +56,7 @@ $app->get('/test', function($req, $res) {
 });
 $app->get('/', function($req, $res) {
     var_dump($req->getQuery('page'));
-    $html = "<h1 style='text-align: center;font-size: 8em;margin-top: 20%'>";
-    $html .= "Fuck world</h1>";
-    $res->withHeader('Content-Type', 'text/html')->end(1);
+    $res->json(['fuck' => 'world']);
 });
 $app->post('/', function($req, $res) {
     $html = "<h1 style='text-align: center;font-size: 8em;margin-top: 20%'>";
