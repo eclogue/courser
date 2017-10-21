@@ -10,13 +10,12 @@
 namespace Courser\Tests;
 
 use Courser\Router;
-use RuntimeException;
-use PHPUnit\Framework\Exception;
 use PHPUnit\Framework\TestCase;
-use Courser\Http\Request;
-use Courser\Http\Response;
+use Hayrick\Http\Request;
+use Hayrick\Http\Response;
 use Courser\Tests\Stub\Request as StubRequest;
 use Courser\Tests\Stub\Response as StubResponse;
+use Bulrush\Scheduler;
 
 
 class RouterTest extends TestCase
@@ -28,10 +27,8 @@ class RouterTest extends TestCase
 
     public function setUp()
     {
-        $this->request = new Request();
-        $this->request->createRequest(new StubRequest());
-        $response = new Response();
-        $this->response = $response->createResponse(new StubResponse());
+        $this->request = new StubRequest();
+        $this->response = new StubResponse();
 
     }
 
@@ -61,7 +58,12 @@ class RouterTest extends TestCase
         $mock->expects($this->once())
             ->method('setParam')
             ->with($this->equalTo('key'), $this->equalTo('value'));
-        $router = new Router($mock, $this->response);
+        $router = new Router($this->request, $this->response);
+        $replace = function () use ($mock) {
+            $this->request = $mock;
+        };
+        $replace = $replace->bindTo($router, Router::class);
+        $replace();
         $router->setParam('key', 'value');
     }
 
@@ -80,21 +82,20 @@ class RouterTest extends TestCase
             $res->end();
         };
         $router->add([$md]);
-        $router->compose($router->callable);
+        $gen = $router->compose($router->callable);
+        $this->assertInstanceOf(\Generator::class, $gen);
+        $scheduler = new Scheduler();
+        $scheduler->add($gen);
+        $scheduler->run();
         $this->assertEquals($router->response->finish, true);
-        list($request, $response) = $this->serverProvider();
-        $router = new Router($request, $response);
-        $md = 'string';
-        $router->compose([$md]);
-        $this->assertEquals($router->response->finish, false);
         $md = function ($req, $res) {
             $res->end();
         };
         $mds = [$md, $md];
         list($request, $response) = $this->serverProvider();
         $router = new Router($request, $response);
-        $router->compose([$mds]);
-//        $this->expectException(\RuntimeException::class);
+        $scheduler->add($router->compose($mds));
+        $scheduler->run();
         $this->assertEquals($router->response->finish, true);
     }
 
@@ -103,7 +104,6 @@ class RouterTest extends TestCase
         $request = new Request();
         $request->createRequest(new StubRequest());
         $response = new Response();
-        $response = $response->createResponse(new StubResponse());
         return [$request, $response];
     }
 

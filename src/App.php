@@ -10,6 +10,8 @@ namespace Courser;
 
 use Pimple\Container;
 use RuntimeException;
+use Hayrick\Http\Request;
+use Hayrick\Http\Response;
 
 class App
 {
@@ -339,10 +341,9 @@ class App
      */
     public function handleError($req, $res, $err)
     {
-        $request = $this->container['courser.request'];
+        $request = new Request();
         $request = $request->createRequest($req);
-        $response = $this->container['courser.response'];
-        $response = $response->createResponse($res);
+        $response = new Response();
         if (empty(static::$errors)) {
             throw $err;
         }
