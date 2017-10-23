@@ -1,5 +1,7 @@
 # Course
 
+![](https://travis-ci.org/racecourse/courser.svg?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/racecourse/courser/badge.svg)](https://coveralls.io/github/racecourse/courser)
 [![Build Status](https://travis-ci.org/eclogue/courser.svg?branch=master)](https://travis-ci.org/eclogue/courser)
 [![Coverage Status](https://coveralls.io/repos/github/eclogue/courser/badge.svg)](https://coveralls.io/github/eclogue/courser)
 [![Latest Stable Version](https://poser.pugx.org/eclogue/courser/version)](https://packagist.org/packages/eclogue/courser)

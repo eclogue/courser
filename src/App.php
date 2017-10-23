@@ -8,12 +8,10 @@
  */
 namespace Courser;
 
-use Courser\Helper\Util;
-use Courser\Http\Request;
-use Courser\Http\Response;
 use Pimple\Container;
 use RuntimeException;
-use SebastianBergmann\CodeCoverage\Report\PHP;
+use Hayrick\Http\Request;
+use Hayrick\Http\Response;
 
 class App
 {
@@ -74,17 +72,7 @@ class App
     public function __construct($env = 'dev')
     {
         $this->env = $env;
-        $container = new Container();
-        $container['courser.request'] = function ($c) {
-            return new Request();
-        };
-        $container['courser.response'] = function ($c) {
-            return new Response();
-        };
-        $container['courser.router'] = $container->factory(function ($c) {
-            return new Router($c['courser.request'], $c['courser.response']);
-        });
-        $this->container = $container;
+        $this->container = new Container();
         spl_autoload_register([$this, 'load'], true, true);
     }
 
@@ -96,9 +84,9 @@ class App
      * */
     public function createContext($req, $res)
     {
-        $router = $this->container['courser.router'];
-        $router->response = $router->response->createResponse($res);
-        $router->request = $router->request->createRequest($req);
+        $router = new Router($req, $res);
+//        $router->createContext($req, $res);
+
         return $router;
     }
 
@@ -141,7 +129,7 @@ class App
      * @param string $route
      * @param callable $callback
      */
-    public function addRoute(string $method, string $route, $callback)
+    public function addRoute(string $method, string $route, ...$callback)
     {
         $method = strtolower($method);
         $route = trim($this->group . $route, '/');
@@ -152,7 +140,6 @@ class App
         if ($pattern) {
             $pattern = '#^' . $pattern . '$#';
         }
-        $callback = Util::isIndexArray($callback) ? $callback : [$callback];
         $this->routes[$method][] = [
             'route' => $route,
             'params' => $params,
@@ -167,13 +154,14 @@ class App
      * @param int $deep
      * @return array
      */
-    public function mapMiddleware($uri, $deep = 1)
+    public function mapMiddleware(string $uri, int $deep = 1)
     {
         $deep = $deep > 0 ? $deep : 1;
         $md = [];
         if (empty($this->middleware)) {
             return $md;
         }
+
         $tmp = $this->middleware;
         $apply = array_slice($tmp, 0, $deep);
         foreach ($apply as $index => $middleware) {
@@ -184,6 +172,7 @@ class App
             }
             $md[] = $middleware['middleware'];
         }
+
         return $md;
     }
 
@@ -193,7 +182,7 @@ class App
      * @param string $router
      * @return mixed
      */
-    public function mapRoute($method, $uri, $router)
+    public function mapRoute(string $method, string $uri, Router $router): Router
     {
         $method = strtolower($method);
         $routes = $this->routes[$method] ?? [];
@@ -202,12 +191,14 @@ class App
             if (empty($match)) {
                 continue;
             }
+
             if ($route['scope']) {
                 $middleware = $this->mapMiddleware($uri, $route['scope']);
                 if (!empty($middleware)) {
                     $router->used($middleware);
                 }
             }
+
             $router->method($method);
             $router->add($route['callable']);
             $router->paramNames = array_merge($router->paramNames, $route['params']);
@@ -219,6 +210,7 @@ class App
                 }
             }
         }
+
         if (empty($router->callable)) {
             foreach ($this->middleware as $key => $md) {
                 if ($md['group'] === '/') {
@@ -226,14 +218,15 @@ class App
                 }
             }
         }
+
         return $router;
     }
 
     /**
-     * @param $route
+     * @param $route string
      * @return array
      */
-    private function getPattern($route)
+    private function getPattern(string $route): array
     {
         $params = [];
         $regex = preg_replace_callback('#:([\w]+)|{([\w]+)}|(\*)#',
@@ -248,6 +241,7 @@ class App
                 return "(?P<$name>[$type]+)";
             },
             $route);
+
         return [$regex, $params];
     }
 
@@ -258,7 +252,7 @@ class App
      * @param function | array
      * @return void
      * */
-    public function get($route, $callback)
+    public function get(string $route, $callback)
     {
         $this->addRoute('get', $route, $callback);
     }
@@ -271,7 +265,7 @@ class App
      *
      * @return void
      * */
-    public function post($route, $callback)
+    public function post(string $route, $callback)
     {
         $this->addRoute('post', $route, $callback);
     }
@@ -282,7 +276,7 @@ class App
      * @param function | array
      * @return void
      * */
-    public function put($route, $callback)
+    public function put(string $route, $callback)
     {
         $this->addRoute('put', $route, $callback);
     }
@@ -293,7 +287,7 @@ class App
      * @param function | array
      * @return void
      * */
-    public function delete($route, $callback)
+    public function delete(string $route, $callback)
     {
         $this->addRoute('delete', $route, $callback);
     }
@@ -304,13 +298,13 @@ class App
      * @param function | array
      * @return void
      * */
-    public function options($route, $callback)
+    public function options(string $route, $callback)
     {
         $this->addRoute('options', $route, $callback);
     }
 
     // @fixme
-    public function any($route, $callback)
+    public function any(string $route, $callback)
     {
         foreach ($this->methods as $method) {
             $this->$method($route, $callback);
@@ -347,10 +341,9 @@ class App
      */
     public function handleError($req, $res, $err)
     {
-        $request = $this->container['courser.request'];
-        $request->createRequest($req);
-        $response = $this->container['courser.response'];
-        $response->createResponse($res);
+        $request = new Request();
+        $request = $request->createRequest($req);
+        $response = new Response();
         if (empty(static::$errors)) {
             throw $err;
         }
@@ -365,7 +358,7 @@ class App
      * @param array $env
      * @return void
      * */
-    public function run($uri)
+    public function run(string $uri)
     {
         $uri = $uri ?: '/';
         return function ($req, $res) use ($uri) {
@@ -383,7 +376,7 @@ class App
      *
      * @param $loader
      */
-    public function import($loader)
+    public function import(array $loader)
     {
         $this->loader = $loader;
         foreach ($loader as $alias => $namespace) {
@@ -392,6 +385,7 @@ class App
                 if (is_callable([$namespace, 'make'])) {
                     call_user_func_array($namespace . '::make', array($alias, $c));
                 }
+
                 return new $namespace();
             };
         }
@@ -402,7 +396,7 @@ class App
      * @param $className 加载的类名，文件名需和类名一致
      * @return include file;
      * */
-    public function load($class)
+    public function load(string $class)
     {
         $alias = $this->loader;
         if (isset($alias[$class])) {
@@ -424,7 +418,7 @@ class App
      * @param $name
      * @return string
      */
-    private function alias($name)
+    private function alias(string $name)
     {
         return 'courser.loader.' . $name;
     }

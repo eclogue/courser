@@ -20,7 +20,7 @@ class HttpServer
 
     protected $daemonzie = true;
 
-    protected $server = '';
+    protected $server;
 
     protected $host = '127.0.0.1';
 
