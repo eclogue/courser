@@ -92,12 +92,11 @@ class Router
         $scheduler = new Scheduler();
         $scheduler->add($this->compose($this->middleware));
         $scheduler->run();
-        if ($this->response->finish) {
-            return true;
+        if (!$this->response->isFinish()) {
+            $scheduler->add($this->compose($this->callable));
+            $scheduler->run();
         }
 
-        $scheduler->add($this->compose($this->callable));
-        $scheduler->run();
         $this->respond();
 
         return true;
@@ -123,7 +122,7 @@ class Router
                 yield $md($this->request, $this->response);
             }
 
-            if ($this->response->finish) {
+            if ($this->response->isFinish()) {
                 break;
             }
         }
