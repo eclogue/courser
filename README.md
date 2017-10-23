@@ -2,12 +2,18 @@
 
 ![](https://travis-ci.org/racecourse/courser.svg?branch=master)
 [![Coverage Status](https://coveralls.io/repos/github/racecourse/courser/badge.svg)](https://coveralls.io/github/racecourse/courser)
+[![Build Status](https://travis-ci.org/eclogue/courser.svg?branch=master)](https://travis-ci.org/eclogue/courser)
+[![Coverage Status](https://coveralls.io/repos/github/eclogue/courser/badge.svg)](https://coveralls.io/github/eclogue/courser)
+[![Latest Stable Version](https://poser.pugx.org/eclogue/courser/version)](https://packagist.org/packages/eclogue/courser)
+[![Total Downloads](https://poser.pugx.org/eclogue/courser/downloads)](https://packagist.org/packages/eclogue/courser)
+[![License](https://poser.pugx.org/eclogue/courser/license)](https://packagist.org/packages/eclogue/courser)
 
-A fast and lighter PHP micro framework and follow the psr-7 spec.  I believe that 
- `entities should not be multiplied unnecessarily.` Courser born with natural beauty.
+
+A project designed for my blog. Follow the psr-7 spec. I believe that 
+`entities should not be multiplied unnecessarily.` 
 
 ### Installation
-`composer require racecourse/courser` or git clone https://github.com/racecourse/courser
+`composer require eclogue/courser` or git clone https://github.com/eclogue/courser
 
 ### Get start
 
@@ -135,17 +141,12 @@ $app->error(function ($req, $res, Exception $err) {
 ```
 
 ### Develop
- I have write a tool for develop courser app [gharry](https://github.com/racecourse/gharry)
+ I have write a tool for develop courser app [gharry](https://github.com/eclogue/gharry)
  It watch project file change and auto reload your server.
- [Ben](https://github.com/racecourse/ben) is a convenient config manager， I recommend use Ben to manage use config file.
+ [Ben](https://github.com/eclogue/ben) is a convenient config manager， I recommend use Ben to manage use config file.
 
 ### Benchmark
- Just for fun.
- 
- 
- Env: docker on mac, ubuntu16.10 PHP 7.0.15-0ubuntu0.16.04.4 (cli) ( NTS )
- 
- util: apache ab
+    Higher than php-fpm.
 >
 ```
 Requests per second:    9801.09 [#/sec] (mean)
@@ -155,9 +156,9 @@ Requests per second:    9801.09 [#/sec] (mean)
 ### Community
 
  - [中文文档](https://superbogy.gitbooks.io/courser/content/)
- - [English document]()
- - [Example]()
- - [FAQ](https://github.com/shipmen/Course/issues)
+ - ~~[English document]()~~~
+ - [Example](https://github.com/eclogue/knight)
+ - [issue](https://github.com/shipmen/Course/issues)
  
 ### Coding...
 
