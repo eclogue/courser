@@ -9,10 +9,9 @@
 
 namespace Courser;
 
-use Courser\Http\Request;
-use Courser\Http\Response;
+use Hayrick\Http\Request;
+use Hayrick\Http\Response;
 use Bulrush\Scheduler;
-use PHP_CodeSniffer\Tokenizers\PHP;
 
 class Router
 {
@@ -43,7 +42,7 @@ class Router
     {
         $this->request = new Request();
         $this->response = new Response();
-        $this->request->createRequest($req);
+        $this->request = $this->request->createRequest($req);
         $this->context['request'] = $req;
         $this->context['response'] = $res;
     }
@@ -92,12 +91,12 @@ class Router
     {
         $scheduler = new Scheduler();
         $scheduler->add($this->compose($this->middleware));
-        if ($this->response->finish) {
-            return true;
+        $scheduler->run();
+        if (!$this->response->isFinish()) {
+            $scheduler->add($this->compose($this->callable));
+            $scheduler->run();
         }
 
-        $scheduler->add($this->compose($this->callable));
-        $scheduler->run();
         $this->respond();
 
         return true;
@@ -123,7 +122,7 @@ class Router
                 yield $md($this->request, $this->response);
             }
 
-            if ($this->response->finish) {
+            if ($this->response->isFinish()) {
                 break;
             }
         }
@@ -151,8 +150,7 @@ class Router
         $response = $this->context['response'];
         $headers = $output->getHeaders();
         foreach($headers as  $key => $header) {
-            list($field, $value) = $header;
-            $response->header($field, $value);
+            $response->header($key, $header);
         }
 
         return $response->end($output->getBody());

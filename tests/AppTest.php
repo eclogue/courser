@@ -20,12 +20,12 @@ use Courser\Tests\Stub\Response as StubResponse;
 class AppTest extends TestCase
 {
 
-    public function testContainer()
-    {
-        $app = new App();
-        $this->assertInstanceOf('Courser\Http\Request', $app->container['courser.request']);
-        $this->assertInstanceOf('Courser\Http\Response', $app->container['courser.response']);
-    }
+//    public function testContainer()
+//    {
+//        $app = new App();
+//        $this->assertInstanceOf('Courser\Http\Request', $app->container['courser.request']);
+//        $this->assertInstanceOf('Courser\Http\Response', $app->container['courser.response']);
+//    }
 
     public function testCreateContext()
     {
@@ -229,8 +229,8 @@ class AppTest extends TestCase
         $app = new App();
         $self = $this;
         $handle = function ($req, $res, $err) use ($self) {
-            $self->assertInstanceOf(\Courser\Http\Request::class, $req);
-            $self->assertInstanceOf(\Courser\Http\Response::class, $res);
+            $self->assertInstanceOf(\Hayrick\Http\Request::class, $req);
+            $self->assertInstanceOf(\Hayrick\Http\Response::class, $res);
             $self->assertInstanceOf(\Exception::class, $err);
         };
         $handle = $handle->bindTo($app, $app);
@@ -301,6 +301,7 @@ class AppTest extends TestCase
         $req->server['request_method'] = $method;
         $req->server['request_uri'] = $uri;
         $req->files = [];
+
         return $req;
     }
 
