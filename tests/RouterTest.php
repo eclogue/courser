@@ -87,7 +87,7 @@ class RouterTest extends TestCase
         $scheduler = new Scheduler();
         $scheduler->add($gen);
         $scheduler->run();
-        $this->assertEquals($router->response->finish, true);
+        $this->assertEquals($router->response->isFinish(), true);
         $md = function ($req, $res) {
             $res->end();
         };
@@ -96,7 +96,7 @@ class RouterTest extends TestCase
         $router = new Router($request, $response);
         $scheduler->add($router->compose($mds));
         $scheduler->run();
-        $this->assertEquals($router->response->finish, true);
+        $this->assertEquals($router->response->isFinish(), true);
     }
 
     public function serverProvider()
