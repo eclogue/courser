@@ -35,6 +35,7 @@ install:
 script:
   - mkdir -p build/logs
   - vendor/bin/phpunit
+  - vendor/bin/phpcs
 
 after_success:
   - travis_retry php vendor/bin/coveralls
