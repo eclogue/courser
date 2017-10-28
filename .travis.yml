@@ -49,11 +49,11 @@ script:
 #  - vendor/bin/phpunit
 #  - vendor/bin/phpcs
   - if [[ "$ANALYSIS" != 'true' ]]; then vendor/bin/phpunit ; fi
-#  - if [[ "$ANALYSIS" == 'true' ]]; then vendor/bin/phpunit --coverage-clover clover.xml ; fi
+  - if [[ "$ANALYSIS" == 'true' ]]; then vendor/bin/phpunit --coverage-clover clover.xml ; fi
   - if [[ "$ANALYSIS" == 'true' ]]; then vendor/bin/phpcs ; fi
 
 after_success:
-  - if [[ "$ANALYSIS" == 'true' ]]; then php vendor/bin/coveralls -v ; fi
+  - if [[ "$ANALYSIS" == 'true' ]]; then php vendor/bin/coveralls --coverage_clover=clover.xml -v ; fi
 
 notifications:
   slack: eclogue:QxiUd6aEHYK6K7n7PHNxS4tp
