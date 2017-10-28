@@ -9,7 +9,6 @@
 
 namespace Courser\Traits;
 
-
 trait Facade
 {
     public static $container = [];

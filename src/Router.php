@@ -54,7 +54,7 @@ class Router
     {
         if (is_array($callback)) {
             $this->callable = array_merge($this->callable, $callback);
-        } else if (!in_array($callback, $this->callable)) {
+        } elseif (!in_array($callback, $this->callable)) {
             $this->callable[] = $callback;
         }
     }
@@ -149,11 +149,10 @@ class Router
         $output = $this->response->getContext();
         $response = $this->context['response'];
         $headers = $output->getHeaders();
-        foreach($headers as  $key => $header) {
+        foreach ($headers as $key => $header) {
             $response->header($key, $header);
         }
 
         return $response->end($output->getBody());
     }
-
 }

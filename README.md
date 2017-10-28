@@ -1,7 +1,4 @@
 # Course
-
-![](https://travis-ci.org/racecourse/courser.svg?branch=master)
-[![Coverage Status](https://coveralls.io/repos/github/racecourse/courser/badge.svg)](https://coveralls.io/github/racecourse/courser)
 [![Build Status](https://travis-ci.org/eclogue/courser.svg?branch=master)](https://travis-ci.org/eclogue/courser)
 [![Coverage Status](https://coveralls.io/repos/github/eclogue/courser/badge.svg)](https://coveralls.io/github/eclogue/courser)
 [![Latest Stable Version](https://poser.pugx.org/eclogue/courser/version)](https://packagist.org/packages/eclogue/courser)
@@ -9,7 +6,7 @@
 [![License](https://poser.pugx.org/eclogue/courser/license)](https://packagist.org/packages/eclogue/courser)
 
 
-A project designed for my blog. Follow the psr-7 spec. I believe that 
+A minimalist web framework. I believe that 
 `entities should not be multiplied unnecessarily.` 
 
 ### Installation
@@ -34,7 +31,7 @@ $config = [
     ],
 ];
 Config::set($config);
-$app = new App('dev');
+$app = new App();
 $app->use(function($req, $res) {
    yield;
    echo "this middleware 1 \n";
@@ -97,8 +94,7 @@ $app->group('/admin/{username}',  function() {
 ```
  
 ### Middleware
->  Course's middleware look like [koa](https://github.com/koajs/koa).In koa, everything is middleware,
-   but Courser split middleware and user business. 
+>  Course's middleware look like [koa](https://github.com/koajs/koa).
    A middleware must be a callable function or a instance that have `__invoke` function;
 
 ```php
@@ -140,18 +136,26 @@ $app->error(function ($req, $res, Exception $err) {
 
 ```
 
+### Coroutine
+  Courser support write coroutine application in easy way. If you are not familiar with php coroutine, it does'nt matter,
+  Courser had already do everything. you just use `yield` keyword  to let process gives up its time slice. 
+  ```
+    // a middleware
+    function middleware($req, $res) {
+        $userId = $req->getParam('userId');
+        $model = new User();
+        $user = yield $model->findById($userId);
+        var_dump($user);
+    }
+  ```
+
 ### Develop
- I have write a tool for develop courser app [gharry](https://github.com/eclogue/gharry)
+ Here is a tool to help you write web app [gharry](https://github.com/eclogue/gharry)
  It watch project file change and auto reload your server.
  [Ben](https://github.com/eclogue/ben) is a convenient config manager， I recommend use Ben to manage use config file.
 
 ### Benchmark
     Higher than php-fpm.
->
-```
-Requests per second:    9801.09 [#/sec] (mean)
-```
-
 
 ### Community
 

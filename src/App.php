@@ -229,7 +229,8 @@ class App
     private function getPattern(string $route): array
     {
         $params = [];
-        $regex = preg_replace_callback('#:([\w]+)|{([\w]+)}|(\*)#',
+        $regex = preg_replace_callback(
+            '#:([\w]+)|{([\w]+)}|(\*)#',
             function ($match) use (&$params) {
                 $name = array_pop($match);
                 $type = $match[0][0];
@@ -240,7 +241,8 @@ class App
                 $params[] = $name;
                 return "(?P<$name>[$type]+)";
             },
-            $route);
+            $route
+        );
 
         return [$regex, $params];
     }
@@ -383,7 +385,7 @@ class App
             $alias = $this->alias($alias);
             $this->container[$alias] = function ($c) use ($alias, $namespace) {
                 if (is_callable([$namespace, 'make'])) {
-                    call_user_func_array($namespace . '::make', array($alias, $c));
+                    call_user_func_array($namespace . '::make', [$alias, $c]);
                 }
 
                 return new $namespace();
