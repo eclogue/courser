@@ -1,6 +1,6 @@
 # Course
 [![Build Status](https://travis-ci.org/eclogue/courser.svg?branch=master)](https://travis-ci.org/eclogue/courser)
-[![Coverage Status](https://coveralls.io/repos/github/eclogue/courser/badge.svg)](https://coveralls.io/github/eclogue/courser)
+[![Coverage Status](https://coveralls.io/repos/github/eclogue/courser/badge.svg?branch=master)](https://coveralls.io/github/eclogue/courser?branch=master)
 [![Latest Stable Version](https://poser.pugx.org/eclogue/courser/version)](https://packagist.org/packages/eclogue/courser)
 [![Total Downloads](https://poser.pugx.org/eclogue/courser/downloads)](https://packagist.org/packages/eclogue/courser)
 [![License](https://poser.pugx.org/eclogue/courser/license)](https://packagist.org/packages/eclogue/courser)
