@@ -12,6 +12,7 @@ namespace Courser;
 use Hayrick\Http\Request;
 use Hayrick\Http\Response;
 use Bulrush\Scheduler;
+use Generator;
 
 class Router
 {
@@ -38,6 +39,7 @@ class Router
         'patch',
     ];
 
+
     public function __construct($req, $res)
     {
         $this->request = new Request();
@@ -45,6 +47,8 @@ class Router
         $this->request = $this->request->createRequest($req);
         $this->context['request'] = $req;
         $this->context['response'] = $res;
+        self::$scheduler = new Scheduler();
+
     }
 
     /*
@@ -53,9 +57,9 @@ class Router
     public function add($callback)
     {
         if (is_array($callback)) {
-            $this->callable = array_merge($this->callable, $callback);
+            $this->middleware = array_merge($this->callable, $callback);
         } elseif (!in_array($callback, $this->callable)) {
-            $this->callable[] = $callback;
+            $this->middleware[] = $callback;
         }
     }
 
@@ -89,17 +93,23 @@ class Router
 
     public function handle()
     {
-        $scheduler = new Scheduler();
-        $scheduler->add($this->compose($this->middleware));
-        $scheduler->run();
-        if (!$this->response->isFinish()) {
-            $scheduler->add($this->compose($this->callable));
-            $scheduler->run();
+        $response = $this->dispatch($this->request);
+        if ($response instanceof $response) {
+            return $this->respond();
         }
 
-        $this->respond();
+        self::$scheduler->run();
+        return $this->respond();
 
-        return true;
+//        $scheduler->add($this->compose($this->middleware));
+//        $scheduler->run();
+//        if (!$this->response->isFinish()) {
+//            $scheduler->add($this->compose($this->callable));
+//            $scheduler->run();
+//        }
+//
+//
+//        return true;
     }
 
     /**
@@ -112,20 +122,46 @@ class Router
         foreach ($middleware as $md) {
             if (is_array($md)) {
                 foreach ($md as $class => $action) {
-                    $ctrl = new $class($this->request, $this->response);
-                    yield $ctrl->$action();
+                    $ctrl = new $class($this->request);
+                    yield $ctrl->$action($this->request);
                 }
             } else {
                 if (!is_callable($md)) {
                     continue;
                 }
-                yield $md($this->request, $this->response);
+                yield $md($this->request);
             }
 
             if ($this->response->isFinish()) {
                 break;
             }
         }
+    }
+
+    public function dispatch($request)
+    {
+        echo '++++++++++ count:' . count($this->middleware) . PHP_EOL;
+        if (empty($this->middleware)) {
+            return null;
+        }
+        $md = array_shift($this->middleware);
+        $pass = $md($request, function ($request) {
+            echo '--------> next' .PHP_EOL;
+            $this->dispatch($request);
+        });
+
+        if ($pass instanceof Generator) {
+            self::$scheduler->add($pass);
+        } elseif ($pass instanceof Response) {
+            return $this->response = $pass;
+        }
+
+        return null;
+    }
+
+    public function __invoke()
+    {
+
     }
 
 
@@ -146,13 +182,14 @@ class Router
 
     public function respond()
     {
-        $output = $this->response->getContext();
+        $output = $this->response ?? new Response();
         $response = $this->context['response'];
         $headers = $output->getHeaders();
         foreach ($headers as $key => $header) {
             $response->header($key, $header);
         }
 
-        return $response->end($output->getBody());
+
+        return $response->end($output->getContext());
     }
 }
