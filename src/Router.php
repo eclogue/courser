@@ -43,7 +43,6 @@ class Router
     public function __construct($req, $res)
     {
         $this->request = new Request();
-        $this->response = new Response();
         $this->request = $this->request->createRequest($req);
         $this->context['request'] = $req;
         $this->context['response'] = $res;
@@ -57,8 +56,8 @@ class Router
     public function add($callback)
     {
         if (is_array($callback)) {
-            $this->middleware = array_merge($this->callable, $callback);
-        } elseif (!in_array($callback, $this->callable)) {
+            $this->middleware = array_merge($this->middleware, $callback);
+        } elseif (!in_array($callback, $this->middleware)) {
             $this->middleware[] = $callback;
         }
     }
@@ -93,70 +92,50 @@ class Router
 
     public function handle()
     {
-        $response = $this->dispatch($this->request);
-        if ($response instanceof $response) {
-            return $this->respond();
-        }
+        $this->compose($this->request);
 
-        self::$scheduler->run();
         return $this->respond();
-
-//        $scheduler->add($this->compose($this->middleware));
-//        $scheduler->run();
-//        if (!$this->response->isFinish()) {
-//            $scheduler->add($this->compose($this->callable));
-//            $scheduler->run();
-//        }
-//
-//
-//        return true;
     }
 
-    /**
-     * handle request stack
-     *
-     * @param $middleware
-     */
-    public function compose($middleware)
-    {
-        foreach ($middleware as $md) {
-            if (is_array($md)) {
-                foreach ($md as $class => $action) {
-                    $ctrl = new $class($this->request);
-                    yield $ctrl->$action($this->request);
-                }
-            } else {
-                if (!is_callable($md)) {
-                    continue;
-                }
-                yield $md($this->request);
-            }
 
-            if ($this->response->isFinish()) {
-                break;
-            }
-        }
-    }
-
-    public function dispatch($request)
+    public function compose($request)
     {
-        echo '++++++++++ count:' . count($this->middleware) . PHP_EOL;
+//        echo '++++++++++ count:' . count($this->middleware) . PHP_EOL;
         if (empty($this->middleware)) {
-            return null;
+            self::$scheduler->run();
+            return $this->response;
         }
-        $md = array_shift($this->middleware);
-        $pass = $md($request, function ($request) {
-            echo '--------> next' .PHP_EOL;
-            $this->dispatch($request);
-        });
 
+        $md = array_shift($this->middleware);
+        $pass = null;
+        $next = function ($request) {
+            echo '--------> next' . PHP_EOL;
+            return $this->compose($request);
+        };
+
+        if (is_callable($md)) {
+            $pass = $md($request, $next);
+        }
+
+        if (is_array($md)) {
+            list($class, $action) = $md;
+            $instance = is_object($class) ?? new $class();
+            $pass = $instance->$action($request, $next);
+        }
+
+//        var_dump($pass);
         if ($pass instanceof Generator) {
             self::$scheduler->add($pass);
+            $next($request);
         } elseif ($pass instanceof Response) {
-            return $this->response = $pass;
+            $this->response = $pass;
+        } else {
+            $response = new Response();
+            $response->write($pass);
+            $this->response = $response;
         }
 
-        return null;
+        return $this->response;
     }
 
     public function __invoke()
