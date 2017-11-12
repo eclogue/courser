@@ -56,9 +56,9 @@ class Router
     public function add($callback)
     {
         if (is_array($callback)) {
-            $this->middleware = array_merge($this->middleware, $callback);
-        } elseif (!in_array($callback, $this->middleware)) {
-            $this->middleware[] = $callback;
+            $this->callable = array_merge($this->callable, $callback);
+        } elseif (!in_array($callback, $this->callable)) {
+            $this->callable[] = $callback;
         }
     }
 
@@ -92,7 +92,10 @@ class Router
 
     public function handle()
     {
+        $this->middleware = array_merge($this->middleware, $this->callable);
         $this->compose($this->request);
+
+        self::$scheduler->run();
 
         return $this->respond();
     }
@@ -102,14 +105,13 @@ class Router
     {
 //        echo '++++++++++ count:' . count($this->middleware) . PHP_EOL;
         if (empty($this->middleware)) {
-            self::$scheduler->run();
             return $this->response;
         }
 
         $md = array_shift($this->middleware);
         $pass = null;
         $next = function ($request) {
-            echo '--------> next' . PHP_EOL;
+//            echo '--------> next' . PHP_EOL;
             return $this->compose($request);
         };
 
@@ -124,9 +126,9 @@ class Router
         }
 
 //        var_dump($pass);
-        if ($pass instanceof Generator) {
+        if ($pass instanceof Generator && $pass->valid()) {
             self::$scheduler->add($pass);
-            $next($request);
+            return $next($request);
         } elseif ($pass instanceof Response) {
             $this->response = $pass;
         } else {
