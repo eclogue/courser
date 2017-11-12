@@ -24,13 +24,19 @@ $config = [];
 $app = new App();
 $app->used(function ($req, $next) {
     echo 'this is 1' . PHP_EOL;
-    $next($req);
+    return $next($req);
 });
 $app->used(function ($req, $next) {
     echo 'this is 2222' . PHP_EOL;
-    yield $next($req);
-});
+    $response = yield $next($req);
+    var_dump('>>@@>>', $response);
 
+    return $response;
+});
+$app->get('/', function ($req, $next) {
+    echo 'this is 2222' . PHP_EOL;
+    return 123;
+});
 $app->error(function ($req, $res, $err) {
     $res->withStatus(500)->json([
         'message' => $err->getMessage(),
