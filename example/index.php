@@ -35,8 +35,8 @@ $app->used(function ($req, $next) {
 
     return $response;
 });
-$app->get('/', function ($req, $next) {
-    echo 'this is 22224444' . PHP_EOL;
+$app->get('/', function () {
+    echo 'this is 333333' . PHP_EOL;
     return 123;
 });
 $app->error(function ($req, $res, $err) {
