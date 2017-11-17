@@ -37,7 +37,7 @@ $app->used(function ($req, $next) {
 });
 $app->get('/', function () {
     echo 'this is 333333' . PHP_EOL;
-    return 123;
+    return (new \Hayrick\Http\Response())->json(['data' => 1]);
 });
 $app->error(function ($req, $res, $err) {
     $res->withStatus(500)->json([
