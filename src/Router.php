@@ -30,6 +30,8 @@ class Router
 
     protected static $scheduler;
 
+    protected $stack = [];
+
     public static $allowMethods = [
         'get',
         'post',
@@ -42,8 +44,8 @@ class Router
 
     public function __construct($req, $res)
     {
-        $this->request = new Request();
-        $this->request = $this->request->createRequest($req);
+        $request = new Request();
+        $this->request = $request->createRequest($req);
         $this->context['request'] = $req;
         $this->context['response'] = $res;
         self::$scheduler = new Scheduler();
@@ -93,9 +95,16 @@ class Router
     public function handle()
     {
         $this->middleware = array_merge($this->middleware, $this->callable);
+        $this->middleware = array_reverse($this->middleware);
         $this->compose($this->request);
-
-        self::$scheduler->run();
+        $response = self::$scheduler->run();
+        if ($response instanceof Response) {
+            $this->response = $response;
+        } else {
+            $res = new Response();
+//            $response->write($response);
+            $this->response = $res;
+        }
 
         return $this->respond();
     }
@@ -103,38 +112,29 @@ class Router
 
     public function compose($request)
     {
-//        echo '++++++++++ count:' . count($this->middleware) . PHP_EOL;
-        if (empty($this->middleware)) {
-            return $this->response;
-        }
+        while (!empty($this->middleware)) {
+            $md = array_pop($this->middleware);
+            $pass = null;
+            $next = function ($request) {
+                return $this->compose($request);
+            };
 
-        $md = array_shift($this->middleware);
-        $pass = null;
-        $next = function ($request) {
-//            echo '--------> next' . PHP_EOL;
-            return $this->compose($request);
-        };
+            $response = null;
+            if (is_callable($md)) {
+                $response = $md($request, $next);
+            } elseif (is_array($md)) {
+                list($class, $action) = $md;
+                $instance = is_object($class) ? $class : new $class();
+                $response = $instance->$action($request, $next);
+            }
 
-        if (is_callable($md)) {
-            $pass = $md($request, $next);
-        }
+            if ($response instanceof Generator && $response->valid()) {
+                self::$scheduler->add($response, true);
+                continue;
+            }
 
-        if (is_array($md)) {
-            list($class, $action) = $md;
-            $instance = is_object($class) ?? new $class();
-            $pass = $instance->$action($request, $next);
-        }
-
-//        var_dump($pass);
-        if ($pass instanceof Generator && $pass->valid()) {
-            self::$scheduler->add($pass);
-            return $next($request);
-        } elseif ($pass instanceof Response) {
-            $this->response = $pass;
-        } else {
-            $response = new Response();
-            $response->write($pass);
             $this->response = $response;
+
         }
 
         return $this->response;
@@ -171,6 +171,6 @@ class Router
         }
 
 
-        return $response->end($output->getContext());
+        return $response->end($output->getContent());
     }
 }

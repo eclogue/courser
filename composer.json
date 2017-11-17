@@ -24,6 +24,14 @@
     "packagist": {
       "type": "composer",
       "url": "https://packagist.phpcomposer.com"
+    },
+    "1": {
+      "type": "vcs",
+      "url": "http://github.com/eclogue/bulrush"
+    },
+    "2": {
+      "type": "vcs",
+      "url": "http://github.com/eclogue/hayrick"
     }
   },
   "require": {
