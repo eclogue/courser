@@ -26,18 +26,23 @@ $app->used(function ($req, $next) {
     echo 'this is 1' . PHP_EOL;
     yield;
     echo "this is 111 \n";
-    return $next($req);
+    $res = $next($req);
+    return $res;
 });
 $app->used(function ($req, $next) {
     echo 'this is 2222' . PHP_EOL;
     $response = yield $next($req);
-    var_dump('>>@@>>', $response);
 
     return $response;
 });
-$app->get('/', function () {
+$app->get('/', function ($request) {
     echo 'this is 333333' . PHP_EOL;
+    var_export($request);
     return (new \Hayrick\Http\Response())->json(['data' => 1]);
+});
+
+$app->used(function ($req, $next) {
+    return 123;
 });
 $app->error(function ($req, $res, $err) {
     $res->withStatus(500)->json([

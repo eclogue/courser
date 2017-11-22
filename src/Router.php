@@ -9,8 +9,10 @@
 
 namespace Courser;
 
+use Bulrush\Poroutine;
 use Hayrick\Http\Request;
 use Hayrick\Http\Response;
+use Psr\Http\Message\ResponseInterface;
 use Bulrush\Scheduler;
 use Generator;
 
@@ -96,14 +98,24 @@ class Router
     {
         $this->middleware = array_merge($this->middleware, $this->callable);
         $this->middleware = array_reverse($this->middleware);
-        $this->compose($this->request);
-        $response = self::$scheduler->run();
-        if ($response instanceof Response) {
+        $response = $this->compose($this->request);
+        if ($response instanceof ResponseInterface) {
             $this->response = $response;
+        } else if ($response instanceof Response) {
+            $this->response = $response;
+        } else if (
+            $response instanceof \ArrayIterator ||
+            $response instanceof \ArrayObject ||
+            $response instanceof \JsonSerializable ||
+            is_array($response)
+        ) {
+            $reply = new Response();
+            $reply = $reply->withHeader('Content-Type', 'application/json');
+            $reply = $reply->write($response);
+            $this->response = $reply;
         } else {
-            $res = new Response();
-//            $response->write($response);
-            $this->response = $res;
+            $this->response = new Response();
+            $this->response->write($response);
         }
 
         return $this->respond();
@@ -112,10 +124,11 @@ class Router
 
     public function compose($request)
     {
-        while (!empty($this->middleware)) {
+
+        if (!empty($this->middleware)) {
             $md = array_pop($this->middleware);
-            $pass = null;
             $next = function ($request) {
+                echo '_________________' . count($this->middleware) . PHP_EOL;
                 return $this->compose($request);
             };
 
@@ -127,17 +140,22 @@ class Router
                 $instance = is_object($class) ? $class : new $class();
                 $response = $instance->$action($request, $next);
             }
-
+//
             if ($response instanceof Generator && $response->valid()) {
-                self::$scheduler->add($response, true);
-                continue;
+                $po = new Poroutine($response, true);
+                $response = $po->resolve();
             }
 
-            $this->response = $response;
+
+            return $response;
+//
+//            if ($response instanceof Generator && $response->valid()) {
+//                self::$scheduler->add($response, true);
+//                continue;
+//            }
 
         }
 
-        return $this->response;
     }
 
     public function __invoke()
