@@ -51,8 +51,6 @@ class Router
         $this->request = $request->createRequest($req);
         $this->context['request'] = $req;
         $this->context['response'] = $res;
-        self::$scheduler = new Scheduler();
-
     }
 
     public function setContainer(Container $container)
@@ -114,10 +112,9 @@ class Router
 
         if ($response instanceof ResponseInterface) {
             $this->response = $response;
-        } else if ($response instanceof Response) {
+        } elseif ($response instanceof Response) {
             $this->response = $response;
-        } else if (
-            $response instanceof \ArrayIterator ||
+        } elseif ($response instanceof \ArrayIterator ||
             $response instanceof \ArrayObject ||
             $response instanceof \JsonSerializable ||
             is_array($response)
@@ -126,6 +123,8 @@ class Router
             $reply = $reply->withHeader('Content-Type', 'application/json');
             $reply = $reply->write($response);
             $this->response = $reply;
+        } elseif (is_object($response) && method_exists($response, 'getContent')) {
+            $this->response = $response;
         } else {
             $this->response = new Response();
             $this->response->write($response);
@@ -134,7 +133,7 @@ class Router
         return $this->respond();
     }
 
-    public function transducer(): Generator
+    public function transducer()
     {
         $response = null;
         if (!empty($this->middleware)) {
@@ -150,7 +149,6 @@ class Router
                 $instance = is_object($class) ? $class : new $class();
                 $response = yield $instance->$action($this->request, $next);
             }
-
         }
 
         return $response;
@@ -182,11 +180,6 @@ class Router
         }
 
         return $response;
-    }
-
-    public function __invoke()
-    {
-
     }
 
 
