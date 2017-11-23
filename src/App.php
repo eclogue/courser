@@ -8,6 +8,7 @@
  */
 namespace Courser;
 
+use Bulrush\Scheduler;
 use Pimple\Container;
 use RuntimeException;
 use Hayrick\Http\Request;
@@ -73,6 +74,7 @@ class App
     {
         $this->env = $env;
         $this->container = new Container();
+        $this->container['scheduler'] = new Scheduler();
         spl_autoload_register([$this, 'load'], true, true);
     }
 
@@ -86,6 +88,7 @@ class App
     {
         $router = new Router($req, $res);
 //        $router->createContext($req, $res);
+        $router->setContainer($this->container);
 
         return $router;
     }
