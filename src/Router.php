@@ -207,8 +207,6 @@ class Router
             $response->header($key, $header);
         }
 
-        var_dump($output->getContent());
-
         return $response->end($output->getContent());
     }
 }

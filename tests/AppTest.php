@@ -207,7 +207,7 @@ class AppTest extends TestCase
     public function testNotFound()
     {
         $app = new App();
-        $callable = function ($req, $res) {
+        $callable = function ($req) {
 
         };
         $app->notFound($callable);
@@ -217,7 +217,7 @@ class AppTest extends TestCase
     public function testError()
     {
         $app = new App();
-        $callable = function ($req, $res) {
+        $callable = function ($req, $err) {
 
         };
         $app->error($callable);
@@ -228,9 +228,8 @@ class AppTest extends TestCase
     {
         $app = new App();
         $self = $this;
-        $handle = function ($req, $res, $err) use ($self) {
+        $handle = function ($req, $err) use ($self) {
             $self->assertInstanceOf(\Hayrick\Http\Request::class, $req);
-            $self->assertInstanceOf(\Hayrick\Http\Response::class, $res);
             $self->assertInstanceOf(\Exception::class, $err);
         };
         $handle = $handle->bindTo($app, $app);
@@ -279,7 +278,7 @@ class AppTest extends TestCase
     /**
      * @depends testImport
      */
-    public function testLoad($app)
+    public function testLoad(App $app)
     {
         $isNull = $app->load('BadClass');
         $this->assertNull($isNull);

@@ -14,30 +14,38 @@ require ROOT . '/vendor/autoload.php';
 use Courser\App;
 //use Ben\Config;
 use Courser\Server\HttpServer;
-use Bulrush\Poroutine;
-use Bulrush\Scheduler;
-
+use Hayrick\Http\Request;
+use Hayrick\Http\Response;
 
 $config = [];
 
 //Config::set($config);
 $app = new App();
-$app->used(function ($req, $next) {
-//    echo 'this is 1' . PHP_EOL;
-//    echo "this is 111 \n";
-    $res = $next($req);
-    return $res;
-});
-$app->used(function ($req, $next) {
-//    echo 'this is 2222' . PHP_EOL;
-    $response = $next($req);
-
+$app->used(function(Request $req, Closure $next) {
+    echo "this middleware 1 \n";
+    $response = yield $next($req);
+    // var_dump($response);
     return $response;
 });
-$app->get('/', function ($request) {
-//    echo 'this is 333333' . PHP_EOL;
-//    var_dump($content);
-    return (new \Hayrick\Http\Response())->json(['data' => '123']);
+
+$app->used(function(Request $req, Closure $next) {
+    yield;
+    $response = $next($req);
+    echo "this middleware 2 \n";
+    // var_dump($response);
+    return $response;
+});
+$app->get('/', function(Request $req,  Closure $next) {
+    $html = "<h1> fuck world</h1>";
+    $res = yield $next($req);
+
+    return $res->withHeader('Content-Type', 'text/html');
+});
+$app->get('/', function(Request $req) {
+    $html = "<h1> fuck world</h1>";
+    $res = new Response();
+
+    return $res->end($html);
 });
 
 $app->used(function () {
