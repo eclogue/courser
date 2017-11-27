@@ -75,14 +75,15 @@ class RouterTest extends TestCase
         $this->assertEquals($router->request->getMethod(), $method);
     }
 
-    public function testCompose()
+    public function testTransducer()
     {
         $router = new Router($this->request, $this->response);
-        $md = function ($req, $res) {
-            $res->end();
+        $md = function (Request $req, \Closure $next) {
+            $response = $next($req);
+            $this->assertInstanceOf(Response::class, $response);
         };
-        $router->add([$md]);
-        $gen = $router->compose($router->callable);
+        $router->add($md);
+        $gen = $router->transducer();
         $this->assertInstanceOf(\Generator::class, $gen);
         $scheduler = new Scheduler();
         $scheduler->add($gen);

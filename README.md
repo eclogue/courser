@@ -8,10 +8,15 @@
 A minimalist web framework. I believe that 
 `entities should not be multiplied unnecessarily.` 
 
-好事近.梦中作
-    -- 秦观
-春路雨添花，花动一山春色。行到小溪深处，有黄鹂千百。 
-飞云当面化龙蛇，夭矫转空碧。醉卧古藤阴下，了不知南北。
+好事近.梦中作  &nbsp;-- 秦观
+    
+春路雨添花，花动一山春色。
+
+行到小溪深处，有黄鹂千百。 
+
+飞云当面化龙蛇，夭矫转空碧。
+
+醉卧古藤阴下，了不知南北。
 
 ### Installation
 `composer require eclogue/courser` or git clone https://github.com/eclogue/courser
@@ -27,6 +32,9 @@ Create a new file server.php.
 require('./vendor/autoload.php');
 use Courser\App;
 use Ben\Config;
+//use Psr\Http\Message\RequestInterface as Request;
+use Hayrick\Http\Request;
+use Hayrick\Http\Response;
 
 $config = [
     'server' => [
@@ -36,19 +44,31 @@ $config = [
 ];
 Config::set($config);
 $app = new App();
-$app->use(function($req, $res) {
-   yield;
+$app->used(function(Request $req, Closure $next) {
    echo "this middleware 1 \n";
+   $response = yield $next($req);
+   // var_dump($response);
+   return $response;
 });
 
-$app->use(function($req, $res) {
+$app->used(function(Request $req, Closure $next) {
     yield;
+    $response = $next($req);
     echo "this middleware 2 \n";
+    // var_dump($response);
+    return $response;
 });
-$app->get('/', function($req, $res) {
+$app->get('/', function(Request $req,  Closure $next) {
     $html = "<h1> fuck world</h1>";
-    $res->header('Content-Type', 'text/html');
-    $res->send($html);
+    $res = yield $next($req);
+    
+    return $res->withHeader('Content-Type', 'text/html');
+});
+$app->get('/', function(Request $req) {
+    $html = "<h1> fuck world</h1>";
+    $res = new Response();
+
+    return $res->end($html);
 });
 
 $server = new \Course\Server\HttpServer($app);
