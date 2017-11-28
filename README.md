@@ -5,18 +5,10 @@
 [![Total Downloads](https://poser.pugx.org/eclogue/courser/downloads)](https://packagist.org/packages/eclogue/courser)
 [![License](https://poser.pugx.org/eclogue/courser/license)](https://packagist.org/packages/eclogue/courser)
 
-A minimalist web framework. I believe that 
+A tiny web framework. It is so simple that you can use it without document. I believe that 
 `entities should not be multiplied unnecessarily.` 
 
-好事近.梦中作  &nbsp;-- 秦观
-    
-春路雨添花，花动一山春色。
-
-行到小溪深处，有黄鹂千百。 
-
-飞云当面化龙蛇，夭矫转空碧。
-
-醉卧古藤阴下，了不知南北。
+当时明月在，曾照彩云归。 --- 临江仙·梦后楼台高锁【晏几道】
 
 ### Installation
 `composer require eclogue/courser` or git clone https://github.com/eclogue/courser
@@ -84,13 +76,12 @@ now run `php server.php`, visit 127.0.0.1:5001
 <?php
 
 # basic /users/11
-$app->get('/users/:id', function($req, $res) {
+$app->get('/users/:id', function($req, Closure $next) {
     var_dump($req->params['id']); // id must be integer
-    yield 1000;
+    return $next($req);
 });
-$app->get('/users/:id', function($req, $res) {
-    $value = (yield); // $value === 1000;
-    $res->send($value);
+$app->get('/users/:id', function($req) {
+    return ['data' => '1'];
 });
 # use array
 $app->get('users/*', [function($req, $res) {
@@ -107,46 +98,50 @@ $app->put('/user/{username}', ['MyNamespace\Controller', 'action']);
 $app->group('/admin/{username}',  function() {
     // [Notice]: In group `$this` is bind to Courser,
     // middleware define in group just have effect on the router of group scope 
-    $this->used(function($req, $res) { // Add group middleware
+    $this->used(function($req, Closure $next) { // Add group middleware
         // todo
         // this middleware is mount at /admin/{username} scope, have not effect outside of this group.
     });
-    $this->get('/test/:id', function($req, $res) {
+    $this->get('/test/:id', function($req, Closure $next) {
         yield 1;
+        // ...
     });
 });
 ```
  
 ### Middleware
->  Course's middleware look like [koa](https://github.com/koajs/koa).
-   A middleware must be a callable function or a instance that have `__invoke` function;
 
-```php
-class session {
-    
-    public function set()
-    {
-      // do something ...
-    }
-    
-    public function get()
-    {
-      // ...
-    }
-    
-    public function __invoke()
-    {
-        // ...
-    }
-}
-
-$app->used(new session());
+  Courser's middleware look like [koa](https://github.com/koajs/koa).
+  
+  It is compatible with Laravel's middleware.
+  
+  Flow the suggestion of [http-handlers](https://github.com/php-fig/fig-standards/blob/master/proposed/http-handlers/request-handlers-meta.md#52-single-pass-lambda)
+  
+  You can define a middleware like:
 ```
+    $app->used(function(Request $request, $next) {
+        return $next($request);  
+    });
+```
+like this:
+```
+   class A {
+        public function someMethod(Request $request, $next) {
+            // ....
+        }
+   }
+   
+   $app->used([A:class, 'someMethod']);
+    
+```    
+  
+
 
 ### Not Found
 ```php
-$app->notFound(function ($req, $res) {
-    $res->withStatus(404)->json(['message' => 'Not Found']);
+$app->notFound(function (Request $req){
+    $response = new Response();
+    $response->withStatus(404)->json(['message' => 'Not Found']);
 });
 ```
 ### Exception
@@ -161,25 +156,29 @@ $app->error(function ($req, $res, Exception $err) {
 ```
 
 ### Coroutine
+
   Courser support write coroutine application in easy way. If you are not familiar with php coroutine, it does'nt matter,
+  
   Courser had already do everything. you just use `yield` keyword  to let process gives up its time slice. 
   ```
     // a middleware
-    function middleware($req, $res) {
+    function middleware(Request $req, Closure $next) {
         $userId = $req->getParam('userId');
         $model = new User();
         $user = yield $model->findById($userId);
         var_dump($user);
+        return $next($request);
     }
   ```
 
 ### Develop
- Here is a tool to help you write web app [gharry](https://github.com/eclogue/gharry)
+ Here is a tool to help you write web app ([gharry](https://github.com/eclogue/gharry))
  It watch project file change and auto reload your server.
+ 
  [Ben](https://github.com/eclogue/ben) is a convenient config manager， I recommend use Ben to manage use config file.
 
 ### Benchmark
-    Higher than php-fpm.
+    Damn it. I just know that, it is fast.
 
 ### Community
 
