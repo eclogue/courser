@@ -159,32 +159,6 @@ class Router
     }
 
 
-    public function compose($request)
-    {
-        $response = null;
-        if (!empty($this->middleware)) {
-            $md = array_pop($this->middleware);
-            $next = function ($request) {
-                return $this->compose($request);
-            };
-
-            if (is_callable($md)) {
-                $response = $md($request, $next);
-            } elseif (is_array($md)) {
-                list($class, $action) = $md;
-                $instance = is_object($class) ? $class : new $class();
-                $response = $instance->$action($request, $next);
-            }
-
-            if ($response instanceof Generator && $response->valid()) {
-                $po = new Poroutine($response, true);
-                $response = $po->resolve();
-                unset($po);
-            }
-        }
-
-        return $response;
-    }
 
 
     public function handleError($err)
@@ -211,8 +185,6 @@ class Router
             $response->header($key, $header);
         }
 
-        var_dump(memory_get_usage());
-        var_dump(memory_get_peak_usage());
 
         return $response->end($output->getContent());
     }
