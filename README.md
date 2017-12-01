@@ -5,7 +5,7 @@
 [![Total Downloads](https://poser.pugx.org/eclogue/courser/downloads)](https://packagist.org/packages/eclogue/courser)
 [![License](https://poser.pugx.org/eclogue/courser/license)](https://packagist.org/packages/eclogue/courser)
 
-A tiny web framework. It is so simple that you can use it without document. I believe that 
+A tiny web framework. It is so simple that you can use it without document. The core files less than 1000 lines.I believe that 
 `entities should not be multiplied unnecessarily.` 
 
 当时明月在，曾照彩云归。 --- 临江仙·梦后楼台高锁【晏几道】
@@ -113,9 +113,7 @@ $app->group('/admin/{username}',  function() {
 
   Courser's middleware look like [koa](https://github.com/koajs/koa).
   
-  It is compatible with Laravel's middleware.
-  
-  Flow the suggestion of [http-handlers](https://github.com/php-fig/fig-standards/blob/master/proposed/http-handlers/request-handlers-meta.md#52-single-pass-lambda)
+  It is compatible with Laravel's middleware and the suggestion of [http-handlers](https://github.com/php-fig/fig-standards/blob/master/proposed/http-handlers/request-handlers-meta.md#52-single-pass-lambda)
   
   You can define a middleware like:
 ```
