@@ -14,6 +14,7 @@ use Hayrick\Http\Request;
 use Hayrick\Http\Response;
 use Pimple\Container;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\RequestInterface;
 use Bulrush\Scheduler;
 use Generator;
 
@@ -102,13 +103,14 @@ class Router
     {
         $this->middleware = array_merge($this->middleware, $this->callable);
         $this->middleware = array_reverse($this->middleware);
-        $scheduler = $this->container['scheduler'];
-        $response = $this->transducer();
-        $scheduler->add($response, true);
-        $scheduler->run();
-        if ($response instanceof Generator && !$response->valid()) {
+        $scheduler = new Scheduler();
+        $response = $this->transducer($this->request);
+        if ($response instanceof Generator) {
+            $scheduler->add($response, true);
+            $scheduler->run();
             $response = $response->getReturn();
         }
+
 
         if ($response instanceof ResponseInterface) {
             $this->response = $response;
@@ -130,24 +132,26 @@ class Router
             $this->response->write($response);
         }
 
+
+
         return $this->respond();
     }
 
-    public function transducer()
+    public function transducer(RequestInterface $request)
     {
         $response = null;
         if (!empty($this->middleware)) {
             $md = array_pop($this->middleware);
-            $next = function ($request) {
-                return $this->compose($request);
+            $next = function (RequestInterface $request) {
+                return $this->transducer($request);
             };
 
             if (is_callable($md)) {
-                $response = yield $md($this->request, $next);
+                $response = yield $md($request, $next);
             } elseif (is_array($md)) {
                 list($class, $action) = $md;
                 $instance = is_object($class) ? $class : new $class();
-                $response = yield $instance->$action($this->request, $next);
+                $response = yield $instance->$action($request, $next);
             }
         }
 
@@ -206,6 +210,9 @@ class Router
         foreach ($headers as $key => $header) {
             $response->header($key, $header);
         }
+
+        var_dump(memory_get_usage());
+        var_dump(memory_get_peak_usage());
 
         return $response->end($output->getContent());
     }
