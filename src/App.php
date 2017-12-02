@@ -341,16 +341,15 @@ class App
      * @param $res
      * @param $err
      */
-    public function handleError($req, $res, $err)
+    public function handleError($req, $err)
     {
         $request = new Request();
         $request = $request->createRequest($req);
-        $response = new Response();
         if (empty(static::$errors)) {
             throw $err;
         }
         foreach (static::$errors as $callback) {
-            $callback($request, $response, $err);
+            $callback($request, $err);
         }
     }
 

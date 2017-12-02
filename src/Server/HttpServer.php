@@ -53,7 +53,8 @@ class HttpServer
             $app = $this->app->run($req->server['request_uri']);
             $app($req, $res);
         } catch (\Exception $e) {
-            $this->app->handleError($req, $res, $e);
+            var_dump($e->getMessage());
+            $this->app->handleError($req, $e);
         }
     }
 

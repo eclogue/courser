@@ -9,7 +9,6 @@
 
 namespace Courser;
 
-use Bulrush\Poroutine;
 use Hayrick\Http\Request;
 use Hayrick\Http\Response;
 use Pimple\Container;
@@ -105,7 +104,7 @@ class Router
         $this->middleware = array_reverse($this->middleware);
         $scheduler = new Scheduler();
         $response = $this->transducer($this->request);
-        if ($response instanceof Generator) {
+        if ($response instanceof Generator && $response->valid()) {
             $scheduler->add($response, true);
             $scheduler->run();
             $response = $response->getReturn();
@@ -139,11 +138,13 @@ class Router
 
     public function transducer(RequestInterface $request)
     {
-        $response = null;
-        if (!empty($this->middleware)) {
+        $response = 0;
+        if (count($this->middleware)) {
             $md = array_pop($this->middleware);
             $next = function (RequestInterface $request) {
-                return $this->transducer($request);
+                $response = $this->transducer($request);
+
+                return $response;
             };
 
             if (is_callable($md)) {
@@ -153,6 +154,8 @@ class Router
                 $instance = is_object($class) ? $class : new $class();
                 $response = yield $instance->$action($request, $next);
             }
+
+            return $response;
         }
 
         return $response;
