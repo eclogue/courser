@@ -22,30 +22,39 @@ $config = [];
 //Config::set($config);
 $app = new App();
 $app->used(function(Request $req, Closure $next) {
+//    var_dump($req);
+    var_dump($req->getParsedBody());
     echo "this middleware 1 \n";
-    $response = yield $next($req);
+    $response = $next($req);
     // var_dump($response);
     return $response;
 });
 
 $app->used(function(Request $req, Closure $next) {
-    yield;
+    yield 1;
     $response = $next($req);
     echo "this middleware 2 \n";
-    // var_dump($response);
+     var_dump($response);
     return $response;
 });
-$app->get('/', function(Request $req,  Closure $next) {
-    $html = "<h1> fuck world</h1>";
-    $res = yield $next($req);
+//$app->get('/', function(Request $req,  Closure $next) {
+//    $html = "<h1> fuck world</h1>";
+//    $res = yield $next($req);
+//
+//    return $res->withHeader('Content-Type', 'text/html');
+//});
+//$app->get('/', function(Request $req) {
+//    $html = "<h1> fuck world</h1>";
+//    $res = new Response();
+//
+//    return $res->end($html);
+//});
 
-    return $res->withHeader('Content-Type', 'text/html');
-});
-$app->get('/', function(Request $req) {
-    $html = "<h1> fuck world</h1>";
-    $res = new Response();
 
-    return $res->end($html);
+$app->post('/test', function (Request $request, $next) {
+    echo '12312312312312312312321312';
+    yield;
+    return '123';
 });
 
 $app->used(function () {
