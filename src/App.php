@@ -11,7 +11,6 @@ namespace Courser;
 use Pimple\Container;
 use RuntimeException;
 use Hayrick\Http\Request;
-use Hayrick\Http\Response;
 
 class App
 {
@@ -84,7 +83,7 @@ class App
      * */
     public function createContext($req, $res)
     {
-        $router = new Router($req, $res);
+        $router = new Context($req, $res);
 //        $router->setContainer($this->container);
 
         return $router;
@@ -182,7 +181,7 @@ class App
      * @param string $router
      * @return mixed
      */
-    public function mapRoute(string $method, string $uri, Router $router): Router
+    public function mapRoute(string $method, string $uri, Context $router): Context
     {
         $method = strtolower($method);
         $routes = $this->routes[$method] ?? [];
