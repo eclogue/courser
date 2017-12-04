@@ -17,7 +17,7 @@ use Psr\Http\Message\RequestInterface;
 use Bulrush\Scheduler;
 use Generator;
 
-class Router
+class Context
 {
     public $request;
 
@@ -31,9 +31,9 @@ class Router
 
     protected $context = [];
 
-    protected static $scheduler;
-
     protected $container = [];
+
+    protected $terminator;
 
     public static $allowMethods = [
         'get',
@@ -58,9 +58,21 @@ class Router
         $this->container = $container;
     }
 
-    /*
-     * $route
-     * */
+    /**
+     * set request process terminator
+     *
+     * @param callable $terminator
+     */
+    public function setTerminator(callable $terminator)
+    {
+        $this->terminator = $terminator;
+    }
+
+    /**
+     * add request handle
+     *
+     * @param callable|array $callback
+     */
     public function add($callback)
     {
         if (is_array($callback)) {
@@ -70,6 +82,11 @@ class Router
         }
     }
 
+    /**
+     * mount middleware
+     *
+     * @param callable|array $middleware
+     */
     public function used($middleware)
     {
         if (is_array($middleware)) {
@@ -97,7 +114,11 @@ class Router
         $this->request = $this->request->withMethod($method);
     }
 
-
+    /**
+     * handle the request
+     *
+     * @return mixed
+     */
     public function handle()
     {
         $this->middleware = array_merge($this->middleware, $this->callable);
@@ -131,11 +152,17 @@ class Router
             $this->response->write($response);
         }
 
+        $terminator = $this->terminator ?? $this->respond();
 
-
-        return $this->respond();
+        return $terminator($this->response);
     }
 
+    /**
+     * Iterative process the request
+     *
+     * @param RequestInterface $request
+     * @return int
+     */
     public function transducer(RequestInterface $request)
     {
         $response = 0;
@@ -170,25 +197,22 @@ class Router
     }
 
 
-    public static function getScheduler(): Scheduler
+    /**
+     * default terminator
+     *
+     * @return \Closure
+     */
+    public function respond(): \Closure
     {
-        if (!static::$scheduler) {
-            static::$scheduler = new Scheduler();
-        }
+        return function ($response) {
+            $output = $response ?? new Response();
+            $response = $this->context['response'];
+            $headers = $output->getHeaders();
+            foreach ($headers as $key => $header) {
+                $response->header($key, $header);
+            }
 
-        return static::$scheduler;
-    }
-
-    public function respond()
-    {
-        $output = $this->response ?? new Response();
-        $response = $this->context['response'];
-        $headers = $output->getHeaders();
-        foreach ($headers as $key => $header) {
-            $response->header($key, $header);
-        }
-
-
-        return $response->end($output->getContent());
+            return $response->end($output->getContent());
+        };
     }
 }
