@@ -8,18 +8,17 @@
  */
 namespace Courser;
 
+use Bulrush\Scheduler;
 use Pimple\Container;
-use RuntimeException;
-use Hayrick\Http\Request;
 
 class App
 {
     public $notFounds = [];
+
     /*
-     * instance env
      * @var array
      * */
-    public $env = [];
+    public $setting = [];
 
     /*
      * global middle ware
@@ -56,7 +55,7 @@ class App
      * @var $errors array
      * custom exception handle
      * */
-    public static $errors = [];
+    public $reporter;
 
     /**
      * @var array|Container
@@ -68,25 +67,34 @@ class App
      */
     public $loader = [];
 
-    public function __construct($env = 'dev')
+    public function __construct()
     {
-        $this->env = $env;
         $this->container = new Container();
+        $this->container['scheduler'] = function () {
+            return new Scheduler();
+        };
         spl_autoload_register([$this, 'load'], true, true);
+    }
+
+    public function config(array $config)
+    {
+        foreach ($config as $key => $value) {
+            $this->container[$key] = $value;
+        }
     }
 
     /*
      * create request context set req and response
-     * @param object $req Swoole\Http\Request
-     * @param object $res Swoole\Http\Response
+     * @param object $req
+     * @param object $res
      * @return object self
      * */
     public function createContext($req, $res)
     {
-        $router = new Context($req, $res);
-//        $router->setContainer($this->container);
+        $context = new Context($req, $res);
+        $context->setContainer($this->container);
 
-        return $router;
+        return $context;
     }
 
     /*
@@ -127,6 +135,7 @@ class App
      * @param string $method
      * @param string $route
      * @param callable $callback
+     * @return bool
      */
     public function addRoute(string $method, string $route, ...$callback)
     {
@@ -134,18 +143,29 @@ class App
         $route = trim($this->group . $route, '/');
         $route = implode('/', [$route]);
         $route = '/' . $route;
+        if (isset($this->routes[$method][$route])) {
+            $callable = $this->routes[$method][$route]['callable'];
+            $callable = array_merge($callable, $callback);
+            $this->routes[$method][$route]['callable'] = $callable;
+
+            return true;
+        }
+
         $scope = count($this->middleware);
         list($pattern, $params) = $this->getPattern($route);
         if ($pattern) {
             $pattern = '#^' . $pattern . '$#';
         }
-        $this->routes[$method][] = [
+
+        $this->routes[$method][$route] = [
             'route' => $route,
             'params' => $params,
             'pattern' => $pattern,
             'callable' => $callback,
             'scope' => $scope,
         ];
+
+        return true;
     }
 
     /**
@@ -330,9 +350,9 @@ class App
      * @param $env
      * @return void
      */
-    public function error($callback)
+    public function setReporter($callback)
     {
-        static::$errors[] = $callback;
+        $this->reporter = $callback;
     }
 
     /**
@@ -340,16 +360,16 @@ class App
      * @param $res
      * @param $err
      */
-    public function handleError($req, $err)
+    public function handleError($request, $response, $err)
     {
-        $request = new Request();
-        $request = $request->createRequest($req);
-        if (empty(static::$errors)) {
+        if (!is_callable($this->reporter) && !is_array($this->reporter)) {
             throw $err;
         }
-        foreach (static::$errors as $callback) {
-            $callback($request, $err);
-        }
+
+        $context = new Context($request, $response);
+        $handler = $context->error($err);
+
+        return $handler($this->reporter);
     }
 
 
@@ -367,7 +387,7 @@ class App
             if (empty($router->callable)) {
                 $router->add($this->notFounds);
             }
-            $router->handle();
+            yield $router->handle();
         };
     }
 
