@@ -1,6 +1,6 @@
 <?php
 /**
- * @license   https://github.com/Init/licese.md
+ * @license   MIT
  * @copyright Copyright (c) 2017
  * @author    : bugbear
  * @date      : 2017/2/20
@@ -9,12 +9,12 @@
 
 namespace Courser;
 
+use Bulrush\Poroutine;
 use Hayrick\Http\Request;
 use Hayrick\Http\Response;
 use Pimple\Container;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\RequestInterface;
-use Bulrush\Scheduler;
 use Generator;
 
 class Context
@@ -31,9 +31,11 @@ class Context
 
     protected $context = [];
 
-    protected $container = [];
-
     protected $terminator;
+
+    protected $container;
+
+    protected $error;
 
     public static $allowMethods = [
         'get',
@@ -51,11 +53,15 @@ class Context
         $this->request = $request->createRequest($req);
         $this->context['request'] = $req;
         $this->context['response'] = $res;
+        $this->container = new Container();
     }
 
+    /**
+     * @param Container $container
+     */
     public function setContainer(Container $container)
     {
-        $this->container = $container;
+        $this->container = clone $container;
     }
 
     /**
@@ -121,17 +127,12 @@ class Context
      */
     public function handle()
     {
+
+//        var_dump($this->middleware, $this->callable);
         $this->middleware = array_merge($this->middleware, $this->callable);
         $this->middleware = array_reverse($this->middleware);
-        $scheduler = new Scheduler();
+
         $response = $this->transducer($this->request);
-        if ($response instanceof Generator && $response->valid()) {
-            $scheduler->add($response, true);
-            $scheduler->run();
-            $response = $response->getReturn();
-        }
-
-
         if ($response instanceof ResponseInterface) {
             $this->response = $response;
         } elseif ($response instanceof Response) {
@@ -152,7 +153,10 @@ class Context
             $this->response->write($response);
         }
 
-        $terminator = $this->terminator ?? $this->respond();
+        $terminator = $this->terminator;
+        if (!is_callable($terminator)) {
+            $terminator = $this->respond();
+        }
 
         return $terminator($this->response);
     }
@@ -160,26 +164,28 @@ class Context
     /**
      * Iterative process the request
      *
-     * @param RequestInterface $request
+     * @param mixed $request
      * @return int
      */
     public function transducer(RequestInterface $request)
     {
-        $response = 0;
+        $response = null;
         if (count($this->middleware)) {
             $md = array_pop($this->middleware);
             $next = function (RequestInterface $request) {
-                $response = $this->transducer($request);
-
-                return $response;
+                return $this->transducer($request);
             };
 
             if (is_callable($md)) {
-                $response = yield $md($request, $next);
+                $response = $md($request, $next);
             } elseif (is_array($md)) {
                 list($class, $action) = $md;
                 $instance = is_object($class) ? $class : new $class();
-                $response = yield $instance->$action($request, $next);
+                $response = $instance->$action($request, $next);
+            }
+
+            if ($response instanceof Generator) {
+                $response = Poroutine::resolve($response);
             }
 
             return $response;
@@ -188,12 +194,30 @@ class Context
         return $response;
     }
 
-
-
-
-    public function handleError($err)
+    public function error($err)
     {
-        throw $err;
+        return function ($callable) use ($err) {
+            if (!$this->error) {
+                return null;
+            }
+
+            if (is_array($callable)) {
+                $response = call_user_func_array($callable, [$this->request, $err]);
+            } else {
+                $response = $callable($this->request, $err);
+            }
+
+            if ($response instanceof Generator) {
+                $response = Poroutine::resolve($response);
+            }
+
+            $terminator = $this->terminator;
+            if (!is_callable($terminator)) {
+                $this->terminator = $this->respond();
+            }
+
+            return $terminator($response);
+        };
     }
 
 
@@ -215,4 +239,5 @@ class Context
             return $response->end($output->getContent());
         };
     }
+
 }
