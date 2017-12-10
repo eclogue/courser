@@ -12,6 +12,7 @@ namespace Courser;
 use Bulrush\Poroutine;
 use Hayrick\Http\Request;
 use Hayrick\Http\Response;
+use Hayrick\Http\Uri;
 use Pimple\Container;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\RequestInterface;
@@ -47,13 +48,13 @@ class Context
     ];
 
 
-    public function __construct($req, $res)
+    public function __construct($req, $res, Container $container)
     {
-        $request = new Request();
-        $this->request = $request->createRequest($req);
+
+        $this->request = new Request();
         $this->context['request'] = $req;
         $this->context['response'] = $res;
-        $this->container = new Container();
+        $this->container = $container;
     }
 
     /**
@@ -61,7 +62,7 @@ class Context
      */
     public function setContainer(Container $container)
     {
-        $this->container = clone $container;
+        $this->container = $container;
     }
 
     /**
@@ -127,8 +128,6 @@ class Context
      */
     public function handle()
     {
-
-//        var_dump($this->middleware, $this->callable);
         $this->middleware = array_merge($this->middleware, $this->callable);
         $this->middleware = array_reverse($this->middleware);
 
@@ -153,12 +152,7 @@ class Context
             $this->response->write($response);
         }
 
-        $terminator = $this->terminator;
-        if (!is_callable($terminator)) {
-            $terminator = $this->respond();
-        }
-
-        return $terminator($this->response);
+        return $this->respond($this->response);
     }
 
     /**
@@ -197,10 +191,6 @@ class Context
     public function error($err)
     {
         return function ($callable) use ($err) {
-            if (!$this->error) {
-                return null;
-            }
-
             if (is_array($callable)) {
                 $response = call_user_func_array($callable, [$this->request, $err]);
             } else {
@@ -211,12 +201,8 @@ class Context
                 $response = Poroutine::resolve($response);
             }
 
-            $terminator = $this->terminator;
-            if (!is_callable($terminator)) {
-                $this->terminator = $this->respond();
-            }
 
-            return $terminator($response);
+            return $this->respond($response);
         };
     }
 
@@ -224,20 +210,52 @@ class Context
     /**
      * default terminator
      *
-     * @return \Closure
+     * @return mixed
      */
-    public function respond(): \Closure
+    public function respond($response)
     {
-        return function ($response) {
-            $output = $response ?? new Response();
-            $response = $this->context['response'];
-            $headers = $output->getHeaders();
-            foreach ($headers as $key => $header) {
-                $response->header($key, $header);
-            }
+        $response = $response ?? new Response();
+        $terminator = $this->container['terminator'];
+        $respond = $terminator($this->context['response']);
 
-            return $response->end($output->getContent());
+        return $respond($response);
+    }
+
+    /*
+     * set request context @todo
+     * @param object|null $req
+     * @return void
+     * */
+    public function createRequest($req = null)
+    {
+
+        $builder = $this->container['request'];
+        $incoming = $builder($req);
+        $clone = new Request();
+        $clone->incoming = $incoming;
+        $method = $incoming['request_method'] ?? 'get';
+        $clone = $clone->withMethod($method);
+        foreach($incoming->headers as $key => $value) {
+            $clone = $clone->withHeader($key, $value);
+        }
+
+        $clone = $clone->withCookieParams($incoming->cookie);
+        $clone = $clone->withBody($incoming->body);
+        $clone = $clone->withUri(new Uri($incoming->server));
+        $clone->files = isset($incoming->files) ? $incoming->files : []; // @todo
+        $clone->query = $clone->uri->getQuery();
+        $clone->queryParams = $clone->parseQuery($clone->query);
+        $clone->getRequestTarget();
+        $clone->bodyParser['application/json'] = function ($body) {
+            return json_decode($body, true);
         };
+
+        $clone->bodyParser['application/x-www-form-urlencoded'] = function ($input) {
+            parse_str($input, $data);
+            return $data;
+        };
+
+        return $clone;
     }
 
 }

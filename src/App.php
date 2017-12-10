@@ -10,6 +10,7 @@ namespace Courser;
 
 use Bulrush\Scheduler;
 use Pimple\Container;
+use Psr\Http\Message\ResponseInterface;
 
 class App
 {
@@ -89,10 +90,9 @@ class App
      * @param object $res
      * @return object self
      * */
-    public function createContext($req, $res)
+    public function createContext($req, $res):Context
     {
-        $context = new Context($req, $res);
-        $context->setContainer($this->container);
+        $context = new Context($req, $res, $this->container);
 
         return $context;
     }
@@ -356,6 +356,14 @@ class App
     }
 
     /**
+     * @param Container $container
+     */
+    public function setContainer(Container $container)
+    {
+        $this->container = $container;
+    }
+
+    /**
      * @param $req
      * @param $res
      * @param $err
@@ -366,7 +374,7 @@ class App
             throw $err;
         }
 
-        $context = new Context($request, $response);
+        $context = $this->createContext($request, $response);
         $handler = $context->error($err);
 
         return $handler($this->reporter);

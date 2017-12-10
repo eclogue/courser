@@ -10,11 +10,14 @@ namespace Courser\Server;
 
 use Bulrush\Scheduler;
 use Generator;
+use Hayrick\Environment\Relay;
 use Pimple\Container;
+use Psr\Http\Message\ResponseInterface;
 use Swoole\Http\Server;
 use Courser\App;
+use Hayrick\Http\Response;
 
-class HttpServer
+class SwooleServer implements ServerInterface
 {
 
     protected $worker = 1;
@@ -31,16 +34,25 @@ class HttpServer
 
     protected $setting = [];
 
+    protected $events = [];
+
     protected $scheduler;
 
     protected $container;
 
+    protected $app;
 
     public function __construct(App $app)
     {
         $this->app = $app;
-        $this->container = [];
-        $this->scheduler = new Scheduler();
+        $this->container = new Container();
+        $this->container['scheduler'] = new Scheduler();
+        $this->container['terminator'] = function () {
+            return $this->respond();
+        };
+        $this->container['request'] = function() {
+            return $this->buildRequest();
+        };
     }
 
     /**
@@ -68,7 +80,30 @@ class HttpServer
      */
     public function register(string $field, $value)
     {
-        $this->container[$field] = $value;
+        $this->events[$field] = $value;
+    }
+
+    public function respond()
+    {
+        return function ($context) {
+            return (function (ResponseInterface $response) use ($context) {
+                $output = $response ?? new Response();
+                $headers = $output->getHeaders();
+                foreach ($headers as $key => $header) {
+                    $context->header($key, $header);
+                }
+
+                return $context->end($output->getContent());
+            })->bindTo(null, null);
+        };
+    }
+
+    public function buildRequest()
+    {
+        return (function ($req) {
+            Relay::createFromSwoole($req);
+
+        })->bindTo(null, null);
     }
 
 
@@ -82,8 +117,9 @@ class HttpServer
             $handler = $this->app->run($req->server['request_uri']);
             $result = $handler($req, $res);
             if ($result instanceof Generator) {
-                $this->scheduler->add($result, true);
-                $this->scheduler->run();
+                $scheduler = $this->container['scheduler'];
+                $scheduler->add($result, true);
+                $scheduler->run();
             }
         } catch (\Exception $error) {
             $this->app->handleError($req, $res, $error);
@@ -99,15 +135,15 @@ class HttpServer
             'daemonize' => false,
             'http_parse_post' => false,
             'dispatch_mode' => 3,
-//            'log_file' => $tmpDir . '/courser.log',
             'upload_tmp_dir' => $tmpDir,
             'worker_num' => 2,
         ];
         $config = array_merge($config, $this->setting);
         $this->app->config($config);
+        $this->app->setContainer($this->container);
         $this->server->set($config);
         $this->server->on('Request', [$this, 'mount']);
-        foreach ($this->container as $key => $value) {
+        foreach ($this->events as $key => $value) {
             $this->server->on($key, $value);
         }
 
