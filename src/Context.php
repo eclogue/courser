@@ -51,10 +51,10 @@ class Context
     public function __construct($req, $res, Container $container)
     {
 
-        $this->request = new Request();
         $this->context['request'] = $req;
         $this->context['response'] = $res;
         $this->container = $container;
+        $this->request = $this->createRequest($req);
     }
 
     /**
@@ -222,7 +222,7 @@ class Context
     }
 
     /*
-     * set request context @todo
+     * set request context @todo @fixme
      * @param object|null $req
      * @return void
      * */
@@ -233,7 +233,7 @@ class Context
         $incoming = $builder($req);
         $clone = new Request();
         $clone->incoming = $incoming;
-        $method = $incoming['request_method'] ?? 'get';
+        $method = $incoming->server['request_method'] ?? 'get';
         $clone = $clone->withMethod($method);
         foreach($incoming->headers as $key => $value) {
             $clone = $clone->withHeader($key, $value);
@@ -242,9 +242,8 @@ class Context
         $clone = $clone->withCookieParams($incoming->cookie);
         $clone = $clone->withBody($incoming->body);
         $clone = $clone->withUri(new Uri($incoming->server));
-        $clone->files = isset($incoming->files) ? $incoming->files : []; // @todo
-        $clone->query = $clone->uri->getQuery();
-        $clone->queryParams = $clone->parseQuery($clone->query);
+        $clone->files = $incoming->files; // @todo
+        $clone->queryParams = $clone->parseQuery($clone->getUri()->getQuery());
         $clone->getRequestTarget();
         $clone->bodyParser['application/json'] = function ($body) {
             return json_decode($body, true);

@@ -57,7 +57,7 @@ class CGIServer implements ServerInterface
     {
         return function (Reply $context) {
             return function (ResponseInterface $response) use ($context) {
-                $context($response);
+                return $context($response);
             };
         };
     }
@@ -65,7 +65,7 @@ class CGIServer implements ServerInterface
     public function buildRequest()
     {
         return (function () {
-            Relay::createFromCGI();
+            return Relay::createFromCGI();
         })->bindTo(null, null);
     }
 
@@ -76,7 +76,7 @@ class CGIServer implements ServerInterface
     public function mount($req, $res)
     {
         try {
-            $req = Relay::createFromCGI();
+            // @todo
             $handler = $this->app->run($req->server['request_uri']);
             $result = $handler($req, $res);
             if ($result instanceof Generator) {

@@ -101,8 +101,7 @@ class SwooleServer implements ServerInterface
     public function buildRequest()
     {
         return (function ($req) {
-            Relay::createFromSwoole($req);
-
+            return Relay::createFromSwoole($req);
         })->bindTo(null, null);
     }
 
