@@ -5,8 +5,13 @@
 [![Total Downloads](https://poser.pugx.org/eclogue/courser/downloads)](https://packagist.org/packages/eclogue/courser)
 [![License](https://poser.pugx.org/eclogue/courser/license)](https://packagist.org/packages/eclogue/courser)
 
-A tiny web framework. It is so simple that you can use it without document. The core files less than 1000 lines.I believe that 
+A tiny, fast and scalable web framework. The core file less than 1000 SLOC codebase(with comments and space).It is easy to write swoole, reactphp, workerman and cgi web application.Use words from koa I believe that 
 `entities should not be multiplied unnecessarily.` 
+
+**feature**
+- laravel like middleware
+- coroutine
+- psr-7 http message
 
 当时明月在，曾照彩云归。 --- 临江仙·梦后楼台高锁【晏几道】
 
@@ -63,12 +68,22 @@ $app->get('/', function(Request $req) {
     return $res->end($html);
 });
 
+```
+**use swoole for server**:
+
+```
 $server = new \Course\Server\HttpServer($app);
 $server->bind(Config::get('server.host'), Config::get('server.port'));
 $server->start();
-?>
 ```
 now run `php server.php`, visit 127.0.0.1:5001
+
+**use cgi server**:
+```
+$server = new \Course\Server\CGIServer($app);
+$server->start();
+```
+
 
 ### Router
 
@@ -103,7 +118,7 @@ $app->group('/admin/{username}',  function() {
         // this middleware is mount at /admin/{username} scope, have not effect outside of this group.
     });
     $this->get('/test/:id', function($req, Closure $next) {
-        yield 1;
+        yield $next($req);
         // ...
     });
 });
@@ -165,12 +180,15 @@ $app->error(function ($req, $res, Exception $err) {
         $model = new User();
         $user = yield $model->findById($userId);
         var_dump($user);
-        return $next($request);
+        $response = yield $next($request);
+
+        return $response;
     }
   ```
 
 ### Develop
- Here is a tool to help you write web app ([gharry](https://github.com/eclogue/gharry))
+ Here is a tool quickly develop web app ([gharry](https://github.com/eclogue/gharry))
+
  It watch project file change and auto reload your server.
  
  [Ben](https://github.com/eclogue/ben) is a convenient config manager， I recommend use Ben to manage use config file.
@@ -181,7 +199,6 @@ $app->error(function ($req, $res, Exception $err) {
 ### Community
 
  - [中文文档](https://superbogy.gitbooks.io/courser/content/)
- - ~~[English document]()~~~
  - [Example](https://github.com/eclogue/knight)
  - [issue](https://github.com/shipmen/Course/issues)
  
