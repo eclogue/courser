@@ -10,6 +10,7 @@
 namespace Courser;
 
 use Bulrush\Poroutine;
+use Hayrick\Environment\Relay;
 use Hayrick\Http\Request;
 use Hayrick\Http\Response;
 use Hayrick\Http\Uri;
@@ -38,6 +39,8 @@ class Context
 
     protected $error;
 
+    public $method = 'get';
+
     public static $allowMethods = [
         'get',
         'post',
@@ -48,7 +51,7 @@ class Context
     ];
 
 
-    public function __construct($req, $res, Container $container)
+    public function __construct($req, $res, $container)
     {
 
         $this->context['request'] = $req;
@@ -118,7 +121,7 @@ class Context
      */
     public function method($method)
     {
-        $this->request = $this->request->withMethod($method);
+        $this->method = $method;
     }
 
     /**
@@ -130,12 +133,13 @@ class Context
     {
         $this->middleware = array_merge($this->middleware, $this->callable);
         $this->middleware = array_reverse($this->middleware);
-
         $response = $this->transducer($this->request);
         if ($response instanceof ResponseInterface) {
             $this->response = $response;
         } elseif ($response instanceof Response) {
             $this->response = $response;
+        } elseif ($response instanceof Generator) {
+            $this->response = $response->getReturn();
         } elseif ($response instanceof \ArrayIterator ||
             $response instanceof \ArrayObject ||
             $response instanceof \JsonSerializable ||
@@ -201,7 +205,6 @@ class Context
                 $response = Poroutine::resolve($response);
             }
 
-
             return $this->respond($response);
         };
     }
@@ -215,11 +218,12 @@ class Context
     public function respond($response)
     {
         $response = $response ?? new Response();
-        $terminator = $this->container['terminator'];
+        $terminator = $this->container['response'];
         $respond = $terminator($this->context['response']);
 
         return $respond($response);
     }
+
 
     /*
      * set request context @todo @fixme
@@ -228,33 +232,14 @@ class Context
      * */
     public function createRequest($req = null)
     {
-
         $builder = $this->container['request'];
         $incoming = $builder($req);
-        $clone = new Request();
-        $clone->incoming = $incoming;
-        $method = $incoming->server['request_method'] ?? 'get';
-        $clone = $clone->withMethod($method);
-        foreach($incoming->headers as $key => $value) {
-            $clone = $clone->withHeader($key, $value);
-        }
+        $request = new Request($incoming);
 
-        $clone = $clone->withCookieParams($incoming->cookie);
-        $clone = $clone->withBody($incoming->body);
-        $clone = $clone->withUri(new Uri($incoming->server));
-        $clone->files = $incoming->files; // @todo
-        $clone->queryParams = $clone->parseQuery($clone->getUri()->getQuery());
-        $clone->getRequestTarget();
-        $clone->bodyParser['application/json'] = function ($body) {
-            return json_decode($body, true);
-        };
+        return $request;
 
-        $clone->bodyParser['application/x-www-form-urlencoded'] = function ($input) {
-            parse_str($input, $data);
-            return $data;
-        };
 
-        return $clone;
+
     }
 
 }

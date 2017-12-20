@@ -71,9 +71,6 @@ class App
     public function __construct()
     {
         $this->container = new Container();
-        $this->container['scheduler'] = function () {
-            return new Scheduler();
-        };
         spl_autoload_register([$this, 'load'], true, true);
     }
 
@@ -352,7 +349,7 @@ class App
      */
     public function setReporter($callback)
     {
-        $this->reporter = $callback;
+//        $this->reporter = $callback;
     }
 
     /**
@@ -391,7 +388,7 @@ class App
         $uri = $uri ?: '/';
         return function ($req, $res) use ($uri) {
             $router = $this->createContext($req, $res);
-            $router = $this->mapRoute($router->request->getMethod(), $uri, $router);
+            $router = $this->mapRoute($router->method, $uri, $router);
             if (empty($router->callable)) {
                 $router->add($this->notFounds);
             }

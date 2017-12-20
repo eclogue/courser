@@ -47,7 +47,7 @@ class SwooleServer implements ServerInterface
         $this->app = $app;
         $this->container = new Container();
         $this->container['scheduler'] = new Scheduler();
-        $this->container['terminator'] = function () {
+        $this->container['response'] = function () {
             return $this->respond();
         };
         $this->container['request'] = function() {
@@ -86,7 +86,7 @@ class SwooleServer implements ServerInterface
     public function respond()
     {
         return function ($context) {
-            return (function (ResponseInterface $response) use ($context) {
+            return function (ResponseInterface $response) use ($context) {
                 $output = $response ?? new Response();
                 $headers = $output->getHeaders();
                 foreach ($headers as $key => $header) {
@@ -94,7 +94,7 @@ class SwooleServer implements ServerInterface
                 }
 
                 return $context->end($output->getContent());
-            })->bindTo(null, null);
+            };
         };
     }
 
@@ -112,17 +112,20 @@ class SwooleServer implements ServerInterface
      */
     public function mount($req, $res)
     {
+        $app = clone $this->app;
         try {
-            $handler = $this->app->run($req->server['request_uri']);
+            $handler = $app->run($req->server['request_uri']);
             $result = $handler($req, $res);
             if ($result instanceof Generator) {
                 $scheduler = $this->container['scheduler'];
+//                $scheduler = new Scheduler();
                 $scheduler->add($result, true);
                 $scheduler->run();
             }
         } catch (\Exception $error) {
-            $this->app->handleError($req, $res, $error);
+            $app->handleError($req, $res, $error);
         }
+        $app = null;
     }
 
 
@@ -134,8 +137,10 @@ class SwooleServer implements ServerInterface
             'daemonize' => false,
             'http_parse_post' => false,
             'dispatch_mode' => 3,
+            'log_file' => './courser.log',
             'upload_tmp_dir' => $tmpDir,
             'worker_num' => 2,
+
         ];
         $config = array_merge($config, $this->setting);
         $this->app->config($config);
