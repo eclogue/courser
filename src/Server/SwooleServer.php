@@ -48,9 +48,11 @@ class SwooleServer implements ServerInterface
         $this->container = new Container();
         $this->container['scheduler'] = new Scheduler();
         $this->container['response'] = function () {
+
             return $this->respond();
         };
-        $this->container['request'] = function() {
+        $this->container['request'] = function () {
+
             return $this->buildRequest();
         };
     }

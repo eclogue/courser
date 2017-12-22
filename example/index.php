@@ -18,7 +18,7 @@ $app = new App();
 
 $app->used(function (Request $req, Closure $next) {
     $response = $next($req);
-    $response->write('test2');
+    $response->write('<h1>test2</h1>');
 
     return $response;
 });

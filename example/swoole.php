@@ -79,13 +79,14 @@ $app->get('/', function(Request $req) {
 //});
 
 $server = new SwooleServer($app);
-$server->bind('0.0.0.0', '6001');
+$server->bind('0.0.0.0', '8179');
 $server->setting([
     // ... swoole setting
 ]);
-//$server->register('WorkerStart', function (){
-//    echo 'fuck';
-//});
+$server->register('start', function (){
+    echo "server started, listening at: http//127.0.0.1:8179\n";
+});
+
 $server->start();
 
 

@@ -6,9 +6,7 @@
  * @date: 2017/12/10
  * @time: 下午12:40
  */
-
 namespace Courser\Server;
-
 
 interface ServerInterface
 {
