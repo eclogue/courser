@@ -48,7 +48,9 @@
   "prefer-stable": false,
   "scripts": {
     "phpcs": "php vendor/bin/phpcs",
-    "test": "php vendor/bin/phpunit --coverage-text"
+    "test": "php vendor/bin/phpunit --coverage-text",
+    "cgi-server": "php -t example -S 127.0.0.1:8179",
+    "swoole-server": "php example/swoole.php"
   },
   "require-dev": {
     "phpunit/phpunit": "^6.1",

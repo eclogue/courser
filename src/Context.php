@@ -237,9 +237,5 @@ class Context
         $request = new Request($incoming);
 
         return $request;
-
-
-
     }
-
 }
