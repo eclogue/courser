@@ -35,7 +35,7 @@ class CGIServer implements ServerInterface
         $this->app = $app;
         $this->container = new Container();
         $this->container['scheduler'] = new Scheduler();
-        $this->container['terminator'] = function () {
+        $this->container['response'] = function () {
             return $this->respond();
         };
 
@@ -65,7 +65,7 @@ class CGIServer implements ServerInterface
     public function buildRequest()
     {
         return (function () {
-            return Relay::createFromCGI();
+            return Relay::createFromGlobal();
         })->bindTo(null, null);
     }
 
@@ -76,7 +76,6 @@ class CGIServer implements ServerInterface
     public function mount($req, $res)
     {
         try {
-            // @todo
             $handler = $this->app->run($req->server['request_uri']);
             $result = $handler($req, $res);
             if ($result instanceof Generator) {
@@ -94,7 +93,7 @@ class CGIServer implements ServerInterface
     {
         $config = $this->setting;
         $this->app->config($config);
-        $request = null;
+        $request = Relay::createFromGlobal();
         $response = new Reply();
         $this->app->setContainer($this->container);
         $this->mount($request, $response);
