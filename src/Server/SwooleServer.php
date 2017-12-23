@@ -93,7 +93,6 @@ class SwooleServer implements ServerInterface
                 foreach ($headers as $key => $header) {
                     $context->header($key, $header);
                 }
-
                 $context->status($output->getStatusCode());
 
                 return $context->end($output->getContent());
@@ -103,7 +102,7 @@ class SwooleServer implements ServerInterface
 
     public function buildRequest()
     {
-        return array(Relay::class, 'createFromSwoole');
+        return [Relay::class, 'createFromSwoole'];
     }
 
 

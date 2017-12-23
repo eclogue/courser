@@ -164,7 +164,7 @@ class Context
      * Iterative process the request
      *
      * @param mixed $request
-     * @return mixed
+     * @return mixed|Response
      */
     public function transducer(RequestInterface $request)
     {
