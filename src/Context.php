@@ -10,10 +10,8 @@
 namespace Courser;
 
 use Bulrush\Poroutine;
-use Hayrick\Environment\Relay;
 use Hayrick\Http\Request;
 use Hayrick\Http\Response;
-use Hayrick\Http\Uri;
 use Pimple\Container;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\RequestInterface;
@@ -58,6 +56,7 @@ class Context
         $this->context['response'] = $res;
         $this->container = $container;
         $this->request = $this->createRequest($req);
+        $this->method = $this->request->getMethod();
     }
 
     /**
@@ -122,7 +121,9 @@ class Context
     public function method($method)
     {
         $this->method = $method;
+        $this->request = $this->request->withMethod($method);
     }
+
 
     /**
      * handle the request
@@ -163,7 +164,7 @@ class Context
      * Iterative process the request
      *
      * @param mixed $request
-     * @return int
+     * @return mixed
      */
     public function transducer(RequestInterface $request)
     {
@@ -185,11 +186,9 @@ class Context
             if ($response instanceof Generator) {
                 $response = Poroutine::resolve($response);
             }
-
-            return $response;
         }
 
-        return $response;
+        return $response ?? new Response();
     }
 
     public function error($err)
@@ -233,7 +232,17 @@ class Context
     public function createRequest($req = null)
     {
         $builder = $this->container['request'];
-        $incoming = $builder($req);
+        $incoming = null;
+        if (is_callable($builder, true, $callable)) {
+            if (is_array($builder)) {
+                $incoming = call_user_func_array($callable, [$req]);
+            } else {
+                $incoming = $builder($req);
+            }
+        } else {
+            throw new \RuntimeException('Request builder invalid');
+        }
+
         $request = new Request($incoming);
 
         return $request;

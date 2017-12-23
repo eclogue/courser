@@ -52,7 +52,6 @@ class SwooleServer implements ServerInterface
             return $this->respond();
         };
         $this->container['request'] = function () {
-
             return $this->buildRequest();
         };
     }
@@ -95,6 +94,8 @@ class SwooleServer implements ServerInterface
                     $context->header($key, $header);
                 }
 
+                $context->status($output->getStatusCode());
+
                 return $context->end($output->getContent());
             };
         };
@@ -102,9 +103,7 @@ class SwooleServer implements ServerInterface
 
     public function buildRequest()
     {
-        return (function ($req) {
-            return Relay::createFromSwoole($req);
-        })->bindTo(null, null);
+        return array(Relay::class, 'createFromSwoole');
     }
 
 
@@ -139,9 +138,8 @@ class SwooleServer implements ServerInterface
             'daemonize' => false,
             'http_parse_post' => false,
             'dispatch_mode' => 3,
-            'log_file' => './courser.log',
             'upload_tmp_dir' => $tmpDir,
-            'worker_num' => 2,
+            'worker_num' => 1,
 
         ];
         $config = array_merge($config, $this->setting);
