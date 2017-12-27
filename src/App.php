@@ -392,7 +392,7 @@ class App
             if (empty($router->callable)) {
                 $router->add($this->notFounds);
             }
-            yield $router->handle();
+            $router->handle();
         };
     }
 
