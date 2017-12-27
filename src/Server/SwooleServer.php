@@ -93,6 +93,7 @@ class SwooleServer implements ServerInterface
                 foreach ($headers as $key => $header) {
                     $context->header($key, $header);
                 }
+
                 $context->status($output->getStatusCode());
 
                 return $context->end($output->getContent());
@@ -115,13 +116,7 @@ class SwooleServer implements ServerInterface
         $app = clone $this->app;
         try {
             $handler = $app->run($req->server['request_uri']);
-            $result = $handler($req, $res);
-            if ($result instanceof Generator) {
-                $scheduler = $this->container['scheduler'];
-//                $scheduler = new Scheduler();
-                $scheduler->add($result, true);
-                $scheduler->run();
-            }
+            $handler($req, $res);
         } catch (\Exception $error) {
             $app->handleError($req, $res, $error);
         }
