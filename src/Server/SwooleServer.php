@@ -113,14 +113,13 @@ class SwooleServer implements ServerInterface
      */
     public function mount($req, $res)
     {
-        $app = clone $this->app;
+        $app = $this->app;
         try {
             $handler = $app->run($req->server['request_uri']);
             $handler($req, $res);
         } catch (\Exception $error) {
             $app->handleError($req, $res, $error);
         }
-        $app = null;
     }
 
 
