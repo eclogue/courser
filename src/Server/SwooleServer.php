@@ -117,7 +117,7 @@ class SwooleServer implements ServerInterface
         try {
             $handler = $app->run($req->server['request_uri']);
             $handler($req, $res);
-        } catch (\Exception $error) {
+        } catch (\Error | \Exception $error) {
             $app->handleError($req, $res, $error);
         }
     }

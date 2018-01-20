@@ -19,6 +19,7 @@ use Hayrick\Http\Response;
 
 $config = [];
 
+error_reporting(E_ALL);
 //Config::set($config);
 $app = new App();
 //$app->used(function(Request $req, Closure $next) {
@@ -44,8 +45,7 @@ $app = new App();
 //});
 $app->get('/', function(Request $req) {
     $req = null;
-    yield;
-    throw new Exception('test');
+    new Fuck;
     $html = "<h1> fuck world</h1>";
     $res = new Response();
 //    ob_start ();
@@ -72,7 +72,7 @@ $app->get('/', function(Request $req) {
 //    return $response->withStatus(404)
 //        ->json(['message' => 'Not Found']);
 //});
-$app->setReporter(function (Request $req, Exception $err) {
+$app->setReporter(function (Request $req, Throwable $err) {
     $res = new Response();
     return $res->withStatus(500)->json([
         'message' => $err->getMessage(),
