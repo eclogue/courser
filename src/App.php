@@ -1,6 +1,6 @@
 <?php
 /**
- * @license   https://github.com/Init/licese.md
+ * @license  MIT
  * @copyright Copyright (c) 2017
  * @author    : bugbear
  * @date      : 2017/2/20
@@ -8,9 +8,10 @@
  */
 namespace Courser;
 
-use Bulrush\Scheduler;
+use Exception;
+use Hayrick\Http\Request;
 use Pimple\Container;
-use Psr\Http\Message\ResponseInterface;
+use Hayrick\Http\Response;
 
 class App
 {
@@ -349,7 +350,7 @@ class App
      */
     public function setReporter($callback)
     {
-//        $this->reporter = $callback;
+        $this->reporter = $callback;
     }
 
     /**
@@ -365,7 +366,7 @@ class App
      * @param $res
      * @param $err
      */
-    public function handleError($request, $response, $err)
+    public function handleError($request, $response, Exception $err)
     {
         if (!is_callable($this->reporter) && !is_array($this->reporter)) {
             throw $err;

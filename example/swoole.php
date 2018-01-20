@@ -44,6 +44,8 @@ $app = new App();
 //});
 $app->get('/', function(Request $req) {
     $req = null;
+    yield;
+    throw new Exception('test');
     $html = "<h1> fuck world</h1>";
     $res = new Response();
 //    ob_start ();
@@ -70,13 +72,13 @@ $app->get('/', function(Request $req) {
 //    return $response->withStatus(404)
 //        ->json(['message' => 'Not Found']);
 //});
-//$app->setReporter(function (Request $req, Exception $err) {
-//    $res = new Response();
-//    return $res->withStatus(500)->json([
-//        'message' => $err->getMessage(),
-//        'code' => 500
-//    ]);
-//});
+$app->setReporter(function (Request $req, Exception $err) {
+    $res = new Response();
+    return $res->withStatus(500)->json([
+        'message' => $err->getMessage(),
+        'code' => 500
+    ]);
+});
 
 $server = new SwooleServer($app);
 $server->bind('0.0.0.0', '8179');
