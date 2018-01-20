@@ -388,17 +388,13 @@ class App
     {
         $uri = $uri ?: '/';
         return function ($req, $res) use ($uri) {
-            try {
-                $router = $this->createContext($req, $res);
-                $router = $this->mapRoute($router->method, $uri, $router);
-                if (empty($router->callable)) {
-                    $router->add($this->notFounds);
-                }
-                $router->handle();
-            } catch (\Exception $e) {
-                echo 'fuck';
+            $router = $this->createContext($req, $res);
+            $router = $this->mapRoute($router->method, $uri, $router);
+            if (empty($router->callable)) {
+                $router->add($this->notFounds);
             }
 
+            $router->handle();
         };
     }
 
