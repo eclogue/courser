@@ -11,9 +11,14 @@ $http->set([
     'dispatch_mode' => 2,
 ]);
 $http->on('request', function ($request, $response) {
-    $relay = new \Hayrick\Environment\Relay($request);
-    $req = new Request($relay);
-    $response->end("<h1>Hello Swoole. #".rand(1000, 9999)."</h1>");
-//    var_dump(memory_get_usage());
+    try {
+        $relay = new \Hayrick\Environment\Relay($request);
+        $req = new Request($relay);
+        new Fuck;
+        $response->end("<h1>Hello Swoole. #".rand(1000, 9999)."</h1>");
+    } catch (Exception $e) {
+        var_dump($e->getMessage());
+    }
 });
 $http->start();
+

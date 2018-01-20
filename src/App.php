@@ -366,7 +366,7 @@ class App
      * @param $res
      * @param $err
      */
-    public function handleError($request, $response, Exception $err)
+    public function handleError($request, $response, \Throwable $err)
     {
         if (!is_callable($this->reporter) && !is_array($this->reporter)) {
             throw $err;
@@ -388,12 +388,17 @@ class App
     {
         $uri = $uri ?: '/';
         return function ($req, $res) use ($uri) {
-            $router = $this->createContext($req, $res);
-            $router = $this->mapRoute($router->method, $uri, $router);
-            if (empty($router->callable)) {
-                $router->add($this->notFounds);
+            try {
+                $router = $this->createContext($req, $res);
+                $router = $this->mapRoute($router->method, $uri, $router);
+                if (empty($router->callable)) {
+                    $router->add($this->notFounds);
+                }
+                $router->handle();
+            } catch (\Exception $e) {
+                echo 'fuck';
             }
-            $router->handle();
+
         };
     }
 
