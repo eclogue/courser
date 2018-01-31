@@ -49,7 +49,7 @@ class Context
     ];
 
 
-    public function __construct($req, $res, $container)
+    public function __construct($req, $res, Container $container = null)
     {
 
         $this->context['request'] = $req;
@@ -233,7 +233,9 @@ class Context
     {
         $builder = $this->container['request'];
         $incoming = null;
-        if (is_callable($builder, true, $callable)) {
+        if (is_object($builder)) {
+            $incoming = $builder;
+        } else if (is_callable($builder, true, $callable)) {
             if (is_array($builder)) {
                 $incoming = call_user_func_array($callable, [$req]);
             } else {

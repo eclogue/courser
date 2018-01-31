@@ -9,6 +9,8 @@
 namespace Courser;
 
 use Exception;
+use Hayrick\Environment\Relay;
+use Hayrick\Environment\Reply;
 use Hayrick\Http\Request;
 use Pimple\Container;
 use Hayrick\Http\Response;
@@ -71,8 +73,31 @@ class App
 
     public function __construct()
     {
-        $this->container = new Container();
+        $container = new Container();
+        $container['request'] = function () {
+            return Relay::createFromGlobal();
+        };
+
+        $container['response'] = function() {
+            return function () {
+                return new Reply();
+            };
+        };
+        $this->container = $container;
         spl_autoload_register([$this, 'load'], true, true);
+    }
+
+    public function init()
+    {
+        $container = new Container();
+        $container['request'] = function () {
+            return Relay::createFromGlobal();
+        };
+
+        $container['response'] = function() {
+            return new Reply();
+        };
+
     }
 
     public function config(array $config)

@@ -9,7 +9,7 @@
 
 namespace Courser\Tests;
 
-use Courser\Router;
+use Courser\Context;
 use PHPUnit\Framework\TestCase;
 use Hayrick\Http\Request;
 use Hayrick\Http\Response;
@@ -18,7 +18,7 @@ use Courser\Tests\Stub\Response as StubResponse;
 use Bulrush\Scheduler;
 
 
-class RouterTest extends TestCase
+class ContextTest extends TestCase
 {
     public $request;
 
@@ -34,7 +34,7 @@ class RouterTest extends TestCase
 
     public function testAdd()
     {
-        $router = new Router($this->request, $this->response);
+        $router = new Context($this->request, $this->response);
         $callable = [function () {
         }];
         $router->add($callable);
@@ -43,7 +43,7 @@ class RouterTest extends TestCase
 
     public function testMiddleware()
     {
-        $router = new Router($this->request, $this->response);
+        $router = new Context($this->request, $this->response);
         $callable = [function () {
         }];
         $router->used($callable);
@@ -58,18 +58,18 @@ class RouterTest extends TestCase
         $mock->expects($this->once())
             ->method('setParam')
             ->with($this->equalTo('key'), $this->equalTo('value'));
-        $router = new Router($this->request, $this->response);
+        $router = new Context($this->request, $this->response);
         $replace = function () use ($mock) {
             $this->request = $mock;
         };
-        $replace = $replace->bindTo($router, Router::class);
+        $replace = $replace->bindTo($router, Context::class);
         $replace();
         $router->setParam('key', 'value');
     }
 
     public function testMethod()
     {
-        $router = new Router($this->request, $this->response);
+        $router = new Context($this->request, $this->response);
         $method = 'get';
         $router->method($method);
         $this->assertEquals($router->request->getMethod(), $method);
@@ -77,7 +77,7 @@ class RouterTest extends TestCase
 
     public function testTransducer()
     {
-        $router = new Router($this->request, $this->response);
+        $router = new Context($this->request, $this->response);
         $md = function (Request $req, \Closure $next) {
             $response = $next($req);
             $this->assertInstanceOf(Response::class, $response);
@@ -94,7 +94,7 @@ class RouterTest extends TestCase
         };
         $mds = [$md, $md];
         list($request, $response) = $this->serverProvider();
-        $router = new Router($request, $response);
+        $router = new Context($request, $response);
         $scheduler->add($router->compose($mds));
         $scheduler->run();
         $this->assertEquals($router->response->isFinish(), true);
