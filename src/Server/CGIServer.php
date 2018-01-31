@@ -35,13 +35,13 @@ class CGIServer implements ServerInterface
         $this->app = $app;
         $this->container = new Container();
         $this->container['scheduler'] = new Scheduler();
-        $this->container['response'] = function () {
-            return $this->respond();
-        };
-
-        $this->container['request'] = function () {
-            return $this->buildRequest();
-        };
+//        $this->container['response'] = function () {
+//            return $this->respond();
+//        };
+//
+//        $this->container['request'] = function () {
+//            return $this->buildRequest();
+//        };
     }
 
     /**
@@ -95,7 +95,7 @@ class CGIServer implements ServerInterface
         $this->app->config($config);
         $request = Relay::createFromGlobal();
         $response = new Reply();
-        $this->app->setContainer($this->container);
+//        $this->app->setContainer($this->container);
         $this->mount($request, $response);
     }
 }
