@@ -143,7 +143,11 @@ class App
     public function group(string $group, $callback)
     {
         $group = rtrim($group, '/');
-        $this->group = $group;
+        if (!$group) {
+            return null;
+        }
+
+        $this->group .= $group;
         if ($callback instanceof \Closure) {
             $callback = $callback->bindTo($this);
         }
