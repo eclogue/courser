@@ -14,6 +14,7 @@ use Hayrick\Environment\Reply;
 use Hayrick\Http\Request;
 use Pimple\Container;
 use Hayrick\Http\Response;
+use Psr\Http\Message\ResponseInterface;
 
 class App
 {
@@ -73,31 +74,29 @@ class App
 
     public function __construct()
     {
-        $container = new Container();
-        $container['request'] = function () {
-            return Relay::createFromGlobal();
-        };
-
-        $container['response'] = function() {
-            return function () {
-                return new Reply();
-            };
-        };
-        $this->container = $container;
+        $this->container = $this->init();
         spl_autoload_register([$this, 'load'], true, true);
     }
 
     public function init()
     {
         $container = new Container();
-        $container['request'] = function () {
+        $container['request.resolver'] = function () {
             return Relay::createFromGlobal();
         };
 
-        $container['response'] = function() {
-            return new Reply();
+        $container['response.resolver'] = function() {
+            $resolver = function (ResponseInterface $response) {
+                $reply = new Reply();
+
+                return $reply($response);
+            };
+
+            return $resolver;
         };
 
+
+        return $container;
     }
 
     public function config(array $config)

@@ -13,9 +13,12 @@ use Courser\App;
 use Courser\Server\CGIServer;
 use Hayrick\Http\Request;
 use Hayrick\Http\Response;
+use Hayrick\Environment\Reply;
+
 
 $app = new App();
 
+echo "<pre>";
 $app->used(function (Request $req, Closure $next) {
     $response = $next($req);
     $response->write('<h1>test2</h1>');
