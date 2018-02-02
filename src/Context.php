@@ -55,6 +55,7 @@ class Context
         $this->context['request'] = $req;
         $this->context['response'] = $res;
         $this->container = $container;
+        var_dump($container);
         $this->request = $this->createRequest($req);
         $this->method = $this->request->getMethod();
     }
@@ -194,9 +195,9 @@ class Context
     public function error($err)
     {
         return function ($callable) use ($err) {
-            if (is_array($callable)) {
+            if (is_array($callable) || is_callable($callable)) {
                 $response = call_user_func_array($callable, [$this->request, $err]);
-            } else {
+            }  else {
                 $response = $callable($this->request, $err);
             }
 
@@ -217,7 +218,7 @@ class Context
     public function respond($response)
     {
         $response = $response ?? new Response();
-        $terminator = $this->container['response'];
+        $terminator = $this->container['response.resolver'];
         $respond = $terminator($this->context['response']);
 
         return $respond($response);
@@ -231,7 +232,7 @@ class Context
      * */
     public function createRequest($req = null)
     {
-        $builder = $this->container['request'];
+        $builder = $this->container['request.resolver'];
         $incoming = null;
         if (is_object($builder)) {
             $incoming = $builder;

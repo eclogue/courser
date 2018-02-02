@@ -10,12 +10,13 @@
 namespace Courser\Tests;
 
 use Courser\Context;
+use Hayrick\Environment\Relay;
+use Hayrick\Environment\Reply;
 use PHPUnit\Framework\TestCase;
 use Hayrick\Http\Request;
 use Hayrick\Http\Response;
-use Courser\Tests\Stub\Request as StubRequest;
-use Courser\Tests\Stub\Response as StubResponse;
 use Bulrush\Scheduler;
+use Pimple\Container;
 
 
 class ContextTest extends TestCase
@@ -24,88 +25,119 @@ class ContextTest extends TestCase
 
     public $response;
 
+    public $container;
+
 
     public function setUp()
     {
-        $this->request = new StubRequest();
-        $this->response = new StubResponse();
+        $this->request = Relay::createFromGlobal();
+        $this->response = new Response();
+        $container = new Container();
+        $container['request'] = function () {
+            return Relay::createFromGlobal();
+        };
+
+        $container['response'] = function() {
+            return function () {
+                return new Reply();
+            };
+        };
+        $this->container = $container;
 
     }
 
     public function testAdd()
     {
-        $router = new Context($this->request, $this->response);
-        $callable = [function () {
-        }];
-        $router->add($callable);
-        $this->assertContains($callable[0], $router->callable);
+        $context = new Context($this->request, $this->response, $this->container);
+        $callable = function () {
+        };
+        $context->add($callable);
+        $this->assertContains($callable, $context->callable);
     }
 
     public function testMiddleware()
     {
-        $router = new Context($this->request, $this->response);
-        $callable = [function () {
-        }];
-        $router->used($callable);
-        $this->assertContains(array_pop($callable), $router->middleware);
+        $context = new Context($this->request, $this->response, $this->container);
+        $callable = function () {
+        };
+        $context->used($callable);
+        $this->assertAttributeContains($callable, 'middleware', $context);
     }
 
     public function testSetParam()
     {
         $mock = $this->getMockBuilder(Request::class)
+            ->disableOriginalConstructor()
             ->setMethods(['setParam'])
             ->getMock();
         $mock->expects($this->once())
             ->method('setParam')
             ->with($this->equalTo('key'), $this->equalTo('value'));
-        $router = new Context($this->request, $this->response);
+        $context = new Context($this->request, $this->response, $this->container);
         $replace = function () use ($mock) {
             $this->request = $mock;
         };
-        $replace = $replace->bindTo($router, Context::class);
+        $replace = $replace->bindTo($context, Context::class);
         $replace();
-        $router->setParam('key', 'value');
+        $context->setParam('key', 'value');
     }
 
     public function testMethod()
     {
-        $router = new Context($this->request, $this->response);
         $method = 'get';
-        $router->method($method);
-        $this->assertEquals($router->request->getMethod(), $method);
+        $stub = $this->getMockBuilder(Request::class)
+            ->disableOriginalConstructor()
+            ->setMethods(['withMethod'])
+            ->getMock();
+        $stub->expects($this->once())
+            ->method('withMethod')
+            ->with($this->equalTo($method));
+        $context = new Context($this->request, $this->response, $this->container);
+        $replace = function () use ($stub) {
+            $this->request = $stub;
+        };
+        $replace = $replace->bindTo($context, Context::class);
+        $replace();
+        $context->method($method);
+        $this->assertEquals($context->method, $method);
     }
 
     public function testTransducer()
     {
-        $router = new Context($this->request, $this->response);
+        $context = new Context($this->request, $this->response, $this->container);
         $md = function (Request $req, \Closure $next) {
             $response = $next($req);
             $this->assertInstanceOf(Response::class, $response);
         };
-        $router->add($md);
-        $gen = $router->transducer();
-        $this->assertInstanceOf(\Generator::class, $gen);
-        $scheduler = new Scheduler();
-        $scheduler->add($gen);
-        $scheduler->run();
-        $this->assertEquals($router->response->isFinish(), true);
-        $md = function ($req, $res) {
-            $res->end();
-        };
-        $mds = [$md, $md];
-        list($request, $response) = $this->serverProvider();
-        $router = new Context($request, $response);
-        $scheduler->add($router->compose($mds));
-        $scheduler->run();
-        $this->assertEquals($router->response->isFinish(), true);
-    }
+        $context->add($md);
 
-    public function serverProvider()
-    {
-        $request = new Request();
-        $request->createRequest(new StubRequest());
-        $response = new Response();
-        return [$request, $response];
+        $relay = Relay::createFromGlobal();
+        $request = new Request($relay);
+        $response = $context->transducer($request);
+
+        $this->assertInstanceOf(Response::class, $response);
+
+        $md =   $md = function (Request $req, \Closure $next) {
+           yield 1;
+        };
+
+        $context->add($md);
+        $relay = Relay::createFromGlobal();
+        $request = new Request($relay);
+        $response = $context->transducer($request);
+
+        $this->assertInstanceOf(Response::class, $response);
+
+//        $this->assertInstanceOf(\Generator::class, $gen);
+//        $this->assertEquals($context->response->isFinish(), true);
+//        $md = function ($req, $res) {
+//            $res->end();
+//        };
+//        $mds = [$md, $md];
+//        list($request, $response) = $this->serverProvider();
+//        $context = new Context($request, $response);
+//        $scheduler->run();
+//        $this->assertEquals($context->response->isFinish(), true);
     }
 
 
