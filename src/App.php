@@ -72,6 +72,8 @@ class App
      */
     public $loader = [];
 
+    public $layer = [];
+
     public function __construct()
     {
         $this->container = $this->init();
@@ -167,14 +169,22 @@ class App
     {
         $method = strtolower($method);
         $route = trim($this->group . $route, '/');
-        $route = implode('/', [$route]);
+//        $route = implode('/', [$route]);
         $route = '/' . $route;
         if (isset($this->routes[$method][$route])) {
             $callable = $this->routes[$method][$route]['callable'];
             $callable = array_merge($callable, $callback);
             $this->routes[$method][$route]['callable'] = $callable;
 
+
+
             return true;
+        }
+
+        // @new
+        if (isset($this->layer[$method][$route])) {
+            $router = $this->layer[$method][$route];
+            $router->add($callback);
         }
 
         $scope = count($this->middleware);
@@ -190,6 +200,10 @@ class App
             'callable' => $callback,
             'scope' => $scope,
         ];
+
+        //@new
+        $this->layer[$method][$route] = new Route($method, $route, $callback, $scope, $this->group);
+
 
         return true;
     }
@@ -257,6 +271,31 @@ class App
         }
 
         if (empty($router->callable)) {
+            foreach ($this->middleware as $key => $md) {
+                if ($md['group'] === '/') {
+                    $router->used($md['middleware']);
+                }
+            }
+        }
+
+        //@new
+        $routes = $this->layer[$method];
+        foreach ($routes as $route) {
+            $found = $route->find($method, $uri);
+            if (!$found) {
+                continue;
+            }
+
+            $scope = $route->getScope();
+            $middleware = $this->mapMiddleware($uri, $scope);
+            if (!empty($middleware)) {
+                $router->used($middleware);
+            }
+
+//            $router->setParamNames($route->getParamNames());
+        }
+
+        if (!$router->isMount()) {
             foreach ($this->middleware as $key => $md) {
                 if ($md['group'] === '/') {
                     $router->used($md['middleware']);

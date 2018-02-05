@@ -250,4 +250,9 @@ class Context
 
         return $request;
     }
+
+    public function isMount()
+    {
+        return count($this->callable) + count($this->middleware);
+    }
 }
