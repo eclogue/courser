@@ -21,7 +21,9 @@ class Middleware
 
     protected $middleware = [];
 
-    public function __construct(array $middleware)
+    protected $group = '/';
+
+    public function __construct(callable $middleware, string $group = '/')
     {
         $this->middleware = $middleware;
     }

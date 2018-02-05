@@ -26,26 +26,32 @@ class Route
 
     public $middleware;
 
-    protected $pattern = '';
+    public $pattern = '';
+
+    protected $length = 0;
 
 
     public function __construct(string $method, string $route, callable $callable, int $scope = 1, string $group = '/')
     {
+        $route = $route === '/' ? $route : rtrim($route, '/');
         $this->method = $method;
         $this->route = $route;
         $this->callable[] = $callable;
         $this->group = $group;
         $this->scope = $scope;
-        $this->middleware = new \SplQueue();
-        $this->getPattern();
+//        $this->middleware = new \SplQueue();
+        list($regex, $params) = $this->parseRoute($route);
+        $this->pattern = '#^' . $regex . '$#';
+        $this->paramNames = $params;
+        $this->length = count(explode('/', $route));
     }
 
 
     /**
      * @param $route string
-     * @return void
+     * @return array
      */
-    private function getPattern()
+    public function parseRoute(string $route)
     {
         $params = [];
         $regex = preg_replace_callback(
@@ -60,11 +66,10 @@ class Route
                 $params[] = $name;
                 return "(?P<$name>[$type]+)";
             },
-            $this->route
+            $route
         );
 
-        $this->pattern = $regex;
-        $this->paramNames = $params;
+        return [$regex, $params];
     }
 
     public function add(callable $callable)
@@ -87,7 +92,7 @@ class Route
     /**
      * @return string
      */
-    public function getGroup()
+    public function getGroup(): string
     {
         return $this->group;
     }
@@ -95,7 +100,7 @@ class Route
     /**
      * @return int
      */
-    public function getScope()
+    public function getScope(): int
     {
         return $this->scope;
     }
@@ -117,5 +122,29 @@ class Route
         }
 
         return $match;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPattern(): string
+    {
+        return $this->pattern;
+    }
+
+    /**
+     * @param string $path
+     */
+    public function pathParser(string $path)
+    {
+
+    }
+
+    /**
+     * @return int
+     */
+    public function len(): int
+    {
+        return $this->length;
     }
 }
