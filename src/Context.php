@@ -39,6 +39,8 @@ class Context
 
     public $method = 'get';
 
+    public $collection;
+
     public static $allowMethods = [
         'get',
         'post',
@@ -55,9 +57,9 @@ class Context
         $this->context['request'] = $req;
         $this->context['response'] = $res;
         $this->container = $container;
-        var_dump($container);
-        $this->request = $this->createRequest($req);
-        $this->method = $this->request->getMethod();
+        $request = $this->createRequest($req);
+        $this->request = $request;
+        $this->method = $request->getMethod();
     }
 
     /**
@@ -219,8 +221,10 @@ class Context
     {
         $response = $response ?? new Response();
         $terminator = $this->container['response.resolver'];
+
         $respond = $terminator($this->context['response']);
 
+        var_dump($response);
         return $respond($response);
     }
 

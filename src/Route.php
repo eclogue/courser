@@ -31,12 +31,11 @@ class Route
     protected $length = 0;
 
 
-    public function __construct(string $method, string $route, callable $callable, int $scope = 1, string $group = '/')
+    public function __construct(string $method, string $route, array $callable, int $scope = 1, string $group = '/')
     {
         $route = $route === '/' ? $route : rtrim($route, '/');
         $this->method = $method;
         $this->route = $route;
-        $this->callable[] = $callable;
         $this->group = $group;
         $this->scope = $scope;
 //        $this->middleware = new \SplQueue();
@@ -44,6 +43,7 @@ class Route
         $this->pattern = '#^' . $regex . '$#';
         $this->paramNames = $params;
         $this->length = count(explode('/', $route));
+        $this->callable += $callable;
     }
 
 
@@ -51,7 +51,7 @@ class Route
      * @param $route string
      * @return array
      */
-    public function parseRoute(string $route)
+    public static function parseRoute(string $route)
     {
         $params = [];
         $regex = preg_replace_callback(

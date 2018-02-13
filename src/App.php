@@ -11,10 +11,9 @@ namespace Courser;
 use Exception;
 use Hayrick\Environment\Relay;
 use Hayrick\Environment\Reply;
-use Hayrick\Http\Request;
 use Pimple\Container;
-use Hayrick\Http\Response;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Server\MiddlewareInterface;
 
 class App
 {
@@ -74,8 +73,10 @@ class App
 
     public $layer = [];
 
+
     public function __construct()
     {
+        $this->middleware = new Middleware();
         $this->container = $this->init();
         spl_autoload_register([$this, 'load'], true, true);
     }
@@ -88,13 +89,13 @@ class App
         };
 
         $container['response.resolver'] = function() {
-            $resolver = function (ResponseInterface $response) {
-                $reply = new Reply();
+            return function() {
+                return function (ResponseInterface $response) {
+                    $reply = new Reply();
 
-                return $reply($response);
+                    return $reply($response);
+                };
             };
-
-            return $resolver;
         };
 
 
@@ -126,12 +127,15 @@ class App
      * @param function | object $callable callable function
      * @return void
      * */
-    public function used($callable)
+    public function add(MiddlewareInterface $callable)
     {
         $this->middleware[] = [
             'group' => $this->group,
             'middleware' => $callable
         ];
+
+        // @new
+        $this->middleware->add($callable);
     }
 
     /*
@@ -140,7 +144,7 @@ class App
      * @param string $group
      * @param function | array $callable
      *
-     * @return void
+     * @return mixed
      * */
     public function group(string $group, $callback)
     {
@@ -150,9 +154,7 @@ class App
         }
 
         $this->group .= $group;
-        if ($callback instanceof \Closure) {
-            $callback = $callback->bindTo($this);
-        }
+        $this->middleware->group($group);
         $callback();
         $this->group = '/';
     }
@@ -168,41 +170,41 @@ class App
     public function addRoute(string $method, string $route, ...$callback)
     {
         $method = strtolower($method);
-        $route = trim($this->group . $route, '/');
-//        $route = implode('/', [$route]);
-        $route = '/' . $route;
-        if (isset($this->routes[$method][$route])) {
-            $callable = $this->routes[$method][$route]['callable'];
-            $callable = array_merge($callable, $callback);
-            $this->routes[$method][$route]['callable'] = $callable;
+        $route = trim($route, '/');
+        $route = $this->group . $route;
+//        if (isset($this->routes[$method][$route])) {
+//            $callable = $this->routes[$method][$route]['callable'];
+//            $callable = array_merge($callable, $callback);
+//            $this->routes[$method][$route]['callable'] = $callable;
+//
+//
+//
+//            return true;
+//        }
+//
+//        // @new
+//        if (isset($this->layer[$method][$route])) {
+//            $router = $this->layer[$method][$route];
+//            $router->add($callback);
+//        }
+//
+//        $scope = count($this->middleware);
+//        list($pattern, $params) = $this->getPattern($route);
+//        if ($pattern) {
+//            $pattern = '#^' . $pattern . '$#';
+//        }
+//
+//        $this->routes[$method][$route] = [
+//            'route' => $route,
+//            'params' => $params,
+//            'pattern' => $pattern,
+//            'callable' => $callback,
+//            'scope' => $scope,
+//        ];
 
-
-
-            return true;
-        }
-
-        // @new
-        if (isset($this->layer[$method][$route])) {
-            $router = $this->layer[$method][$route];
-            $router->add($callback);
-        }
-
-        $scope = count($this->middleware);
-        list($pattern, $params) = $this->getPattern($route);
-        if ($pattern) {
-            $pattern = '#^' . $pattern . '$#';
-        }
-
-        $this->routes[$method][$route] = [
-            'route' => $route,
-            'params' => $params,
-            'pattern' => $pattern,
-            'callable' => $callback,
-            'scope' => $scope,
-        ];
-
+        $scope = $this->middleware->count();
         //@new
-        $this->layer[$method][$route] = new Route($method, $route, $callback, $scope, $this->group);
+        $this->layer[$method][] = new Route($method, $route, $callback, $scope, $this->group);
 
 
         return true;
@@ -215,24 +217,27 @@ class App
      */
     public function mapMiddleware(string $uri, int $deep = 1)
     {
-        $deep = $deep > 0 ? $deep : 1;
-        $md = [];
-        if (empty($this->middleware)) {
-            return $md;
-        }
+//        $deep = $deep > 0 ? $deep : 1;
+//        $md = [];
+//        if (empty($this->middleware)) {
+//            return $md;
+//        }
+//
+//        $tmp = $this->middleware;
+//        $apply = array_slice($tmp, 0, $deep);
+//        foreach ($apply as $index => $middleware) {
+//            $group = '#^' . $middleware['group'] . '(.*?)#';
+//            preg_match($group, $uri, $match);
+//            if (empty($match)) {
+//                continue;
+//            }
+//            $md[] = $middleware['middleware'];
+//        }
 
-        $tmp = $this->middleware;
-        $apply = array_slice($tmp, 0, $deep);
-        foreach ($apply as $index => $middleware) {
-            $group = '#^' . $middleware['group'] . '(.*?)#';
-            preg_match($group, $uri, $match);
-            if (empty($match)) {
-                continue;
-            }
-            $md[] = $middleware['middleware'];
-        }
+        $match = $this->middleware->match($uri, $deep);
+        var_dump($match);
 
-        return $md;
+        return $match;
     }
 
     /**
@@ -282,11 +287,14 @@ class App
         $routes = $this->layer[$method];
         foreach ($routes as $route) {
             $found = $route->find($method, $uri);
+            echo "found <hr>";
+            var_dump($found);
             if (!$found) {
                 continue;
             }
 
             $scope = $route->getScope();
+            var_dump($scope);
             $middleware = $this->mapMiddleware($uri, $scope);
             if (!empty($middleware)) {
                 $router->used($middleware);

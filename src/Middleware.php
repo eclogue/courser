@@ -9,12 +9,7 @@
 
 namespace Courser;
 
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
-use Generator;
-use Bulrush\Poroutine;
-use Hayrick\Http\Response;
-use Psr\Http\Server\RequestHandlerInterface;
+use Psr\Http\Server\MiddlewareInterface;
 
 class Middleware
 {
@@ -23,47 +18,56 @@ class Middleware
 
     protected $group = '/';
 
-    public function __construct(callable $middleware, string $group = '/')
+
+    /**
+     * @param MiddlewareInterface $handler
+     * @return $this
+     */
+    public function add(MiddlewareInterface $handler)
     {
-        $this->middleware = $middleware;
+        list($regex, $params) = Route::parseRoute($this->group);
+        $regex = '#^' . $regex . '(.*?)#';
+        $middleware = [
+            'regex' => $regex,
+            'params' => $params,
+            'group' => $this->group,
+            'handler' => $handler
+        ];
+        $this->middleware[] = $middleware;
+
+        return $this;
     }
 
-    public function add(RequestHandlerInterface $handler)
+    public function group($group)
     {
-        $this->middleware[] = $handler;
+        $this->group = $group;
     }
 
-    public function handle(ServerRequestInterface $request): ResponseInterface
+    public function match($path, $deep)
     {
-        $response = null;
-        if (count($this->middleware)) {
-            $md = array_pop($this->middleware);
-            $next = function (ServerRequestInterface $request) {
-                return $this->handle($request);
-            };
-
-            if (is_callable($md)) {
-                $response = $md($request, $next);
-            } elseif (is_array($md)) {
-                list($class, $action) = $md;
-                $instance = is_object($class) ? $class : new $class();
-                $response = $instance->$action($request, $next);
-            }
-
-            if ($response instanceof Generator) {
-                $response = Poroutine::resolve($response);
-            }
+        if (empty($this->middleware)) {
+            return [];
         }
 
-        if (!$response instanceof ResponseInterface) {
-            $res = new Response();
-            if ($response) {
-                $res->write($response);
+
+        $md = [];
+        foreach ($this->middleware as $index => $middleware) {
+            if ($index > $deep) {
+                break;
             }
 
-            return $res;
-        } else {
-            return $response;
+            preg_match($middleware['regex'], $path, $match);
+            if (empty($match)) {
+                continue;
+            }
+
+            $md[] = $middleware['handler'];
         }
+
+        return $md;
+    }
+    public function count()
+    {
+        return count($this->middleware);
     }
 }
