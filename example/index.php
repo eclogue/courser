@@ -9,28 +9,39 @@
 define('ROOT', dirname(dirname(__FILE__)));
 
 require ROOT . '/vendor/autoload.php';
+
 use Courser\App;
 use Courser\Server\CGIServer;
-use Hayrick\Http\Request;
 use Hayrick\Http\Response;
-use Hayrick\Environment\Reply;
-
+use Psr\Http\Server\RequestHandlerInterface;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\MiddlewareInterface;
 
 $app = new App();
 
-echo "<pre>";
-$app->used(function (Request $req, Closure $next) {
-    $response = $next($req);
-    $response->write('<h1>test2</h1>');
+class md1 {
 
-    return $response;
-});
+
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+    {
+        var_dump($request);
+        var_dump($handler);
+
+        return new Response();
+    }
+}
+
+
+echo "<pre>";
+//$app->add(new md1());
 
 $app->get('/', function () {
     $response = new Response();
 
-    return $response->send('test1');
+    return $response->withStatus(400)->write('test1');
 });
 
 $server = new Courser\Server\CGIServer($app);
 $server->start();
+
