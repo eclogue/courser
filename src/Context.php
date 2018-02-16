@@ -88,7 +88,7 @@ class Context
     public function add($callback)
     {
         if (is_array($callback)) {
-            $this->callable = array_merge($this->callable, $callback);
+            $this->callable += $callback;
         } elseif (!in_array($callback, $this->callable)) {
             $this->callable[] = $callback;
         }
@@ -99,10 +99,10 @@ class Context
      *
      * @param callable|array $middleware
      */
-    public function used($middleware)
+    public function use($middleware)
     {
         if (is_array($middleware)) {
-            $this->middleware = array_merge($this->middleware, $middleware);
+            $this->middleware += $middleware;
         } else {
             $this->middleware[] = $middleware;
         }
@@ -135,9 +135,12 @@ class Context
      */
     public function handle()
     {
-        $this->middleware = array_merge($this->middleware, $this->callable);
-        $this->middleware = array_reverse($this->middleware);
-        $response = $this->transducer($this->request);
+//        $this->middleware = array_merge($this->middleware, $this->callable);
+//        $this->middleware = array_reverse($this->middleware);
+        $handler = $this->middleware + $this->callable;
+        $resolver = new RequestResolver($handler);
+        $response = $resolver->handle($this->request);
+        var_dump($handler);
         if ($response instanceof ResponseInterface) {
             $this->response = $response;
         } elseif ($response instanceof Response) {
