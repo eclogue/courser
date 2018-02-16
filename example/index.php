@@ -17,24 +17,14 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
+use Courser\Test;
 
 $app = new App();
 
-class md1 {
-
-
-    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
-    {
-        var_dump($request);
-        var_dump($handler);
-
-        return new Response();
-    }
-}
-
 
 echo "<pre>";
-//$app->add(new md1());
+
+$app->add(new Test());
 
 $app->get('/', function () {
     $response = new Response();

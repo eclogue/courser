@@ -129,10 +129,10 @@ class App
      * */
     public function add(MiddlewareInterface $callable)
     {
-        $this->middleware[] = [
-            'group' => $this->group,
-            'middleware' => $callable
-        ];
+//        $this->middleware[] = [
+//            'group' => $this->group,
+//            'middleware' => $callable
+//        ];
 
         // @new
         $this->middleware->add($callable);
@@ -249,36 +249,36 @@ class App
     public function mapRoute(string $method, string $uri, Context $router): Context
     {
         $method = strtolower($method);
-        $routes = $this->routes[$method] ?? [];
-        foreach ($routes as $route) {
-            preg_match($route['pattern'], $uri, $match);
-            if (empty($match)) {
-                continue;
-            }
-
-            if ($route['scope']) {
-                $middleware = $this->mapMiddleware($uri, $route['scope']);
-                if (!empty($middleware)) {
-                    $router->used($middleware);
-                }
-            }
-
-            $router->method($method);
-            $router->add($route['callable']);
-            $router->paramNames = array_merge($router->paramNames, $route['params']);
-            foreach ($match as $param => $value) {
-                if (in_array($param, $router->paramNames)) {
-                    if (is_string($param)) {
-                        $router->setParam($param, $value);
-                    }
-                }
-            }
-        }
+//        $routes = $this->routes[$method] ?? [];
+//        foreach ($routes as $route) {
+//            preg_match($route['pattern'], $uri, $match);
+//            if (empty($match)) {
+//                continue;
+//            }
+//
+//            if ($route['scope']) {
+//                $middleware = $this->mapMiddleware($uri, $route['scope']);
+//                if (!empty($middleware)) {
+//                    $router->used($middleware);
+//                }
+//            }
+//
+//            $router->method($method);
+//            $router->add($route['callable']);
+//            $router->paramNames = array_merge($router->paramNames, $route['params']);
+//            foreach ($match as $param => $value) {
+//                if (in_array($param, $router->paramNames)) {
+//                    if (is_string($param)) {
+//                        $router->setParam($param, $value);
+//                    }
+//                }
+//            }
+//        }
 
         if (empty($router->callable)) {
             foreach ($this->middleware as $key => $md) {
                 if ($md['group'] === '/') {
-                    $router->used($md['middleware']);
+                    $router->use($md['middleware']);
                 }
             }
         }
@@ -288,16 +288,16 @@ class App
         foreach ($routes as $route) {
             $found = $route->find($method, $uri);
             echo "found <hr>";
-            var_dump($found);
+            var_dump($route);
             if (!$found) {
                 continue;
             }
+            $router->add($route->callable);
 
             $scope = $route->getScope();
-            var_dump($scope);
             $middleware = $this->mapMiddleware($uri, $scope);
             if (!empty($middleware)) {
-                $router->used($middleware);
+                $router->use($middleware);
             }
 
 //            $router->setParamNames($route->getParamNames());
@@ -306,7 +306,7 @@ class App
         if (!$router->isMount()) {
             foreach ($this->middleware as $key => $md) {
                 if ($md['group'] === '/') {
-                    $router->used($md['middleware']);
+                    $router->use($md['middleware']);
                 }
             }
         }

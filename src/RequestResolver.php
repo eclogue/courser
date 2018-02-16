@@ -9,6 +9,7 @@
 
 namespace Courser;
 
+use Psr\Http\Message\RequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -26,6 +27,13 @@ class RequestResolver implements RequestHandlerInterface
     public function __construct(array $callable)
     {
         $this->callable = new \SplQueue();
+        foreach ($callable as $resolver) {
+            if (!$resolver) {
+                continue;
+            }
+
+            $this->callable->enqueue($resolver);
+        }
     }
 
     /**
@@ -46,12 +54,11 @@ class RequestResolver implements RequestHandlerInterface
         if (!$this->callable->isEmpty()) {
             $callable = $this->callable->dequeue();
             if (is_callable($callable)) {
-                $response = $callable($request, $this);
+                $response = call_user_func_array($callable, [$request, $this]);
             } elseif ($callable instanceof MiddlewareInterface) {
-//                list($class, $action) = $callable;
-//                $instance = is_object($class) ? $class : new $class();
-//                $response = $instance->$action($request, $this);
-                $callable->process($request, $this);
+                $response = $callable->process($request, $this);
+            } else {
+                throw new \InvalidArgumentException('Invalid Request handler');
             }
 
             if ($response instanceof Generator) {
@@ -59,12 +66,17 @@ class RequestResolver implements RequestHandlerInterface
             }
         }
 
-        return $response;
+        return $response ?? new Response();
     }
 
     public function push(callable $callable)
     {
         $this->callable->enqueue($callable);
+    }
+
+    public function __invoke(ServerRequestInterface $request)
+    {
+        return $this->handle($request);
     }
 
 

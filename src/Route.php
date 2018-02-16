@@ -10,6 +10,9 @@
 namespace Courser;
 
 
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
+
 class Route
 {
     public $method = 'get';
