@@ -26,8 +26,13 @@ echo "<pre>";
 
 $app->add(new Test());
 
-$app->get('/', function () {
+$app->get('/', function ($request, $next) {
     $response = new Response();
+    $a = [function() {}];
+    $b = [function() {}];
+//    var_dump(array_merge($a, $b));
+//    echo '<------get-------><br><hr>';
+//    var_dump($request, $next);
 
     return $response->withStatus(400)->write('test1');
 });

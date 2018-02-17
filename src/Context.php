@@ -137,10 +137,9 @@ class Context
     {
 //        $this->middleware = array_merge($this->middleware, $this->callable);
 //        $this->middleware = array_reverse($this->middleware);
-        $handler = $this->middleware + $this->callable;
+        $handler = array_merge($this->middleware, $this->callable);
         $resolver = new RequestResolver($handler);
         $response = $resolver->handle($this->request);
-        var_dump($handler);
         if ($response instanceof ResponseInterface) {
             $this->response = $response;
         } elseif ($response instanceof Response) {
@@ -227,7 +226,6 @@ class Context
 
         $respond = $terminator($this->context['response']);
 
-        var_dump($response);
         return $respond($response);
     }
 
