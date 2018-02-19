@@ -83,12 +83,26 @@ class Context
     /**
      * add request handle
      *
-     * @param callable|array $callback
+     * @param Route $route
+     * @param array $params
+     * @return void
      */
-    public function add($callback)
+    public function add(Route $route, array $params)
     {
+        $callback = $route->callable;
+        if (empty($callback)) {
+            return;
+        }
+
+        $paramNames = $route->getParamNames();
+        foreach ($paramNames as $name) {
+            if (isset($params[$name])) {
+                $this->request->setParam($name, $params[$name]);
+            }
+        }
+
         if (is_array($callback)) {
-            $this->callable += $callback;
+            $this->callable = array_merge($this->callable, $callback);
         } elseif (!in_array($callback, $this->callable)) {
             $this->callable[] = $callback;
         }
@@ -102,7 +116,7 @@ class Context
     public function use($middleware)
     {
         if (is_array($middleware)) {
-            $this->middleware += $middleware;
+            $this->middleware = array_merge($this->middleware, $middleware);
         } else {
             $this->middleware[] = $middleware;
         }
@@ -129,16 +143,14 @@ class Context
 
 
     /**
-     * handle the request
+     * dispatch the route
      *
      * @return mixed
      */
-    public function handle()
+    public function dispatch()
     {
-//        $this->middleware = array_merge($this->middleware, $this->callable);
-//        $this->middleware = array_reverse($this->middleware);
         $handler = array_merge($this->middleware, $this->callable);
-        $resolver = new RequestResolver($handler);
+        $resolver = new Transducer($handler);
         $response = $resolver->handle($this->request);
         if ($response instanceof ResponseInterface) {
             $this->response = $response;
@@ -231,11 +243,12 @@ class Context
 
 
     /*
-     * set request context @todo @fixme
+     * build request
+     *
      * @param object|null $req
      * @return void
      * */
-    public function createRequest($req = null)
+    public function createRequest($req = null): Request
     {
         $builder = $this->container['request.resolver'];
         $incoming = null;

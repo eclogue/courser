@@ -46,7 +46,7 @@ class Route
         $this->pattern = '#^' . $regex . '$#';
         $this->paramNames = $params;
         $this->length = count(explode('/', $route));
-        $this->callable += $callable;
+        $this->callable = $callable;
     }
 
 
@@ -135,13 +135,6 @@ class Route
         return $this->pattern;
     }
 
-    /**
-     * @param string $path
-     */
-    public function pathParser(string $path)
-    {
-
-    }
 
     /**
      * @return int
@@ -149,5 +142,10 @@ class Route
     public function len(): int
     {
         return $this->length;
+    }
+
+    public function getParamNames(): array
+    {
+        return $this->paramNames;
     }
 }
