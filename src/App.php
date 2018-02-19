@@ -8,7 +8,7 @@
  */
 namespace Courser;
 
-use Exception;
+use Throwable;
 use Hayrick\Environment\Relay;
 use Hayrick\Environment\Reply;
 use Pimple\Container;
@@ -129,12 +129,6 @@ class App
      * */
     public function add(MiddlewareInterface $callable)
     {
-//        $this->middleware[] = [
-//            'group' => $this->group,
-//            'middleware' => $callable
-//        ];
-
-        // @new
         $this->middleware->add($callable);
     }
 
@@ -164,7 +158,7 @@ class App
      *
      * @param string $method
      * @param string $route
-     * @param callable $callback
+     * @param array $callback
      * @return bool
      */
     public function addRoute(string $method, string $route, ...$callback)
@@ -172,68 +166,26 @@ class App
         $method = strtolower($method);
         $route = trim($route, '/');
         $route = $this->group . $route;
-//        if (isset($this->routes[$method][$route])) {
-//            $callable = $this->routes[$method][$route]['callable'];
-//            $callable = array_merge($callable, $callback);
-//            $this->routes[$method][$route]['callable'] = $callable;
-//
-//
-//
-//            return true;
-//        }
-//
-//        // @new
-//        if (isset($this->layer[$method][$route])) {
-//            $router = $this->layer[$method][$route];
-//            $router->add($callback);
-//        }
-//
-//        $scope = count($this->middleware);
-//        list($pattern, $params) = $this->getPattern($route);
-//        if ($pattern) {
-//            $pattern = '#^' . $pattern . '$#';
-//        }
-//
-//        $this->routes[$method][$route] = [
-//            'route' => $route,
-//            'params' => $params,
-//            'pattern' => $pattern,
-//            'callable' => $callback,
-//            'scope' => $scope,
-//        ];
-
         $scope = $this->middleware->count();
-        //@new
-        $this->layer[$method][] = new Route($method, $route, $callback, $scope, $this->group);
-
+        $this->layer[$method][] = new Route(
+            $method,
+            $route,
+            $callback,
+            $scope,
+            $this->group
+        );
 
         return true;
     }
 
     /**
      * @param string $uri
+     *
      * @param int $deep
      * @return array
      */
-    public function mapMiddleware(string $uri, int $deep = 1)
+    public function mapMiddleware(string $uri, int $deep = 1): array
     {
-//        $deep = $deep > 0 ? $deep : 1;
-//        $md = [];
-//        if (empty($this->middleware)) {
-//            return $md;
-//        }
-//
-//        $tmp = $this->middleware;
-//        $apply = array_slice($tmp, 0, $deep);
-//        foreach ($apply as $index => $middleware) {
-//            $group = '#^' . $middleware['group'] . '(.*?)#';
-//            preg_match($group, $uri, $match);
-//            if (empty($match)) {
-//                continue;
-//            }
-//            $md[] = $middleware['middleware'];
-//        }
-
         $match = $this->middleware->match($uri, $deep);
 
         return $match;
@@ -242,7 +194,7 @@ class App
     /**
      * @param string $method
      * @param string $uri
-     * @param string $router
+     * @param Context $router
      * @return mixed
      */
     public function mapRoute(string $method, string $uri, Context $router): Context
@@ -259,18 +211,22 @@ class App
         //@new
         $routes = $this->layer[$method];
         foreach ($routes as $route) {
+            if (!$route instanceof Route) {
+                continue;
+            }
+
             $found = $route->find($method, $uri);
-            echo "found <hr>";
             if (!$found) {
                 continue;
             }
 
-            $router->add($route->callable);
+            $router->add($route, $found);
             $scope = $route->getScope();
             $middleware = $this->mapMiddleware($uri, $scope);
             if (!empty($middleware)) {
                 $router->use($middleware);
             }
+
 
 //            $router->setParamNames($route->getParamNames());
         }
@@ -284,31 +240,6 @@ class App
         }
 
         return $router;
-    }
-
-    /**
-     * @param $route string
-     * @return array
-     */
-    private function getPattern(string $route): array
-    {
-        $params = [];
-        $regex = preg_replace_callback(
-            '#:([\w]+)|{([\w]+)}|(\*)#',
-            function ($match) use (&$params) {
-                $name = array_pop($match);
-                $type = $match[0][0];
-                if ($type === '*') {
-                    return '(.*)';
-                }
-                $type = $type === ':' ? '\d' : '\w';
-                $params[] = $name;
-                return "(?P<$name>[$type]+)";
-            },
-            $route
-        );
-
-        return [$regex, $params];
     }
 
 
@@ -369,7 +300,6 @@ class App
         $this->addRoute('options', $route, $callback);
     }
 
-    // @fixme
     public function any(string $route, $callback)
     {
         foreach ($this->methods as $method) {
@@ -392,7 +322,7 @@ class App
     /**
      * set error handle
      *
-     * @param $env
+     * @param callable $callback
      * @return void
      */
     public function setReporter($callback)
@@ -409,11 +339,11 @@ class App
     }
 
     /**
-     * @param $req
-     * @param $res
-     * @param $err
+     * @param object $request
+     * @param object $response
+     * @param object $err
      */
-    public function handleError($request, $response, \Throwable $err)
+    public function handleError($request, $response, Throwable $err)
     {
         if (!is_callable($this->reporter) && !is_array($this->reporter)) {
             throw $err;
@@ -441,7 +371,7 @@ class App
                 $router->add($this->notFounds);
             }
 
-            $router->handle();
+            $router->dispatch();
         };
     }
 

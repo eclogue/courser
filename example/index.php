@@ -17,24 +17,31 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
-use Courser\Test;
 
 $app = new App();
 
 
-echo "<pre>";
+class Test implements MiddlewareInterface
+{
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+    {
+        $response =  $handler->handle($request);
+
+        return $response;
+    }
+}
 
 $app->add(new Test());
 
 $app->get('/', function ($request, $next) {
     $response = new Response();
-    $a = [function() {}];
-    $b = [function() {}];
-//    var_dump(array_merge($a, $b));
-//    echo '<------get-------><br><hr>';
-//    var_dump($request, $next);
-
     return $response->withStatus(400)->write('test1');
+});
+
+$app->get('/test/:id', function ($request, $next) {
+    $id = $request->getParam('id');
+    $response = new Response();
+    return $response->json(['id' => $id]);
 });
 
 $server = new Courser\Server\CGIServer($app);

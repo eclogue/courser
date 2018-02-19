@@ -17,10 +17,8 @@ use Hayrick\Http\Response;
 use Bulrush\Poroutine;
 use Generator;
 
-class RequestResolver implements RequestHandlerInterface
+class Transducer implements RequestHandlerInterface
 {
-    protected $pipeline;
-
     protected $callable;
 
     public function __construct(array $callable)
@@ -50,12 +48,8 @@ class RequestResolver implements RequestHandlerInterface
     public function next(ServerRequestInterface $request): ResponseInterface
     {
         $response = null;
-        var_dump($this->count());
         if (!$this->callable->isEmpty()) {
             $callable = $this->callable->dequeue();
-            echo "<br> handle:::<br>";
-            var_export($callable);
-            echo "<br> ::::end handle:::<br>";
             if (is_callable($callable)) {
                 $response = call_user_func_array($callable, [$request, $this]);
             } elseif ($callable instanceof MiddlewareInterface) {
