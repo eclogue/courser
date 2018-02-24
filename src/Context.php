@@ -234,6 +234,12 @@ class Context
     public function respond($response)
     {
         $response = $response ?? new Response();
+        $length = $response->getBody()->getSize();
+        $check = $response->getHeader('Content-Length');
+        if (!$check && $length) {
+          $response = $response->withHeader('Content-type', $length);
+        }
+
         $terminator = $this->container['response.resolver'];
 
         $respond = $terminator($this->context['response']);
