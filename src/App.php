@@ -9,9 +9,10 @@
 namespace Courser;
 
 use Throwable;
+use DI\Container;
+use DI\ContainerBuilder;
 use Hayrick\Environment\Relay;
 use Hayrick\Environment\Reply;
-use Pimple\Container;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Server\MiddlewareInterface;
 
@@ -74,29 +75,30 @@ class App
     public $layer = [];
 
 
-    public function __construct()
+    public function __construct(Container $container = null)
     {
         $this->middleware = new Middleware();
-        $this->container = $this->init();
+        $this->container = $container ? $container : $this->loadContainer();
         spl_autoload_register([$this, 'load'], true, true);
     }
 
-    public function init()
+    public function loadContainer()
     {
-        $container = new Container();
-        $container['request.resolver'] = function () {
+        $builder = new ContainerBuilder();
+        $builder->useAutowiring(false);
+        $builder->useAnnotations(false);
+        $container = $builder->build();
+        $container->set('request.resolver', function () {
             return Relay::createFromGlobal();
-        };
+        });
 
-        $container['response.resolver'] = function() {
-            return function() {
-                return function (ResponseInterface $response) {
-                    $reply = new Reply();
+        $container->set('response.resolver', function() {
+            return function ($response) {
+                $terminator = new Terminator($response);
 
-                    return $reply($response);
-                };
+                return $terminator;
             };
-        };
+        });
 
 
         return $container;
@@ -368,7 +370,7 @@ class App
             $router = $this->createContext($req, $res);
             $router = $this->mapRoute($router->method, $uri, $router);
             if (empty($router->callable)) {
-                $router->add($this->notFounds);
+                $router->use($this->notFounds);
             }
 
             $router->dispatch();
