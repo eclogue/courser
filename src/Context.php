@@ -12,7 +12,7 @@ namespace Courser;
 use Bulrush\Poroutine;
 use Hayrick\Http\Request;
 use Hayrick\Http\Response;
-use Pimple\Container;
+use DI\Container;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\RequestInterface;
 use Generator;
@@ -70,15 +70,6 @@ class Context
         $this->container = $container;
     }
 
-    /**
-     * set request process terminator
-     *
-     * @param callable $terminator
-     */
-    public function setTerminator(callable $terminator)
-    {
-        $this->terminator = $terminator;
-    }
 
     /**
      * add request handle
@@ -240,11 +231,10 @@ class Context
           $response = $response->withHeader('Content-type', $length);
         }
 
-        $terminator = $this->container['response.resolver'];
+        $wrapper = $this->container->get('response.resolver');
+        $terminator = $wrapper($response);
 
-        $respond = $terminator($this->context['response']);
-
-        return $respond($response);
+        return $terminator->respond($this->context['response']);
     }
 
 
