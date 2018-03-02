@@ -21,7 +21,7 @@ class Terminator
         $this->origin = $origin;
     }
 
-    public function respond(ResponseInterface $response)
+    public function end(ResponseInterface $response)
     {
         if (!headers_sent()) {
             header(sprintf(

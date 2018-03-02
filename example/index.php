@@ -11,18 +11,22 @@ define('ROOT', dirname(dirname(__FILE__)));
 require ROOT . '/vendor/autoload.php';
 
 use Courser\App;
-use Courser\Server\CGIServer;
 use Hayrick\Http\Response;
 use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
+use DI\Container;
 
 $app = new App();
 
 
 class Test implements MiddlewareInterface
 {
+    public function __construct()
+    {
+    }
+
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $response =  $handler->handle($request);
@@ -44,6 +48,24 @@ $app->get('/test/:id', function ($request, $next) {
     return $response->json(['id' => $id]);
 });
 
-$server = new Courser\Server\CGIServer($app);
-$server->start();
+echo "<pre>";
+($app->run($_SERVER['REQUEST_URI']))();
 
+
+//$builder = new \DI\ContainerBuilder();
+//$builder->addDefinitions([
+//    'foo' => function ($c) {
+//        return new Response();
+//    },
+//    Test::class => \DI\factory([\Hayrick\Environment\Relay::class, 'createFromGlobal'])
+//]);
+//
+//$container = $builder->build();
+//
+//$make = $container->make(Test::class, [
+//    'user' => 'torvalds',
+//]);
+//
+//var_dump($make);
+
+//var_dump($container->get('GithubProfile'));
