@@ -339,18 +339,16 @@ class App
      * @param array $env
      * @return void
      * */
-    public function run(string $uri)
+    public function run(string $uri, $req = null, $res = null)
     {
         $uri = $uri ?: '/';
-        return function ($req = null, $res = null) use ($uri) {
-            $router = $this->createContext($req, $res);
-            $router = $this->mapRoute($router->method, $uri, $router);
-            if (empty($router->callable)) {
-                $router->use($this->notFounds);
-            }
+        $router = $this->createContext($req, $res);
+        $router = $this->mapRoute($router->method, $uri, $router);
+        if (empty($router->callable)) {
+            $router->use($this->notFounds);
+        }
 
-            $router->dispatch();
-        };
+        $router->dispatch();
     }
 
     /**

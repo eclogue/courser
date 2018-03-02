@@ -37,6 +37,11 @@ class Test implements MiddlewareInterface
 
 $app->add(new Test());
 
+$app->get('/', function ($request, RequestHandlerInterface$next) {
+    $response = $next->handle($request);
+    return $response->withStatus(400)->write('test1');
+});
+
 $app->get('/', function ($request, $next) {
     $response = new Response();
     return $response->withStatus(400)->write('test1');
@@ -49,7 +54,7 @@ $app->get('/test/:id', function ($request, $next) {
 });
 
 echo "<pre>";
-($app->run($_SERVER['REQUEST_URI']))();
+$app->run($_SERVER['REQUEST_URI']);
 
 
 //$builder = new \DI\ContainerBuilder();
