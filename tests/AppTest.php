@@ -15,7 +15,6 @@ use Hayrick\Http\Request;
 use Hayrick\Http\Response;
 use PHPUnit\Framework\Exception;
 use PHPUnit\Framework\TestCase;
-use Courser\Tests\Stub\Request as StubRequest;
 use Hayrick\Environment\Relay;
 use Hayrick\Environment\Reply;
 

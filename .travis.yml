@@ -46,8 +46,6 @@ install:
   - composer update $COMPOSER_ARGS
 script:
   - mkdir -p build/logs
-#  - vendor/bin/phpunit
-#  - vendor/bin/phpcs
   - if [[ "$ANALYSIS" != 'true' ]]; then vendor/bin/phpunit ; fi
   - if [[ "$ANALYSIS" == 'true' ]]; then vendor/bin/phpunit --coverage-clover clover.xml ; fi
   - if [[ "$ANALYSIS" == 'true' ]]; then vendor/bin/phpcs ; fi
@@ -57,3 +55,8 @@ after_success:
 
 notifications:
   slack: eclogue:QxiUd6aEHYK6K7n7PHNxS4tp
+    email:
+      recipients:
+        - mulberry10th@gmail.com
+      on_success: never
+      on_failure: always

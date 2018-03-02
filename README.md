@@ -5,15 +5,15 @@
 [![Total Downloads](https://poser.pugx.org/eclogue/courser/downloads)](https://packagist.org/packages/eclogue/courser)
 [![License](https://poser.pugx.org/eclogue/courser/license)](https://packagist.org/packages/eclogue/courser)
 
-A tiny, fast and scalable web framework. The core file less than 1000 SLOC codebase(with comments and space).It is easy to write swoole, reactphp, workerman and cgi web application.Use words from koa I believe that 
+Fast and scalable web framework. Implement psr-7, psr-15, psr-4, psr-2, psr-11.It is easy to write swoole, reactphp, workerman and cgi web application.I believe that 
 `entities should not be multiplied unnecessarily.` 
 
-**feature**
-- laravel like middleware
-- coroutine
-- psr-7 http message
+**Feature**
+- PSR-15 middleware
+- PSR-7 http message
+- PSR-11
+- coroutine support
 
-当时明月在，曾照彩云归。 --- 临江仙·梦后楼台高锁【晏几道】
 
 ### Installation
 `composer require eclogue/courser` or git clone https://github.com/eclogue/courser
@@ -29,9 +29,9 @@ Create a new file server.php.
 require('./vendor/autoload.php');
 use Courser\App;
 use Ben\Config;
-//use Psr\Http\Message\RequestInterface as Request;
-use Hayrick\Http\Request;
+use Psr\Http\Message\RequestInterface;
 use Hayrick\Http\Response;
+use Psr\Http\Server\RequestHandlerInterface;
 
 $config = [
     'server' => [
@@ -41,23 +41,23 @@ $config = [
 ];
 Config::set($config);
 $app = new App();
-$app->used(function(Request $req, Closure $next) {
+$app->used(function(RequestInterface $req, RequestHandlerInterface $handler) {
    echo "this middleware 1 \n";
-   $response = yield $next($req);
+   $response = yield $handler->handle($req);
    // var_dump($response);
    return $response;
 });
 
-$app->used(function(Request $req, Closure $next) {
+$app->used(function(RequestInterface $req, RequestHandlerInterface $handler) {
     yield;
-    $response = $next($req);
+    $response = $handler->handle($req);
     echo "this middleware 2 \n";
     // var_dump($response);
     return $response;
 });
-$app->get('/', function(Request $req,  Closure $next) {
+$app->get('/', function(RequestInterface $req,  RequestHandlerInterface $handler) {
     $html = "<h1> fuck world</h1>";
-    $res = yield $next($req);
+    $res = yield $handler->handle($req);
     
     return $res->withHeader('Content-Type', 'text/html');
 });
@@ -91,17 +91,17 @@ $server->start();
 <?php
 
 # basic /users/11
-$app->get('/users/:id', function($req, Closure $next) {
+$app->get('/users/:id', function($req, RequestHandlerInterface $handler) {
     var_dump($req->params['id']); // id must be integer
-    return $next($req);
+    return $handler->handle($req);
 });
 $app->get('/users/:id', function($req) {
     return ['data' => '1'];
 });
 # use array
-$app->get('users/*', [function($req, $res) {
+$app->get('users/*', [function($req, RequestHandlerInterface $handler) {
     /* do something*/
-}, function($req, $res) {
+}, function($req, RequestHandlerInterface $handler) {
     /*...todo*/
 }]);
 
@@ -113,12 +113,12 @@ $app->put('/user/{username}', ['MyNamespace\Controller', 'action']);
 $app->group('/admin/{username}',  function() {
     // [Notice]: In group `$this` is bind to Courser,
     // middleware define in group just have effect on the router of group scope 
-    $this->used(function($req, Closure $next) { // Add group middleware
+    $this->used(function($req, RequestHandlerInterface $handler) { // Add group middleware
         // todo
         // this middleware is mount at /admin/{username} scope, have not effect outside of this group.
     });
-    $this->get('/test/:id', function($req, Closure $next) {
-        yield $next($req);
+    $this->get('/test/:id', function($req, RequestHandlerInterface $handler) {
+        yield $handler->handle($req);
         // ...
     });
 });
@@ -132,14 +132,14 @@ $app->group('/admin/{username}',  function() {
   
   You can define a middleware like:
 ```
-    $app->used(function(Request $request, $next) {
-        return $next($request);  
+    $app->used(function(Request $request, $handler) {
+        return $handler($request);  
     });
 ```
 like this:
 ```
    class A {
-        public function someMethod(Request $request, $next) {
+        public function someMethod(Request $request, $handler) {
             // ....
         }
    }
@@ -175,12 +175,12 @@ $app->error(function ($req, $res, Exception $err) {
   Courser had already do everything. you just use `yield` keyword  to let process gives up its time slice. 
   ```
     // a middleware
-    function middleware(Request $req, Closure $next) {
+    function middleware(Request $req, RequestHandlerInterface $handler) {
         $userId = $req->getParam('userId');
         $model = new User();
         $user = yield $model->findById($userId);
         var_dump($user);
-        $response = yield $next($request);
+        $response = yield $handler->handle($request);
 
         return $response;
     }
