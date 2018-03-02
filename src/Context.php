@@ -231,10 +231,10 @@ class Context
           $response = $response->withHeader('Content-type', $length);
         }
 
-        $wrapper = $this->container->get('response.resolver');
-        $terminator = $wrapper($response);
+        $resolver = $this->container->get('response.resolver');
+        $terminator = new $resolver($this->context['response']);
 
-        return $terminator->respond($this->context['response']);
+        return $terminator->end($response);
     }
 
 
@@ -246,7 +246,7 @@ class Context
      * */
     public function createRequest($req = null): Request
     {
-        $builder = $this->container['request.resolver'];
+        $builder = $this->container->get('request.resolver');
         $incoming = null;
         if (is_object($builder)) {
             $incoming = $builder;

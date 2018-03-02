@@ -11,9 +11,8 @@ namespace Courser;
 use Throwable;
 use DI\Container;
 use DI\ContainerBuilder;
+use function DI\factory;
 use Hayrick\Environment\Relay;
-use Hayrick\Environment\Reply;
-use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Server\MiddlewareInterface;
 
 class App
@@ -85,20 +84,11 @@ class App
     public function loadContainer()
     {
         $builder = new ContainerBuilder();
-        $builder->useAutowiring(false);
-        $builder->useAnnotations(false);
+//        $builder->useAutowiring(false);
+//        $builder->useAnnotations(false);
         $container = $builder->build();
-        $container->set('request.resolver', function () {
-            return Relay::createFromGlobal();
-        });
-
-        $container->set('response.resolver', function() {
-            return function ($response) {
-                $terminator = new Terminator($response);
-
-                return $terminator;
-            };
-        });
+        $container->set('request.resolver', factory([Relay::class, 'createFromGlobal']));
+        $container->set('response.resolver', Terminator::class);
 
 
         return $container;
@@ -126,12 +116,12 @@ class App
 
     /*
      * add a middleware
-     * @param function | object $callable callable function
+     * @param function | object $md callable function
      * @return void
      * */
-    public function add(MiddlewareInterface $callable)
+    public function add(MiddlewareInterface $md)
     {
-        $this->middleware->add($callable);
+        $this->middleware->add($md);
     }
 
     /*
@@ -199,49 +189,35 @@ class App
      * @param Context $router
      * @return mixed
      */
-    public function mapRoute(string $method, string $uri, Context $router): Context
+    public function mapRoute(string $method, string $path, Context $context): Context
     {
+        $path = parse_url($path, PHP_URL_PATH);
         $method = strtolower($method);
-        if (empty($router->callable)) {
-            foreach ($this->middleware as $key => $md) {
-                if ($md['group'] === '/') {
-                    $router->use($md['middleware']);
-                }
-            }
-        }
-
-        //@new
         $routes = $this->layer[$method];
         foreach ($routes as $route) {
             if (!$route instanceof Route) {
                 continue;
             }
 
-            $found = $route->find($method, $uri);
+            $found = $route->find($method, $path);
             if (!$found) {
                 continue;
             }
 
-            $router->add($route, $found);
+            $context->add($route, $found);
             $scope = $route->getScope();
-            $middleware = $this->mapMiddleware($uri, $scope);
+            $middleware = $this->mapMiddleware($path, $scope);
             if (!empty($middleware)) {
-                $router->use($middleware);
-            }
-
-
-//            $router->setParamNames($route->getParamNames());
-        }
-
-        if (!$router->isMount()) {
-            foreach ($this->middleware as $key => $md) {
-                if ($md['group'] === '/') {
-                    $router->use($md['middleware']);
-                }
+                $context->use($middleware);
             }
         }
 
-        return $router;
+        if (!$context->isMount()) {
+            $md = $this->mapMiddleware($path, 1);
+            $context->use($md);
+        }
+
+        return $context;
     }
 
 
@@ -366,7 +342,7 @@ class App
     public function run(string $uri)
     {
         $uri = $uri ?: '/';
-        return function ($req, $res) use ($uri) {
+        return function ($req = null, $res = null) use ($uri) {
             $router = $this->createContext($req, $res);
             $router = $this->mapRoute($router->method, $uri, $router);
             if (empty($router->callable)) {
@@ -409,7 +385,7 @@ class App
             class_alias($alias[$class], $class);
         }
         $class = $this->alias($class);
-        if (!$this->container->offsetExists($class)) {
+        if (!$this->container->has($class)) {
             return null;
         }
         $instance = $this->container[$class];
