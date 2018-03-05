@@ -16,7 +16,9 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
+use Psr\Http\Message\RequestInterface;
 use DI\Container;
+
 
 $app = new App();
 
@@ -44,6 +46,7 @@ $app->get('/', function ($request, RequestHandlerInterface$next) {
 
 $app->get('/', function ($request, $next) {
     $response = new Response();
+    throw new Exception('just test error');
     return $response->withStatus(400)->write('test1');
 });
 
@@ -52,8 +55,18 @@ $app->get('/test/:id', function ($request, $next) {
     $response = new Response();
     return $response->json(['id' => $id]);
 });
+$app->setReporter(function(RequestInterface $request, Throwable $err) {
+//    var_dump($request, $err->getMessage());
+    $response = new Response();
+    $response = $response->json([
+        'error' => $err->getMessage(),
+    ])->withStatus(500);
+//    var_dump($response->getHeaders());
 
-echo "<pre>";
+    return $response;
+});
+
+//echo "<pre>";
 $app->run($_SERVER['REQUEST_URI']);
 
 

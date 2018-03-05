@@ -12,7 +12,6 @@ use Throwable;
 use DI\Container;
 use DI\ContainerBuilder;
 use function DI\factory;
-use Hayrick\Environment\Relay;
 use Psr\Http\Server\MiddlewareInterface;
 
 class App
@@ -292,7 +291,7 @@ class App
      * @param  callable $callback params same as route
      * @return void
      * */
-    public function notFound($callback)
+    public function notFound(callable $callback)
     {
         $this->notFounds[] = $callback;
     }
@@ -303,7 +302,7 @@ class App
      * @param callable $callback
      * @return void
      */
-    public function setReporter($callback)
+    public function setReporter(callable $callback)
     {
         $this->reporter = $callback;
     }
@@ -341,14 +340,19 @@ class App
      * */
     public function run(string $uri, $req = null, $res = null)
     {
-        $uri = $uri ?: '/';
-        $router = $this->createContext($req, $res);
-        $router = $this->mapRoute($router->method, $uri, $router);
-        if (empty($router->callable)) {
-            $router->use($this->notFounds);
-        }
+            $uri = $uri ?: '/';
+            $context = $this->createContext($req, $res);
+        try {
+            $context = $this->mapRoute($context->method, $uri, $context);
+            if (empty($context->callable)) {
+                $context->use($this->notFounds);
+            }
 
-        $router->dispatch();
+            $context->dispatch();
+        } catch (Throwable $err) {
+            $handler = $context->error($err);
+            $handler($this->reporter);
+        }
     }
 
     /**

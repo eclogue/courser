@@ -41,7 +41,6 @@ class Route
         $this->route = $route;
         $this->group = $group;
         $this->scope = $scope;
-//        $this->middleware = new \SplQueue();
         list($regex, $params) = $this->parseRoute($route);
         $this->pattern = '#^' . $regex . '$#';
         $this->paramNames = $params;
