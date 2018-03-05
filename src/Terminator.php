@@ -11,8 +11,9 @@ namespace Courser;
 
 
 use Psr\Http\Message\ResponseInterface;
+use Hayrick\Environment\ReplyInterface;
 
-class Terminator
+class Terminator implements ReplyInterface
 {
     protected $origin;
 

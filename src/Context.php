@@ -9,13 +9,15 @@
 
 namespace Courser;
 
-use Bulrush\Poroutine;
-use Hayrick\Http\Request;
-use Hayrick\Http\Response;
-use DI\Container;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\RequestInterface;
+use Hayrick\Http\Request;
+use Hayrick\Http\Response;
+use Bulrush\Poroutine;
+use DI\Container;
 use Generator;
+use Throwable;
+use Closure;
 
 class Context
 {
@@ -199,9 +201,9 @@ class Context
         return $response ?? new Response();
     }
 
-    public function error($err)
+    public function error(Throwable $err): Closure
     {
-        return function ($callable) use ($err) {
+        return function (callable $callable) use ($err) {
             if (is_array($callable) || is_callable($callable)) {
                 $response = call_user_func_array($callable, [$this->request, $err]);
             }  else {
@@ -265,8 +267,22 @@ class Context
         return $request;
     }
 
+    /**
+     * check context is mounted
+     * @return int|void
+     */
     public function isMount()
     {
         return count($this->callable) + count($this->middleware);
+    }
+
+    /**
+     * get context
+     *
+     * @return array
+     */
+    public function getContext(): array
+    {
+        return $this->context;
     }
 }

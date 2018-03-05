@@ -12,7 +12,7 @@ $http->set([
 ]);
 $http->on('request', function ($request, $response) {
     try {
-        $relay = new \Hayrick\Environment\Relay($request);
+        $relay = new \Courser\Relay($request);
         $req = new Request($relay);
         new Fuck;
         $response->end("<h1>Hello Swoole. #".rand(1000, 9999)."</h1>");

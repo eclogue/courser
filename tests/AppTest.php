@@ -15,7 +15,7 @@ use Hayrick\Http\Request;
 use Hayrick\Http\Response;
 use PHPUnit\Framework\Exception;
 use PHPUnit\Framework\TestCase;
-use Hayrick\Environment\Relay;
+use Courser\Relay;
 use Hayrick\Environment\Reply;
 
 class AppTest extends TestCase
