@@ -250,19 +250,19 @@ class Context
     {
         $builder = $this->container->get('request.resolver');
         $incoming = null;
-        if (is_object($builder)) {
-            $incoming = $builder;
-        } else if (is_callable($builder, true, $callable)) {
+        if (is_callable($builder, true, $callable)) {
             if (is_array($builder)) {
                 $incoming = call_user_func_array($callable, [$req]);
             } else {
                 $incoming = $builder($req);
             }
+        } else if (is_object($builder)) {
+            $incoming = $builder;
         } else {
             throw new \RuntimeException('Request builder invalid');
         }
 
-        $request = new Request($incoming);
+        $request = Request::createRequest($incoming);
 
         return $request;
     }
