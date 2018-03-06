@@ -12,12 +12,16 @@ define('ROOT', dirname(dirname(__FILE__)));
 
 require ROOT . '/vendor/autoload.php';
 use Courser\App;
-//use Ben\Config;
-use Courser\Server\SwooleServer;
+use Psr\Http\Server\RequestHandlerInterface;
+use Psr\Http\Message\ResponseInterface;
 use Hayrick\Http\Request;
 use Hayrick\Http\Response;
+use Hayrick\Http\Stream;
 use Courser\Relay;
 use Swoole\Http\Request as SRequest;
+use Swoole\Http\Response as SResponse;
+use Swoole\Http\Server;
+use function DI\factory;
 
 
 function getRelay(SRequest $request) {
@@ -41,62 +45,35 @@ function getRelay(SRequest $request) {
     return $relay;
 }
 
+$container = new \DI\Container();
+$container->set('request.resolver', function() {
+    return function (SRequest $request) {
+        return getRelay($request);
+    };
+});
+$container->set('response.resolver', function() {
+    $instance = new class extends \Courser\Terminator {
 
-$config = [];
+        public function end(ResponseInterface $response) {
+            $data = $response->getBody();
+            $this->origin->end($data);
+        }
+    };
 
-error_reporting(E_ALL);
-//Config::set($config);
-$app = new App();
-//$app->used(function(Request $req, Closure $next) {
-////    var_dump($req);
-//    echo "this middleware 1 \n";
-//    $response = $next($req);
-//    // var_dump($response);
-//    return $response;
-//});
-//
-//$app->used(function(Request $req, Closure $next) {
-//    yield 1;
-//    $response = $next($req);
-//    echo "this middleware 2 \n";
-//    return $response;
-//});
-//$app->get('/', function(Request $req,  Closure $next) {
-//    $html = "<h1> fuck world2</h1>";
-//    $res = yield $next($req);
-//    $res->write($html);
-//
-//    return $res->withHeader('Content-Type', 'text/html');
-//});
-$app->get('/', function(Request $req) {
-    $req = null;
-    new Fuck;
-    $html = "<h1> fuck world</h1>";
-    $res = new Response();
-//    ob_start ();
-//
-//    ob_start ();                              // Capturing
-//    phpinfo ();                               // phpinfo ()
-//    $info = trim (ob_get_clean ());
-    return $res->send($html);
+    return $instance;
 });
 
-//$app->get('/error', function () {
-//    throw new Exception('test');
-//});
+$app = new App($container);
 
-//$app->post('/test', function (Request $request, $next) {
-//    echo '12312312312312312312321312';
-//    yield;
-//    return '123';
-//});
+$app->get('/', function(Request $request,  RequestHandlerInterface $handler) {
+    $header = $request->getHeaders();
+    $response = new Response();
+    foreach($header as $key => $value) {
+        $response = $response->withHeader($key, $value);
+    }
 
-//$app->used(function () {
-//    $response = new \Hayrick\Http\Response();
-//
-//    return $response->withStatus(404)
-//        ->json(['message' => 'Not Found']);
-//});
+    return $response->json(['test' => 1]);
+});
 $app->setReporter(function (Request $req, Throwable $err) {
     $res = new Response();
     return $res->withStatus(500)->json([
@@ -104,17 +81,14 @@ $app->setReporter(function (Request $req, Throwable $err) {
         'code' => 500
     ]);
 });
-
-$server = new SwooleServer($app);
-$server->bind('0.0.0.0', '8179');
-$server->setting([
-    // ... swoole setting
-]);
-$server->register('start', function (){
-    echo "server started, listening at: http//127.0.0.1:8179\n";
+$server = new Server('127.0.0.1', 7001);
+$server->on('request', function(Srequest $request, SResponse $response) use ($app) {
+    $app->run($request->server['request_uri'], $request, $response);
 });
 
+
 $server->start();
+
 
 
 
