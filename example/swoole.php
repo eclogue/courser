@@ -16,6 +16,31 @@ use Courser\App;
 use Courser\Server\SwooleServer;
 use Hayrick\Http\Request;
 use Hayrick\Http\Response;
+use Courser\Relay;
+use Swoole\Http\Request as SRequest;
+
+
+function getRelay(SRequest $request) {
+    $server = $request->server ?? [];
+    $cookie = $request->cookie ?? [];
+    $files = $request->files ?? [];
+    $query = $request->get ?? [];
+    $headers = $request->header ?? [];
+    $stream = fopen('php://temp', 'w+');
+    $source = $request->rawContent();
+    if ($source) {
+        fwrite($stream, $source);
+    }
+
+    if (!isset($server['http_host']) && isset($headers['http_host'])) {
+        $server['http_host'] = $headers['https_host'];
+    }
+
+    $body = new Stream($stream);
+    $relay = new Relay($server, $headers, $cookie, $files, $query, $body);
+    return $relay;
+}
+
 
 $config = [];
 

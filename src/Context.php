@@ -230,7 +230,7 @@ class Context
         $length = $response->getBody()->getSize();
         $check = $response->getHeader('Content-Length');
         if (!$check && $length) {
-          $response = $response->withHeader('Content-type', $length);
+//          $response = $response->withHeader('Content-Length', $length);
         }
 
         $resolver = $this->container->get('response.resolver');
