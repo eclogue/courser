@@ -35,8 +35,7 @@ class Relay extends RelayAbstract
         array $files,
         array $query,
         StreamInterface $stream
-    )
-    {
+    ) {
         $this->server = $server;
         $this->headers = $headers;
         $this->cookie = $cookie;
@@ -46,7 +45,11 @@ class Relay extends RelayAbstract
     }
 
 
-
+    /**
+     * build Relay
+     *
+     * @return Relay
+     */
     public static function createFromGlobal(): Relay
     {
         $server = array_change_key_case($_SERVER, CASE_LOWER);
@@ -97,5 +100,4 @@ class Relay extends RelayAbstract
             return $this->body;
         }
     }
-
 }

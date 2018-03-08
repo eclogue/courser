@@ -11,7 +11,6 @@ namespace Courser;
 use Throwable;
 use DI\Container;
 use DI\ContainerBuilder;
-use function DI\factory;
 use Psr\Http\Server\MiddlewareInterface;
 
 class App
@@ -76,17 +75,23 @@ class App
     public function __construct(Container $container = null)
     {
         $this->middleware = new Middleware();
-        $this->container = $container ? $container : $this->loadContainer();
+        if (!$container) {
+            $this->container = $this->loadContainer();
+        }
+
         spl_autoload_register([$this, 'load'], true, true);
     }
 
-    public function loadContainer()
+    /**
+     * @return Container
+     * @throws \DI\Definition\Exception\InvalidDefinition
+     * @throws \Exception
+     */
+    public function loadContainer() : Container
     {
         $builder = new ContainerBuilder();
-//        $builder->useAutowiring(false);
-//        $builder->useAnnotations(false);
         $container = $builder->build();
-        $container->set('request.resolver', factory([Relay::class, 'createFromGlobal']));
+        $container->set('request.resolver', [Relay::class, 'createFromGlobal']);
         $container->set('response.resolver', Terminator::class);
 
 
@@ -96,7 +101,7 @@ class App
     public function config(array $config)
     {
         foreach ($config as $key => $value) {
-            $this->container[$key] = $value;
+            $this->container->set($key, $value);
         }
     }
 
@@ -319,6 +324,7 @@ class App
      * @param object $request
      * @param object $response
      * @param object $err
+     * @throws Throwable
      */
     public function handleError($request, $response, Throwable $err)
     {
