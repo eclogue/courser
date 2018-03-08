@@ -53,7 +53,16 @@ class Context
     ];
 
 
-    public function __construct($req, $res, Container $container = null)
+    /**
+     * Context constructor.
+     *
+     * @param $req
+     * @param $res
+     * @param Container $container
+     * @throws \DI\DependencyException
+     * @throws \DI\NotFoundException
+     */
+    public function __construct($req, $res, Container $container)
     {
 
         $this->context['request'] = $req;
@@ -134,11 +143,10 @@ class Context
         $this->request = $this->request->withMethod($method);
     }
 
-
     /**
-     * dispatch the route
-     *
      * @return mixed
+     * @throws \DI\DependencyException
+     * @throws \DI\NotFoundException
      */
     public function dispatch()
     {
@@ -206,7 +214,7 @@ class Context
         return function (callable $callable) use ($err) {
             if (is_array($callable) || is_callable($callable)) {
                 $response = call_user_func_array($callable, [$this->request, $err]);
-            }  else {
+            } else {
                 $response = $callable($this->request, $err);
             }
 
@@ -220,9 +228,10 @@ class Context
 
 
     /**
-     * default terminator
-     *
+     * @param $response
      * @return mixed
+     * @throws \DI\DependencyException
+     * @throws \DI\NotFoundException
      */
     public function respond($response)
     {
@@ -230,7 +239,7 @@ class Context
         $length = $response->getBody()->getSize();
         $check = $response->getHeader('Content-Length');
         if (!$check && $length) {
-//          $response = $response->withHeader('Content-Length', $length);
+            $response = $response->withHeader('Content-Length', $length);
         }
 
         $resolver = $this->container->get('response.resolver');
@@ -240,23 +249,19 @@ class Context
     }
 
 
-    /*
-     * build request
-     *
-     * @param object|null $req
-     * @return void
-     * */
+    /**
+     * @param null $req
+     * @return Request
+     * @throws \DI\DependencyException
+     * @throws \DI\NotFoundException
+     */
     public function createRequest($req = null): Request
     {
         $builder = $this->container->get('request.resolver');
         $incoming = null;
-        if (is_callable($builder, true, $callable)) {
-            if (is_array($builder)) {
-                $incoming = call_user_func_array($callable, [$req]);
-            } else {
-                $incoming = $builder($req);
-            }
-        } else if (is_object($builder)) {
+        if (is_callable($builder)) {
+            $incoming = call_user_func_array($builder, [$req]);
+        } elseif (is_object($builder)) {
             $incoming = $builder;
         } else {
             throw new \RuntimeException('Request builder invalid');
@@ -269,7 +274,7 @@ class Context
 
     /**
      * check context is mounted
-     * @return int|void
+     * @return int
      */
     public function isMount()
     {

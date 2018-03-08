@@ -9,7 +9,6 @@
 
 namespace Courser;
 
-
 interface ServerInterface
 {
 
