@@ -10,12 +10,11 @@
 namespace Courser\Tests;
 
 use Courser\Context;
-use Hayrick\Environment\Relay;
+use Courser\Relay;
 use Hayrick\Environment\Reply;
 use PHPUnit\Framework\TestCase;
 use Hayrick\Http\Request;
 use Hayrick\Http\Response;
-use Bulrush\Scheduler;
 use Pimple\Container;
 
 

@@ -9,10 +9,6 @@
 
 namespace Courser;
 
-
-use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Server\RequestHandlerInterface;
-
 class Route
 {
     public $method = 'get';
@@ -33,7 +29,15 @@ class Route
 
     protected $length = 0;
 
-
+    /**
+     * Route constructor.
+     *
+     * @param string $method
+     * @param string $route
+     * @param array $callable
+     * @param int $scope
+     * @param string $group
+     */
     public function __construct(string $method, string $route, array $callable, int $scope = 1, string $group = '/')
     {
         $route = $route === '/' ? $route : rtrim($route, '/');
@@ -41,7 +45,6 @@ class Route
         $this->route = $route;
         $this->group = $group;
         $this->scope = $scope;
-//        $this->middleware = new \SplQueue();
         list($regex, $params) = $this->parseRoute($route);
         $this->pattern = '#^' . $regex . '$#';
         $this->paramNames = $params;

@@ -16,6 +16,7 @@ use Psr\Http\Server\MiddlewareInterface;
 use Hayrick\Http\Response;
 use Bulrush\Poroutine;
 use Generator;
+use Closure;
 
 class Transducer implements RequestHandlerInterface
 {
@@ -81,5 +82,4 @@ class Transducer implements RequestHandlerInterface
     {
         return $this->callable->count();
     }
-
 }

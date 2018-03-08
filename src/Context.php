@@ -9,13 +9,15 @@
 
 namespace Courser;
 
-use Bulrush\Poroutine;
-use Hayrick\Http\Request;
-use Hayrick\Http\Response;
-use Pimple\Container;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\RequestInterface;
+use Hayrick\Http\Request;
+use Hayrick\Http\Response;
+use Bulrush\Poroutine;
+use DI\Container;
 use Generator;
+use Throwable;
+use Closure;
 
 class Context
 {
@@ -51,7 +53,16 @@ class Context
     ];
 
 
-    public function __construct($req, $res, Container $container = null)
+    /**
+     * Context constructor.
+     *
+     * @param $req
+     * @param $res
+     * @param Container $container
+     * @throws \DI\DependencyException
+     * @throws \DI\NotFoundException
+     */
+    public function __construct($req, $res, Container $container)
     {
 
         $this->context['request'] = $req;
@@ -70,15 +81,6 @@ class Context
         $this->container = $container;
     }
 
-    /**
-     * set request process terminator
-     *
-     * @param callable $terminator
-     */
-    public function setTerminator(callable $terminator)
-    {
-        $this->terminator = $terminator;
-    }
 
     /**
      * add request handle
@@ -141,11 +143,10 @@ class Context
         $this->request = $this->request->withMethod($method);
     }
 
-
     /**
-     * dispatch the route
-     *
      * @return mixed
+     * @throws \DI\DependencyException
+     * @throws \DI\NotFoundException
      */
     public function dispatch()
     {
@@ -208,12 +209,12 @@ class Context
         return $response ?? new Response();
     }
 
-    public function error($err)
+    public function error(Throwable $err): Closure
     {
-        return function ($callable) use ($err) {
+        return function (callable $callable) use ($err) {
             if (is_array($callable) || is_callable($callable)) {
                 $response = call_user_func_array($callable, [$this->request, $err]);
-            }  else {
+            } else {
                 $response = $callable($this->request, $err);
             }
 
@@ -227,9 +228,10 @@ class Context
 
 
     /**
-     * default terminator
-     *
+     * @param $response
      * @return mixed
+     * @throws \DI\DependencyException
+     * @throws \DI\NotFoundException
      */
     public function respond($response)
     {
@@ -237,46 +239,55 @@ class Context
         $length = $response->getBody()->getSize();
         $check = $response->getHeader('Content-Length');
         if (!$check && $length) {
-          $response = $response->withHeader('Content-type', $length);
+            $response = $response->withHeader('Content-Length', $length);
         }
 
-        $terminator = $this->container['response.resolver'];
+        $resolver = $this->container->get('response.resolver');
+        $terminator = new $resolver($this->context['response']);
 
-        $respond = $terminator($this->context['response']);
-
-        return $respond($response);
+        return $terminator->end($response);
     }
 
 
-    /*
-     * build request
-     *
-     * @param object|null $req
-     * @return void
-     * */
+    /**
+     * @param null $req
+     * @return Request
+     * @throws \DI\DependencyException
+     * @throws \DI\NotFoundException
+     */
     public function createRequest($req = null): Request
     {
-        $builder = $this->container['request.resolver'];
+        $builder = $this->container->get('request.resolver');
         $incoming = null;
-        if (is_object($builder)) {
+        if (is_callable($builder)) {
+            $incoming = call_user_func_array($builder, [$req]);
+        } elseif (is_object($builder)) {
             $incoming = $builder;
-        } else if (is_callable($builder, true, $callable)) {
-            if (is_array($builder)) {
-                $incoming = call_user_func_array($callable, [$req]);
-            } else {
-                $incoming = $builder($req);
-            }
         } else {
             throw new \RuntimeException('Request builder invalid');
         }
 
-        $request = new Request($incoming);
+        $request = Request::createRequest($incoming);
 
         return $request;
     }
 
+    /**
+     * check context is mounted
+     * @return int
+     */
     public function isMount()
     {
         return count($this->callable) + count($this->middleware);
+    }
+
+    /**
+     * get context
+     *
+     * @return array
+     */
+    public function getContext(): array
+    {
+        return $this->context;
     }
 }
