@@ -223,11 +223,9 @@ class App
             }
         }
 
-        var_dump('mounted', $this->middleware->count());
 
         if (!$context->isMount()) {
             $md = $this->mapMiddleware($path, $this->middleware->count());
-            var_dump($md);
             $context->use($md);
         }
 
