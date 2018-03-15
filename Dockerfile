@@ -18,7 +18,8 @@ WORKDIR $APP_DIR
 WORKDIR $APP_DIR
 RUN git clone https://github.com/eclogue/courser
 WORKDIR $APP_DIR/courser
-#RUN composer install --prefer-dist
+RUN git checkout develop && git pull origin develop
+RUN composer install --prefer-dist
 
 
 
