@@ -26,7 +26,7 @@ class App
      * global middle ware
      * @var array
      * */
-    public $middleware = [];
+    public $middleware;
 
     /*
      * @var array
@@ -136,7 +136,7 @@ class App
      *
      * @return mixed
      * */
-    public function group(string $group, $callback)
+    public function group(string $group, callable $callback)
     {
         $group = rtrim($group, '/');
         if (!$group) {
@@ -144,9 +144,16 @@ class App
         }
 
         $this->group .= $group;
-        $this->middleware->group($group);
-        $callback();
+        $this->middleware->group($this->group);
+        $callback($this);
+        $this->resetGroup();
+    }
+
+
+    public function resetGroup()
+    {
         $this->group = '/';
+        $this->middleware->group($this->group);
     }
 
     /**
@@ -216,8 +223,9 @@ class App
             }
         }
 
+
         if (!$context->isMount()) {
-            $md = $this->mapMiddleware($path, 1);
+            $md = $this->mapMiddleware($path, $this->middleware->count());
             $context->use($md);
         }
 
@@ -346,8 +354,8 @@ class App
      * */
     public function run(string $uri, $req = null, $res = null)
     {
-            $uri = $uri ?: '/';
-            $context = $this->createContext($req, $res);
+        $uri = $uri ?: '/';
+        $context = $this->createContext($req, $res);
         try {
             $context = $this->mapRoute($context->method, $uri, $context);
             if (empty($context->callable)) {
