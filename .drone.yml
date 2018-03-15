@@ -5,7 +5,10 @@ pipeline:
       - composer install
       - composer run-script phpcs
       - composer run-script test
-  notify:
+  branches:
+    include: [ master, develop ]
+    exclude: [feature/*]
+  slack:
     image: plugins/slack
     channel: courser
     webhook: https://hooks.slack.com/services/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
