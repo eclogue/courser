@@ -7,7 +7,7 @@ pipeline:
       - composer run-script test
   branches:
     include: [ master, develop ]
-    exclude: [feature/*]
+    exclude: [ feature/* ]
   slack:
     image: plugins/slack
     channel: courser
