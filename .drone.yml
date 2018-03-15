@@ -1,0 +1,13 @@
+pipeline:
+  build:
+    image: php:7.0-cli
+    commands:
+      - composer install
+      - composer run-script phpcs
+      - composer run-script test
+  notify:
+    image: plugins/slack
+    channel: courser
+    webhook: https://hooks.slack.com/services/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
+       when:
+         status: [ success, failure ]
