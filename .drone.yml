@@ -1,6 +1,6 @@
 pipeline:
   build:
-    image: php:7.0-cli
+    image: eclogue/courser:dev
     commands:
       - composer install
       - composer run-script phpcs
