@@ -12,5 +12,5 @@ pipeline:
     image: plugins/slack
     channel: courser
     webhook: https://hooks.slack.com/services/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
-       when:
-         status: [ success, failure ]
+    when:
+     status: [ success, failure ]
