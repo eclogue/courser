@@ -42,7 +42,6 @@ matrix:
   allow_failures:
     - php: nightly
 install:
-  - pecl install swoole
   - composer update $COMPOSER_ARGS
 script:
   - mkdir -p build/logs
@@ -50,13 +49,13 @@ script:
 #  - if [[ "$ANALYSIS" == 'true' ]]; then vendor/bin/phpunit --coverage-clover clover.xml ; fi
   - if [[ "$ANALYSIS" == 'true' ]]; then vendor/bin/phpcs ; fi
 
-after_success:
+#after_success:
 #  - if [[ "$ANALYSIS" == 'true' ]]; then php vendor/bin/coveralls --coverage_clover=clover.xml -v ; fi
 
 notifications:
   slack: eclogue:QxiUd6aEHYK6K7n7PHNxS4tp
-    email:
-      recipients:
-        - mulberry10th@gmail.com
-      on_success: never
-      on_failure: always
+  email:
+    recipients:
+      - mulberry10th@gmail.com
+    on_success: never
+    on_failure: always
