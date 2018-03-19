@@ -22,67 +22,12 @@ Fast and scalable web framework. Implement psr-7, psr-15, psr-4, psr-2, psr-11.I
 
 `composer install` 
 
-Create a new file server.php.
+**Simple usage** `php -S 127.0.0.1:7001 -t example/`
 
-```php
-<?php
-require('./vendor/autoload.php');
-use Courser\App;
-use Ben\Config;
-use Psr\Http\Message\RequestInterface;
-use Hayrick\Http\Response;
-use Psr\Http\Server\RequestHandlerInterface;
 
-$config = [
-    'server' => [
-        'host' => '0.0.0.0',
-        'port' => '5001',
-    ],
-];
-Config::set($config);
-$app = new App();
-$app->used(function(RequestInterface $req, RequestHandlerInterface $handler) {
-   echo "this middleware 1 \n";
-   $response = yield $handler->handle($req);
-   // var_dump($response);
-   return $response;
-});
+**Use swoole for server**: `php example/swoole.php`
 
-$app->used(function(RequestInterface $req, RequestHandlerInterface $handler) {
-    yield;
-    $response = $handler->handle($req);
-    echo "this middleware 2 \n";
-    // var_dump($response);
-    return $response;
-});
-$app->get('/', function(RequestInterface $req,  RequestHandlerInterface $handler) {
-    $html = "<h1> fuck world</h1>";
-    $res = yield $handler->handle($req);
-    
-    return $res->withHeader('Content-Type', 'text/html');
-});
-$app->get('/', function(Request $req) {
-    $html = "<h1> fuck world</h1>";
-    $res = new Response();
 
-    return $res->end($html);
-});
-
-```
-**use swoole for server**:
-
-```
-$server = new \Course\Server\HttpServer($app);
-$server->bind(Config::get('server.host'), Config::get('server.port'));
-$server->start();
-```
-now run `php server.php`, visit 127.0.0.1:5001
-
-**use cgi server**:
-```
-$server = new \Course\Server\CGIServer($app);
-$server->start();
-```
 
 
 ### Router
@@ -126,40 +71,30 @@ $app->group('/admin/{username}',  function() {
  
 ### Middleware
 
-  Courser's middleware look like [koa](https://github.com/koajs/koa).
-  
-  It is compatible with Laravel's middleware and the suggestion of [http-handlers](https://github.com/php-fig/fig-standards/blob/master/proposed/http-handlers/request-handlers-meta.md#52-single-pass-lambda)
-  
-  You can define a middleware like:
-```
-    $app->used(function(Request $request, $handler) {
-        return $handler($request);  
-    });
-```
-like this:
-```
-   class A {
-        public function someMethod(Request $request, $handler) {
-            // ....
-        }
-   }
-   
-   $app->used([A:class, 'someMethod']);
-    
-```    
+ Flow the PSR-15 standard, 
+ see [https://github.com/middlewares/awesome-psr15-middlewares](https://github.com/middlewares/awesome-psr15-middlewares) 
   
 
 
-### Not Found
+### Not Found handle
+
 ```php
 $app->notFound(function (Request $req){
     $response = new Response();
     $response->withStatus(404)->json(['message' => 'Not Found']);
 });
 ```
+
+or
+
+```
+# add after the last route
+$app->add(new NotFoundMiddleware());
+```
+
 ### Exception
 ```php
-$app->error(function ($req, $res, Exception $err) {
+$app->setReporter(function ($req, $res, Exception $err) {
    $res->withStatus(500)->json([
        'message' =>$err->getMessage(),
        'code' => 10502,
