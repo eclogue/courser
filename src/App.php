@@ -72,6 +72,13 @@ class App
     public $layer = [];
 
 
+    /**
+     * App constructor.
+     *
+     * @param Container|null $container
+     * @throws \DI\Definition\Exception\InvalidDefinition
+     * @throws \Exception
+     */
     public function __construct(Container $container = null)
     {
         $this->middleware = new Middleware();
@@ -105,13 +112,16 @@ class App
         }
     }
 
-    /*
+    /**
      * create request context set req and response
-     * @param object $req
-     * @param object $res
-     * @return object self
-     * */
-    public function createContext($req, $res):Context
+     *
+     * @param $req
+     * @param $res
+     * @return Context
+     * @throws \DI\DependencyException
+     * @throws \DI\NotFoundException
+     */
+    public function createContext($req = null, $res = null):Context
     {
         $context = new Context($req, $res, $this->container);
 
@@ -143,7 +153,7 @@ class App
             return null;
         }
 
-        $this->group .= $group;
+        $this->group = rtrim($this->group, '/') . $group ;
         $this->middleware->group($this->group);
         $callback($this);
         $this->resetGroup();
@@ -347,11 +357,13 @@ class App
     }
 
 
-    /*
-     * run app handle request
-     * @param array $env
-     * @return void
-     * */
+    /**
+     * @param string $uri
+     * @param null $req
+     * @param null $res
+     * @throws \DI\DependencyException
+     * @throws \DI\NotFoundException
+     */
     public function run(string $uri, $req = null, $res = null)
     {
         $uri = $uri ?: '/';
@@ -379,13 +391,13 @@ class App
         $this->loader = $loader;
         foreach ($loader as $alias => $namespace) {
             $alias = $this->alias($alias);
-            $this->container[$alias] = function ($c) use ($alias, $namespace) {
+            $this->container->set($alias, function ($c) use ($alias, $namespace) {
                 if (is_callable([$namespace, 'make'])) {
                     call_user_func_array($namespace . '::make', [$alias, $c]);
                 }
 
                 return new $namespace();
-            };
+            });
         }
     }
 
@@ -400,10 +412,12 @@ class App
         if (isset($alias[$class])) {
             class_alias($alias[$class], $class);
         }
+
         $class = $this->alias($class);
         if (!$this->container->has($class)) {
             return null;
         }
+
         $instance = $this->container[$class];
         if (is_object($instance)) {
             return $instance;

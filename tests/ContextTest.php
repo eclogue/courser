@@ -15,7 +15,7 @@ use Hayrick\Environment\Reply;
 use PHPUnit\Framework\TestCase;
 use Hayrick\Http\Request;
 use Hayrick\Http\Response;
-use Pimple\Container;
+use DI\Container;
 
 
 class ContextTest extends TestCase

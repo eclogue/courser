@@ -278,7 +278,7 @@ class Context
      */
     public function isMount()
     {
-        return count($this->callable) + count($this->middleware);
+        return !!count($this->callable) + count($this->middleware);
     }
 
     /**

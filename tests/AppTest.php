@@ -11,12 +11,17 @@ namespace Courser\Tests;
 
 use Courser\App;
 use Courser\Context;
+use Courser\Terminator;
 use Hayrick\Http\Request;
 use Hayrick\Http\Response;
 use PHPUnit\Framework\Exception;
 use PHPUnit\Framework\TestCase;
 use Courser\Relay;
 use Hayrick\Environment\Reply;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\MiddlewareInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 
 class AppTest extends TestCase
 {
@@ -36,36 +41,32 @@ class AppTest extends TestCase
         ];
         $app = new App();
         $app->config($config);
-        $this->assertEquals($app->container['a'], $config['a']);
+        $this->assertEquals($app->container->get('a'), $config['a']);
     }
 
     public function testCreateContext()
     {
         $app = new App();
         $request = Relay::createFromGlobal();
-        $response = new Reply();
-        $context = $app->createContext($request, $response);
+        $context = $app->createContext($request, null);
         $this->assertInstanceOf(Context::class, $context);
     }
 
-    public function testUsed()
+    public function testAdd()
     {
         $app = new App();
-        $this->assertTrue(empty($app->middleware));
-        $app->used(function ($req, $res) {
-
-        });
-        $this->assertTrue(!empty($app->middleware));
+        $md = $this->middlewareProvider();
+        $app->add($md);
+        $this->assertTrue(!empty($app->middleware->count()));
     }
 
     public function testGroup()
     {
         $app = new App();
         $path = '/test';
-        $self = $this;
-        $app->group($path, function () use ($path, $self) {
+        $app->group($path, function ($app) use ($path) {
             // todo
-            $self->assertEquals($this->group, $path);
+            $this->assertEquals($app->group, $path);
         });
 
     }
@@ -79,12 +80,7 @@ class AppTest extends TestCase
 
         };
         $app->addRoute($method, $uri, $callable);
-        $this->assertArrayHasKey($method, $app->routes);
-        $this->assertArrayHasKey('route', $app->routes[$method][$uri]);
-        $this->assertArrayHasKey('params', $app->routes[$method][$uri]);
-        $this->assertArrayHasKey('scope', $app->routes[$method][$uri]);
-        $this->assertArrayHasKey('pattern', $app->routes[$method][$uri]);
-        $this->assertContains('callable', $app->routes[$method][$uri]);
+        $this->assertArrayHasKey($method, $app->layer);
     }
 
     public function testMapMiddleware()
@@ -92,10 +88,8 @@ class AppTest extends TestCase
         $app = new App();
         $uri = '/test';
         $deep = 1;
-        $md = function (...$params) {
-            return $params;
-        };
-        $app->used($md);
+        $md = $this->middlewareProvider();
+        $app->add($md);
         $callable = $app->mapMiddleware($uri, $deep);
         $this->assertContains($md, $callable);
     }
@@ -110,34 +104,31 @@ class AppTest extends TestCase
         $callable = function () use ($called) {
             return $called;
         };
-        $request = new Request(Relay::createFromGlobal());
-        $response = new Reply();
-        $app->used($callable);
+        $md = $this->middlewareProvider();
+        $request = Request::createRequest(Relay::createFromGlobal());
+        $response = null;
+        $app->add($md);
         $app->addRoute($method, $route, $callable);
         $context = $app->createContext($request, $response);
-        $result = $app->mapRoute($method, $uri, $context);
-        $this->assertContains($callable, $result->middleware);
-        $this->assertEquals($method, $result->request->getMethod());
-        $this->assertAttributeContains('id', 'paramNames', $result);
-        $this->assertEquals(1, $result->request->getParam('id'));
-        $uri = $uri . '/test';
-        $router = $app->createContext($request, $response);
-        $result = $app->mapRoute($method, $uri, $router);
-        $this->assertContains($callable, $result->middleware);
+        $context = $app->mapRoute($method, $uri, $context);
+        $this->assertTrue(true, $context->isMount());
+        $this->assertContains($md, $context->middleware);
+        $this->assertEquals($method, $context->method);
+        $this->assertEquals(1, $context->request->getParam('id'));
     }
-
-    public function testGetPattern()
-    {
-        $app = new App();
-        $getPattern = function ($route) {
-            return $this->getPattern($route);
-        };
-        $getPattern = $getPattern->bindTo($app, $app);
-        $route = '/test/:id';
-        list($pattern, $params) = $getPattern($route);
-        $this->assertStringStartsWith('/test', $pattern);
-        $this->assertContains('id', $params);
-    }
+//
+//    public function testGetPattern()
+//    {
+//        $app = new App();
+//        $getPattern = function ($route) {
+//            return $this->getPattern($route);
+//        };
+//        $getPattern = $getPattern->bindTo($app, $app);
+//        $route = '/test/:id';
+//        list($pattern, $params) = $getPattern($route);
+//        $this->assertStringStartsWith('/test', $pattern);
+//        $this->assertContains('id', $params);
+//    }
 
     public function testGet()
     {
@@ -146,8 +137,10 @@ class AppTest extends TestCase
 
         };
         $app->get('/test', $callable);
-        $this->assertArrayHasKey('get', $app->routes);
-        $this->assertTrue(!empty($app->routes['get']));
+        $this->assertArrayHasKey('get', $app->layer);
+        $this->assertTrue(!empty($app->layer['get']));
+        $route = $app->layer['get'][0];
+        $this->assertContains($callable, $route->callable);
     }
 
     public function testPut()
@@ -157,8 +150,10 @@ class AppTest extends TestCase
 
         };
         $app->put('/test', $callable);
-        $this->assertArrayHasKey('put', $app->routes);
-        $this->assertTrue(!empty($app->routes['put']));
+        $this->assertArrayHasKey('put', $app->layer);
+        $this->assertTrue(!empty($app->layer['put']));
+        $route = $app->layer['put'][0];
+        $this->assertContains($callable, $route->callable);
     }
 
     public function testPost()
@@ -168,8 +163,10 @@ class AppTest extends TestCase
 
         };
         $app->post('/test', $callable);
-        $this->assertArrayHasKey('post', $app->routes);
-        $this->assertTrue(!empty($app->routes['post']));
+        $this->assertArrayHasKey('post', $app->layer);
+        $this->assertTrue(!empty($app->layer['post']));
+        $route = $app->layer['post'][0];
+        $this->assertContains($callable, $route->callable);
     }
 
     public function testDelete()
@@ -179,8 +176,10 @@ class AppTest extends TestCase
 
         };
         $app->delete('/test', $callable);
-        $this->assertArrayHasKey('delete', $app->routes);
-        $this->assertTrue(!empty($app->routes['delete']));
+        $this->assertArrayHasKey('delete', $app->layer);
+        $this->assertTrue(!empty($app->layer['delete']));
+        $route = $app->layer['delete'][0];
+        $this->assertContains($callable, $route->callable);
     }
 
     public function testOptions()
@@ -190,8 +189,10 @@ class AppTest extends TestCase
 
         };
         $app->options('/test', $callable);
-        $this->assertArrayHasKey('options', $app->routes);
-        $this->assertTrue(!empty($app->routes['options']));
+        $this->assertArrayHasKey('options', $app->layer);
+        $this->assertTrue(!empty($app->layer['options']));
+        $route = $app->layer['options'][0];
+        $this->assertContains($callable, $route->callable);
     }
 
     public function testAny()
@@ -201,16 +202,16 @@ class AppTest extends TestCase
 
         };
         $app->any('/test', $callable);
-        $this->assertArrayHasKey('get', $app->routes);
-        $this->assertArrayHasKey('put', $app->routes);
-        $this->assertArrayHasKey('post', $app->routes);
-        $this->assertArrayHasKey('delete', $app->routes);
-        $this->assertArrayHasKey('options', $app->routes);
-        $this->assertTrue(!empty($app->routes['get']));
-        $this->assertTrue(!empty($app->routes['post']));
-        $this->assertTrue(!empty($app->routes['put']));
-        $this->assertTrue(!empty($app->routes['delete']));
-        $this->assertTrue(!empty($app->routes['options']));
+        $this->assertArrayHasKey('get', $app->layer);
+        $this->assertArrayHasKey('put', $app->layer);
+        $this->assertArrayHasKey('post', $app->layer);
+        $this->assertArrayHasKey('delete', $app->layer);
+        $this->assertArrayHasKey('options', $app->layer);
+        $this->assertTrue(!empty($app->layer['get']));
+        $this->assertTrue(!empty($app->layer['post']));
+        $this->assertTrue(!empty($app->layer['put']));
+        $this->assertTrue(!empty($app->layer['delete']));
+        $this->assertTrue(!empty($app->layer['options']));
     }
 
     public function testNotFound()
@@ -297,23 +298,15 @@ class AppTest extends TestCase
 //    }
 //
 //
-//    public function requestProvider($method, $uri)
-//    {
-//        $req = new StubRequest();
-//        $req->cookie = [];
-//        $req->header = [];
-//        $req->get = [];
-//        $req->post = [];
-//        $req->server = array_change_key_case($_SERVER, CASE_LOWER);
-//        $req->server['request_method'] = $method;
-//        $req->server['request_uri'] = $uri;
-//        $req->files = [];
-//
-//        return $req;
-//    }
-//
-//    public function responseProvider()
-//    {
-//        return new StubRequest();
-//    }
+    public function middlewareProvider()
+    {
+        $md = new class implements MiddlewareInterface {
+          public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+          {
+              return $handler->handle($request);
+          }
+        };
+
+        return $md;
+    }
 }
