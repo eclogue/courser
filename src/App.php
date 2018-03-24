@@ -332,7 +332,7 @@ class App
      * @param object $err
      * @throws Throwable
      */
-    public function handleError($request = null, $response = null, Throwable $err)
+    public function handleError(Throwable $err, $request = null, $response = null)
     {
         if (!is_callable($this->reporter) && !is_array($this->reporter)) {
             throw $err;

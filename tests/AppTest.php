@@ -239,17 +239,13 @@ class AppTest extends TestCase
     public function testHandleError()
     {
         $app = new App();
-        $handle = function ($req, $err)  {
-            $this->assertInstanceOf(Request::class, $req);
-            $this->assertInstanceOf(\Exception::class, $err);
-        };
         $app->setReporter(function ($req, $err)  {
             $this->assertInstanceOf(Request::class, $req);
             $this->assertInstanceOf(\Exception::class, $err);
         });
         $err = new Exception();
         $request = Relay::createFromGlobal();
-        $app->handleError($request, null, $err);
+        $app->handleError($err, $request, null);
     }
 //
 //    public function testRun() // @todo
