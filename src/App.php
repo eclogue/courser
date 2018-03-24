@@ -165,8 +165,9 @@ class App
     public function addRoute(string $method, string $route, ...$callback)
     {
         $method = strtolower($method);
-        $route = trim($route, '/');
-        $route = $this->group . $route;
+        $route = ltrim($route, '/');
+        $group = rtrim($this->group, '/') . '/';
+        $route = $group . $route;
         $scope = $this->middleware->count();
         $this->layer[$method][] = new Route(
             $method,
@@ -202,7 +203,7 @@ class App
     {
         $path = parse_url($path, PHP_URL_PATH);
         $method = strtolower($method);
-        $routes = $this->layer[$method];
+        $routes = $this->layer[$method] ?? [];
         foreach ($routes as $route) {
             if (!$route instanceof Route) {
                 continue;
@@ -220,7 +221,6 @@ class App
                 $context->use($middleware);
             }
         }
-
 
         if (!$context->isMount()) {
             $md = $this->mapMiddleware($path, $this->middleware->count());

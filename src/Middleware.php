@@ -49,10 +49,9 @@ class Middleware
             return [];
         }
 
-
         $md = [];
         foreach ($this->middleware as $index => $middleware) {
-            if ($index > $deep) {
+            if ($index >= $deep) {
                 break;
             }
 
