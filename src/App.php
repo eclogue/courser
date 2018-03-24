@@ -8,9 +8,9 @@
  */
 namespace Courser;
 
+use Psr\Container\ContainerInterface;
 use Throwable;
 use DI\Container;
-use DI\ContainerBuilder;
 use Psr\Http\Server\MiddlewareInterface;
 
 class App
@@ -75,35 +75,25 @@ class App
     /**
      * App constructor.
      *
-     * @param Container|null $container
-     * @throws \DI\Definition\Exception\InvalidDefinition
-     * @throws \Exception
+     * @param ContainerInterface|null $container
      */
-    public function __construct(Container $container = null)
+    public function __construct(ContainerInterface $container = null)
     {
         $this->middleware = new Middleware();
-        if (!$container) {
-            $this->container = $this->loadContainer();
-        }
-
+        $this->container = $container ?? new Container();
         spl_autoload_register([$this, 'load'], true, true);
     }
 
-    /**
-     * @return Container
-     * @throws \DI\Definition\Exception\InvalidDefinition
-     * @throws \Exception
-     */
-    public function loadContainer() : Container
+    public function setContain(ContainerInterface $container)
     {
-        $builder = new ContainerBuilder();
-        $container = $builder->build();
-        $container->set('request.resolver', [Relay::class, 'createFromGlobal']);
-        $container->set('response.resolver', Terminator::class);
-
-
-        return $container;
+        $this->container = $container;
     }
+
+    public function getContainer(): ContainerInterface
+    {
+        return $this->container;
+    }
+
 
     public function config(array $config)
     {
@@ -113,10 +103,8 @@ class App
     }
 
     /**
-     * create request context set req and response
-     *
-     * @param $req
-     * @param $res
+     * @param null $req
+     * @param null $res
      * @return Context
      * @throws \DI\DependencyException
      * @throws \DI\NotFoundException
@@ -344,7 +332,7 @@ class App
      * @param object $err
      * @throws Throwable
      */
-    public function handleError($request, $response, Throwable $err)
+    public function handleError($request = null, $response = null, Throwable $err)
     {
         if (!is_callable($this->reporter) && !is_array($this->reporter)) {
             throw $err;

@@ -9,13 +9,14 @@
 
 namespace Courser;
 
+use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\RequestInterface;
 use Hayrick\Http\Request;
 use Hayrick\Http\Response;
 use Bulrush\Poroutine;
-use DI\Container;
 use Generator;
+use Psr\Http\Server\MiddlewareInterface;
 use Throwable;
 use Closure;
 
@@ -58,11 +59,11 @@ class Context
      *
      * @param $req
      * @param $res
-     * @param Container $container
+     * @param ContainerInterface $container
      * @throws \DI\DependencyException
      * @throws \DI\NotFoundException
      */
-    public function __construct($req, $res, Container $container)
+    public function __construct($req, $res, ContainerInterface $container)
     {
 
         $this->context['request'] = $req;
@@ -74,9 +75,9 @@ class Context
     }
 
     /**
-     * @param Container $container
+     * @param ContainerInterface $container
      */
-    public function setContainer(Container $container)
+    public function setContainer(ContainerInterface $container)
     {
         $this->container = $container;
     }
@@ -89,7 +90,7 @@ class Context
      * @param array $params
      * @return void
      */
-    public function add(Route $route, array $params)
+    public function add(Route $route, array $params = [])
     {
         $callback = $route->callable;
         if (empty($callback)) {
@@ -113,7 +114,7 @@ class Context
     /**
      * mount middleware
      *
-     * @param callable|array $middleware
+     * @param MiddlewareInterface|array $middleware
      */
     public function use($middleware)
     {
@@ -242,7 +243,12 @@ class Context
             $response = $response->withHeader('Content-Length', $length);
         }
 
-        $resolver = $this->container->get('response.resolver');
+        if ($this->container->has('response.resolver')) {
+            $resolver = $this->container->get('response.resolver');
+        } else {
+            $resolver = Terminator::class;
+        }
+
         $terminator = new $resolver($this->context['response']);
 
         return $terminator->end($response);
@@ -250,15 +256,22 @@ class Context
 
 
     /**
+     * build Request
+     *
      * @param null $req
      * @return Request
      * @throws \DI\DependencyException
      * @throws \DI\NotFoundException
+     * @throws \RuntimeException
      */
     public function createRequest($req = null): Request
     {
-        $builder = $this->container->get('request.resolver');
-        $incoming = null;
+        if ($this->container->has('request.resolver')) {
+            $builder = $this->container->get('request.resolver');
+        } else {
+            $builder = Relay::createFromGlobal();
+        }
+
         if (is_callable($builder)) {
             $incoming = call_user_func_array($builder, [$req]);
         } elseif (is_object($builder)) {

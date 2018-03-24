@@ -12,12 +12,12 @@ namespace Courser\Tests;
 use Courser\App;
 use Courser\Context;
 use Courser\Terminator;
+use DI\Container;
 use Hayrick\Http\Request;
 use Hayrick\Http\Response;
 use PHPUnit\Framework\Exception;
 use PHPUnit\Framework\TestCase;
 use Courser\Relay;
-use Hayrick\Environment\Reply;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -27,12 +27,23 @@ class AppTest extends TestCase
 {
 
 
-//    public function testContainer()
-//    {
-//        $app = new App();
-//        $this->assertInstanceOf('Courser\Http\Request', $app->container['courser.request']);
-//        $this->assertInstanceOf('Courser\Http\Response', $app->container['courser.response']);
-//    }
+
+    public function testSetContainer()
+    {
+        $app = new App();
+        $container = new Container();
+        $app->setContain($container);
+        $this->assertSame($container, $app->getContainer());
+    }
+
+    public function testGetContainer()
+    {
+        $container = new Container();
+        $app = new App($container);
+        $app->setContain($container);
+        $this->assertSame($container, $app->getContainer());
+    }
+
 
     public function testConfig()
     {
@@ -224,15 +235,6 @@ class AppTest extends TestCase
         $this->assertContains($callable, $app->notFounds);
     }
 
-    public function testSetContainer()
-    {
-        $app = new App();
-        $callable = function ($req, $err) {
-
-        };
-        $app->setReporter($callable);
-        $this->assertEquals($callable, $app->reporter);
-    }
 
     public function testHandleError()
     {
@@ -247,8 +249,7 @@ class AppTest extends TestCase
         });
         $err = new Exception();
         $request = Relay::createFromGlobal();
-        $response = new Reply();
-        $app->handleError($request, $response, $err);
+        $app->handleError($request, null, $err);
     }
 //
 //    public function testRun() // @todo
