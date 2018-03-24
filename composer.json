@@ -27,11 +27,11 @@
     },
     "1": {
       "type": "vcs",
-      "url": "https://github.com/eclogue/bulrush"
+      "url": "https://github.com/eclogue/bulrush.git"
     },
     "2": {
       "type": "vcs",
-      "url": "https://github.com/eclogue/hayrick"
+      "url": "https://github.com/eclogue/hayrick.git"
     }
   },
   "require": {

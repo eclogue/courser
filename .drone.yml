@@ -1,13 +1,14 @@
 pipeline:
   build:
-    image: eclogue/courser:latest
+    image: eclogue/courser:dev
     commands:
       - composer install
       - composer run-script phpcs
       - composer run-script test
-  branches:
-    include: [ master, develop ]
-    exclude: [ feature/* ]
+    when:
+      branch:
+        include: [ master, develop ]
+        exclude: [ feature/* ]
   slack:
     image: plugins/slack
     channel: courser

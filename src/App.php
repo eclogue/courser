@@ -8,9 +8,9 @@
  */
 namespace Courser;
 
+use Psr\Container\ContainerInterface;
 use Throwable;
 use DI\Container;
-use DI\ContainerBuilder;
 use Psr\Http\Server\MiddlewareInterface;
 
 class App
@@ -72,31 +72,28 @@ class App
     public $layer = [];
 
 
-    public function __construct(Container $container = null)
+    /**
+     * App constructor.
+     *
+     * @param ContainerInterface|null $container
+     */
+    public function __construct(ContainerInterface $container = null)
     {
         $this->middleware = new Middleware();
-        if (!$container) {
-            $this->container = $this->loadContainer();
-        }
-
+        $this->container = $container ?? new Container();
         spl_autoload_register([$this, 'load'], true, true);
     }
 
-    /**
-     * @return Container
-     * @throws \DI\Definition\Exception\InvalidDefinition
-     * @throws \Exception
-     */
-    public function loadContainer() : Container
+    public function setContain(ContainerInterface $container)
     {
-        $builder = new ContainerBuilder();
-        $container = $builder->build();
-        $container->set('request.resolver', [Relay::class, 'createFromGlobal']);
-        $container->set('response.resolver', Terminator::class);
-
-
-        return $container;
+        $this->container = $container;
     }
+
+    public function getContainer(): ContainerInterface
+    {
+        return $this->container;
+    }
+
 
     public function config(array $config)
     {
@@ -105,13 +102,14 @@ class App
         }
     }
 
-    /*
-     * create request context set req and response
-     * @param object $req
-     * @param object $res
-     * @return object self
-     * */
-    public function createContext($req, $res):Context
+    /**
+     * @param null $req
+     * @param null $res
+     * @return Context
+     * @throws \DI\DependencyException
+     * @throws \DI\NotFoundException
+     */
+    public function createContext($req = null, $res = null):Context
     {
         $context = new Context($req, $res, $this->container);
 
@@ -143,7 +141,7 @@ class App
             return null;
         }
 
-        $this->group .= $group;
+        $this->group = rtrim($this->group, '/') . $group ;
         $this->middleware->group($this->group);
         $callback($this);
         $this->resetGroup();
@@ -334,7 +332,7 @@ class App
      * @param object $err
      * @throws Throwable
      */
-    public function handleError($request, $response, Throwable $err)
+    public function handleError(Throwable $err, $request = null, $response = null)
     {
         if (!is_callable($this->reporter) && !is_array($this->reporter)) {
             throw $err;
@@ -347,11 +345,13 @@ class App
     }
 
 
-    /*
-     * run app handle request
-     * @param array $env
-     * @return void
-     * */
+    /**
+     * @param string $uri
+     * @param null $req
+     * @param null $res
+     * @throws \DI\DependencyException
+     * @throws \DI\NotFoundException
+     */
     public function run(string $uri, $req = null, $res = null)
     {
         $uri = $uri ?: '/';
@@ -379,13 +379,13 @@ class App
         $this->loader = $loader;
         foreach ($loader as $alias => $namespace) {
             $alias = $this->alias($alias);
-            $this->container[$alias] = function ($c) use ($alias, $namespace) {
+            $this->container->set($alias, function ($c) use ($alias, $namespace) {
                 if (is_callable([$namespace, 'make'])) {
                     call_user_func_array($namespace . '::make', [$alias, $c]);
                 }
 
                 return new $namespace();
-            };
+            });
         }
     }
 
@@ -400,10 +400,12 @@ class App
         if (isset($alias[$class])) {
             class_alias($alias[$class], $class);
         }
+
         $class = $this->alias($class);
         if (!$this->container->has($class)) {
             return null;
         }
+
         $instance = $this->container[$class];
         if (is_object($instance)) {
             return $instance;
