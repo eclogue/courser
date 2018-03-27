@@ -8,9 +8,9 @@
  */
 namespace Courser;
 
-use Psr\Container\ContainerInterface;
 use Throwable;
 use DI\Container;
+use Psr\Container\ContainerInterface;
 use Psr\Http\Server\MiddlewareInterface;
 
 class App
