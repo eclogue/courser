@@ -55,14 +55,14 @@ $app->put('/user/{username}', ['MyNamespace\Controller', 'action']);
 
 # use group
 
-$app->group('/admin/{username}',  function() {
+$app->group('/admin/{username}',  function(App $app) {
     // [Notice]: In group `$this` is bind to Courser,
     // middleware define in group just have effect on the router of group scope 
-    $this->used(function($req, RequestHandlerInterface $handler) { // Add group middleware
+    $app->used(function($req, RequestHandlerInterface $handler) { // Add group middleware
         // todo
         // this middleware is mount at /admin/{username} scope, have not effect outside of this group.
     });
-    $this->get('/test/:id', function($req, RequestHandlerInterface $handler) {
+    $app->get('/test/:id', function($req, RequestHandlerInterface $handler) {
         yield $handler->handle($req);
         // ...
     });
@@ -133,9 +133,7 @@ $app->setReporter(function ($req, $res, Exception $err) {
 
 ### Community
 
- - [中文文档](https://superbogy.gitbooks.io/courser/content/)
  - [Example](https://github.com/eclogue/knight)
- - [issue](https://github.com/shipmen/Course/issues)
  
 ### Coding...
 
