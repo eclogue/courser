@@ -362,10 +362,10 @@ class App
                 $context->use($this->notFounds);
             }
 
-            $context->dispatch();
+            return $context->dispatch();
         } catch (Throwable $err) {
             $handler = $context->error($err);
-            $handler($this->reporter);
+            return $handler($this->reporter);
         }
     }
 
