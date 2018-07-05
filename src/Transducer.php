@@ -52,6 +52,15 @@ class Transducer implements RequestHandlerInterface
         if (!$this->callable->isEmpty()) {
             $callable = $this->callable->dequeue();
             if (is_callable($callable)) {
+                if (is_array($callable)) {
+                    $object = $callable[0];
+                    if (!is_object($object)) {
+                        $object = new $object();
+                    }
+
+                    $callable[0] = $object;
+                }
+
                 $response = call_user_func_array($callable, [$request, $this]);
             } elseif ($callable instanceof MiddlewareInterface) {
                 $response = $callable->process($request, $this);

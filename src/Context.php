@@ -9,18 +9,16 @@
 
 namespace Courser;
 
-use Closure;
-use Generator;
-use Throwable;
-use Bulrush\Poroutine;
+use Psr\Container\ContainerInterface;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\RequestInterface;
 use Hayrick\Http\Request;
 use Hayrick\Http\Response;
-use Psr\Container\ContainerInterface;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
+use Bulrush\Poroutine;
+use Generator;
 use Psr\Http\Server\MiddlewareInterface;
-
-
+use Throwable;
+use Closure;
 
 class Context
 {

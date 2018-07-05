@@ -11,6 +11,7 @@ namespace Courser;
 use Hayrick\Http\Stream;
 use Hayrick\Environment\RelayAbstract;
 use Psr\Http\Message\StreamInterface;
+use SebastianBergmann\CodeCoverage\Report\PHP;
 
 class Relay extends RelayAbstract
 {
@@ -28,22 +29,6 @@ class Relay extends RelayAbstract
 
     public $body;
 
-    public function __construct(
-        array $server,
-        array $headers,
-        array $cookie,
-        array $files,
-        array $query,
-        StreamInterface $stream
-    ) {
-        $this->server = $server;
-        $this->headers = $headers;
-        $this->cookie = $cookie;
-        $this->files = $files;
-        $this->query = $query;
-        $this->body = $stream;
-    }
-
 
     /**
      * build Relay
@@ -52,12 +37,12 @@ class Relay extends RelayAbstract
      */
     public static function createFromGlobal(): Relay
     {
-        $server = array_change_key_case($_SERVER, CASE_LOWER);
-        $cookie = array_change_key_case($_COOKIE, CASE_LOWER);
-        $files = array_change_key_case($_FILES, CASE_LOWER);
+        $server = $_SERVER;
+        $cookie = $_COOKIE;
+        $files =    $_FILES;
         $query = $_GET;
         $headers = [];
-        if (!function_exists('getallheaders')) {
+        if (!function_exists('getallheaders') || empty(getallheaders())) {
             foreach ($_SERVER as $name => $value) {
                 if (substr($name, 0, 5) == 'HTTP_') {
                     $key = strtolower(str_replace('_', ' ', substr($name, 5)));
@@ -65,6 +50,8 @@ class Relay extends RelayAbstract
                     $headers[$key] = $value;
                 }
             }
+        } else {
+            $headers = getallheaders();
         }
 
         if (!isset($server['http_host']) && isset($headers['http_host'])) {
@@ -73,7 +60,6 @@ class Relay extends RelayAbstract
 
         $stream = fopen('php://temp', 'w+');
         stream_copy_to_stream(fopen('php://input', 'r'), $stream);
-        rewind($stream);
         $body = new Stream($stream);
         $relay = new static(
             $server,
