@@ -41,7 +41,7 @@
     "eclogue/hayrick": "dev-master",
     "psr/http-server-handler": "^1.0@dev",
     "psr/http-server-middleware": "^1.0",
-    "php-di/php-di": "dev-master"
+    "php-di/php-di": "^6.0.2"
   },
   "replace": {
     "courser/http": "self.version"
