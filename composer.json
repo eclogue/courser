@@ -39,9 +39,9 @@
     "psr/http-message": "^1.0",
     "eclogue/bulrush": "dev-master",
     "eclogue/hayrick": "dev-master",
-    "php-di/php-di": "dev-master",
     "psr/http-server-handler": "^1.0@dev",
-    "psr/http-server-middleware": "^1.0"
+    "psr/http-server-middleware": "^1.0",
+    "php-di/php-di": "dev-master"
   },
   "replace": {
     "courser/http": "self.version"
