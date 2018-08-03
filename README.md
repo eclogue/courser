@@ -105,12 +105,10 @@ $app->setReporter(function ($req, $res, Exception $err) {
 
 ### Coroutine
 
-  Courser support write coroutine application in easy way. If you are not familiar with php coroutine, it does'nt matter,
-  
-  Courser had already do everything. you just use `yield` keyword  to let process gives up its time slice. 
+  Courser support write coroutine application in easy way. support `yield`  syntax. 
   ```
     // a middleware
-    function middleware(Request $req, RequestHandlerInterface $handler) {
+    function process(Request $req, RequestHandlerInterface $handler) {
         $userId = $req->getParam('userId');
         $model = new User();
         $user = yield $model->findById($userId);
@@ -126,12 +124,12 @@ $app->setReporter(function ($req, $res, Exception $err) {
 
  It watch project file change and auto reload your server.
  
- [Ben](https://github.com/eclogue/ben) is a convenient config manager， I recommend use Ben to manage use config file.
+ [Ben](https://github.com/eclogue/ben) is a convenient config manager， I recommend use Ben to manage diff env config file.
 
 ### Benchmark
     Damn it. I just know that, it is fast.
 
-### Community
+### Demo
 
  - [Example](https://github.com/eclogue/knight)
  
