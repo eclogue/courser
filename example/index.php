@@ -39,7 +39,7 @@ class Test implements MiddlewareInterface
 
 $app->add(new Test());
 
-$app->get('/', function ($request, RequestHandlerInterface$next) {
+$app->get('/', function ($request, RequestHandlerInterface $next) {
     $response = $next->handle($request);
     return $response->withStatus(400)->write('test1');
 });
