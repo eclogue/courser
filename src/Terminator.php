@@ -10,7 +10,6 @@
 namespace Courser;
 
 use Psr\Http\Message\ResponseInterface;
-use Hayrick\Environment\ReplyInterface;
 
 class Terminator implements ReplyInterface
 {

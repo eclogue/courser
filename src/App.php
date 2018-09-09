@@ -8,6 +8,7 @@
  */
 namespace Courser;
 
+use Psr\Http\Message\RequestInterface;
 use Throwable;
 use DI\Container;
 use Psr\Container\ContainerInterface;
@@ -109,9 +110,12 @@ class App
      * @throws \DI\DependencyException
      * @throws \DI\NotFoundException
      */
-    public function createContext($req = null, $res = null):Context
+    public function createContext(RequestInterface $req = null, ReplyInterface $reply = null):Context
     {
-        $context = new Context($req, $res, $this->container);
+        $req = $req ?: Request::createFromGlobals($_SERVER);
+        $reply = $reply ?: new Terminator();
+
+        $context = new Context($req, $reply, $this->container);
 
         return $context;
     }
@@ -199,8 +203,12 @@ class App
      * @param Context $router
      * @return mixed
      */
-    public function mapRoute(string $method, string $path, Context $context): Context
+    public function mapRoute(Context $context): Context
     {
+        $request = $context->getRequest();
+        $method = $request->getMethod();
+        $uri = $request->getUri();
+        $path = $uri->getPath();
         $path = parse_url($path, PHP_URL_PATH);
         $method = strtolower($method);
         $routes = $this->layer[$method] ?? [];
@@ -352,13 +360,16 @@ class App
      * @throws \DI\DependencyException
      * @throws \DI\NotFoundException
      */
-    public function run(string $uri, $req = null, $res = null)
+    public function run(RequestInterface $request = null, ReplyInterface $reply = null)
     {
-        $uri = $uri ?: '/';
-        $context = $this->createContext($req, $res);
+        if (!$request) {
+            $request = Request::createFromGlobals($_SERVER);
+        }
+
+        $context = $this->createContext($request, $reply);
         try {
-            $context = $this->mapRoute($context->method, $uri, $context);
-            if (empty($context->callable)) {
+            $context = $this->mapRoute($context);
+            if (empty($context->getCallable())) {
                 $context->use($this->notFounds);
             }
 

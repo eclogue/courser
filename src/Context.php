@@ -12,7 +12,7 @@ namespace Courser;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\RequestInterface;
-use Hayrick\Http\Request;
+use Psr\Http\Message\ServerRequestInterface;
 use Hayrick\Http\Response;
 use Bulrush\Poroutine;
 use Generator;
@@ -31,6 +31,8 @@ class Context
     public $callable = [];
 
     public $paramNames = [];
+
+    protected $params = [];
 
     protected $context = [];
 
@@ -63,14 +65,12 @@ class Context
      * @throws \DI\DependencyException
      * @throws \DI\NotFoundException
      */
-    public function __construct($req, $res, ContainerInterface $container)
+    public function __construct(RequestInterface $request, ReplyInterface $reply, ContainerInterface $container)
     {
 
-        $this->context['request'] = $req;
-        $this->context['response'] = $res;
+        $this->context['request'] = $request;
+        $this->context['response'] = $reply;
         $this->container = $container;
-        $request = $this->createRequest($req);
-        $this->request = $request;
         $this->method = $request->getMethod();
     }
 
@@ -100,7 +100,7 @@ class Context
         $paramNames = $route->getParamNames();
         foreach ($paramNames as $name) {
             if (isset($params[$name])) {
-                $this->request->setParam($name, $params[$name]);
+                $this->setParam($name, $params[$name]);
             }
         }
 
@@ -132,16 +132,15 @@ class Context
      */
     public function setParam($name, $value)
     {
-        $this->request->setParam($name, $value);
+        $this->params[$name] = $value;
     }
 
     /**
      * @param $method
      */
-    public function method($method)
+    public function setMethod($method)
     {
         $this->method = $method;
-        $this->request = $this->request->withMethod($method);
     }
 
     /**
@@ -153,7 +152,9 @@ class Context
     {
         $handler = array_merge($this->middleware, $this->callable);
         $resolver = new Transducer($handler);
-        $response = $resolver->handle($this->request);
+        $request = $this->getRequest();
+        $request = $request->withAttribute('params', $this->params);
+        $response = $resolver->handle($request);
         if ($response instanceof ResponseInterface) {
             $this->response = $response;
         } elseif ($response instanceof Response) {
@@ -255,35 +256,6 @@ class Context
     }
 
 
-    /**
-     * build Request
-     *
-     * @param null $req
-     * @return Request
-     * @throws \DI\DependencyException
-     * @throws \DI\NotFoundException
-     * @throws \RuntimeException
-     */
-    public function createRequest($req = null): Request
-    {
-        if ($this->container->has('request.resolver')) {
-            $builder = $this->container->get('request.resolver');
-        } else {
-            $builder = Relay::createFromGlobal();
-        }
-
-        if (is_callable($builder)) {
-            $incoming = call_user_func_array($builder, [$req]);
-        } elseif (is_object($builder)) {
-            $incoming = $builder;
-        } else {
-            throw new \RuntimeException('Request builder invalid');
-        }
-
-        $request = Request::createRequest($incoming);
-
-        return $request;
-    }
 
     /**
      * check context is mounted
@@ -303,4 +275,20 @@ class Context
     {
         return $this->context;
     }
+
+    public function getRequest(): ServerRequestInterface
+    {
+        return $this->context['request'];
+    }
+
+    public function getResponse()
+    {
+        return $this->context['response'];
+    }
+
+    public function getCallable()
+    {
+        return $this->callable;
+    }
+
 }
