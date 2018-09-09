@@ -40,7 +40,6 @@ class Test implements MiddlewareInterface
 $app->add(new Test());
 
 
-
 $app->get('/test/:id', function (ServerRequestInterface $request) {
     $id = $request->getAttribute('params');
     $response = new Response();
