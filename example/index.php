@@ -42,6 +42,7 @@ $app->add(new Test());
 
 $app->get('/test/:id', function (ServerRequestInterface $request) {
     $id = $request->getAttribute('params');
+
     $response = new Response();
     return $response->json(['id' => $id]);
 });
