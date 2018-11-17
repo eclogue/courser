@@ -40,8 +40,6 @@ class Context
 
     protected $container;
 
-    protected $error;
-
     public $method = 'get';
 
     public $collection;
@@ -215,9 +213,9 @@ class Context
     {
         return function (callable $callable) use ($err) {
             if (is_array($callable) || is_callable($callable)) {
-                $response = call_user_func_array($callable, [$this->request, $err]);
+                $response = call_user_func_array($callable, [$this->getRequest(), $err]);
             } else {
-                $response = $callable($this->request, $err);
+                $response = $callable($this->getRequest(), $err);
             }
 
             if ($response instanceof Generator) {

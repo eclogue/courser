@@ -11,7 +11,7 @@ define('ROOT', dirname(dirname(__FILE__)));
 require ROOT . '/vendor/autoload.php';
 
 use Courser\App;
-use Hayrick\Http\Response;
+use Zend\Diactoros\Response\JsonResponse;
 use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -42,22 +42,19 @@ $app->add(new Test());
 
 $app->get('/test/:id', function (ServerRequestInterface $request) {
     $id = $request->getAttribute('params');
-
-    $response = new Response();
-    return $response->json(['id' => $id]);
+    $response = new JsonResponse([
+        'data' => 'hello bear'
+    ]);
+    return $response;
 });
 $app->setReporter(function(RequestInterface $request, Throwable $err) {
-//    var_dump($request, $err->getMessage());
-    $response = new Response();
-    $response = $response->json([
-        'error' => $err->getMessage(),
-    ])->withStatus(500);
-//    var_dump($response->getHeaders());
+    $data = [];
+    $response = new JsonResponse($data, 500);
+   
 
     return $response;
 });
 
-//echo "<pre>";
 $app->run();
 
 

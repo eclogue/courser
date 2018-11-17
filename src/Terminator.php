@@ -22,6 +22,7 @@ class Terminator implements ReplyInterface
 
     public function end(ResponseInterface $response)
     {
+       
         if (!headers_sent()) {
             header(sprintf(
                 'HTTP/%s %s %s',
@@ -48,7 +49,7 @@ class Terminator implements ReplyInterface
             }
 
             $chunkSize = 4096;
-            $contentLength  = $response->getHeaderLine('Content-Length');
+            $contentLength  = (int) $response->getHeaderLine('Content-Length');
             if (!$contentLength) {
                 $contentLength = $body->getSize();
             }

@@ -376,6 +376,7 @@ class App
             return $context->dispatch();
         } catch (Throwable $err) {
             $handler = $context->error($err);
+            
             return $handler($this->reporter);
         }
     }
