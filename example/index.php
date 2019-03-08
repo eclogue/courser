@@ -48,30 +48,17 @@ $app->get('/test/:id', function (ServerRequestInterface $request) {
     return $response;
 });
 $app->setReporter(function(RequestInterface $request, Throwable $err) {
-    $data = [];
+    $data = [
+        'message' => $err->getMessage(),
+        'file' => $err->getFile(),
+        'line' => $err->getLine(),
+        'stack' => $err->getTrace(),
+    ];
     $response = new JsonResponse($data, 500);
-   
+
 
     return $response;
 });
 
 $app->run();
 
-
-//$builder = new \DI\ContainerBuilder();
-//$builder->addDefinitions([
-//    'foo' => function ($c) {
-//        return new Response();
-//    },
-//    Test::class => \DI\factory([\Hayrick\Environment\Relay::class, 'createFromGlobal'])
-//]);
-//
-//$container = $builder->build();
-//
-//$make = $container->make(Test::class, [
-//    'user' => 'torvalds',
-//]);
-//
-//var_dump($make);
-
-//var_dump($container->get('GithubProfile'));

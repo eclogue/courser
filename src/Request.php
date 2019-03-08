@@ -9,13 +9,20 @@
 
 namespace Courser;
 
-use Slim\Http\Request as SlimRequest;
-class Request extends SlimRequest
+use Zend\Diactoros\ServerRequest;
+use Zend\Diactoros\ServerRequestFactory;
+
+class Request extends ServerRequest
 {
 
     public static function createByRelay(Relay $relay)
     {
-        return new SlimRequest(...$relay->toArray());
+        return new ServerRequest(...$relay->toArray());
     }
 
+
+    public static function createFromGlobals()
+    {
+        return ServerRequestFactory::fromGlobals();
+    }
 }

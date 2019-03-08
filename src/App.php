@@ -363,7 +363,7 @@ class App
     public function run(RequestInterface $request = null, ReplyInterface $reply = null)
     {
         if (!$request) {
-            $request = Request::createFromGlobals($_SERVER);
+            $request = Request::createFromGlobals();
         }
 
         $context = $this->createContext($request, $reply);
@@ -375,8 +375,11 @@ class App
 
             return $context->dispatch();
         } catch (Throwable $err) {
+
             $handler = $context->error($err);
-            
+            // echo "<pre>";
+            // var_dump($handler);
+
             return $handler($this->reporter);
         }
     }

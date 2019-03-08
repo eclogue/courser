@@ -5,8 +5,7 @@
 [![Total Downloads](https://poser.pugx.org/eclogue/courser/downloads)](https://packagist.org/packages/eclogue/courser)
 [![License](https://poser.pugx.org/eclogue/courser/license)](https://packagist.org/packages/eclogue/courser)
 
-Fast and scalable web framework. Implement psr-7, psr-15, psr-4, psr-2, psr-11.It is easy to write swoole, reactphp, workerman and cgi web application.I believe that 
-`entities should not be multiplied unnecessarily.` 
+some thing for fun
 
 **Feature**
 - PSR-15 middleware
@@ -23,10 +22,6 @@ Fast and scalable web framework. Implement psr-7, psr-15, psr-4, psr-2, psr-11.I
 `composer install` 
 
 **Simple usage** `php -S 127.0.0.1:7001 -t example/`
-
-
-**Use swoole for server**: `php example/swoole.php`
-
 
 
 

@@ -22,7 +22,11 @@ class Terminator implements ReplyInterface
 
     public function end(ResponseInterface $response)
     {
-       
+        if (is_callable([$response, '__toString'])) {
+            echo $response;
+            return;
+        }
+
         if (!headers_sent()) {
             header(sprintf(
                 'HTTP/%s %s %s',

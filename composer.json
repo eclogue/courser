@@ -36,11 +36,8 @@
     "psr/http-server-handler": "^1.0@dev",
     "psr/http-server-middleware": "^1.0",
     "php-di/php-di": "^6.0.2",
-    "slim/http": "^0.3",
+    "slim/http": "^0.5",
     "zendframework/zend-diactoros": "^2.0@dev"
-  },
-  "replace": {
-    "courser/http": "self.version"
   },
   "minimum-stability": "dev",
   "prefer-stable": false,

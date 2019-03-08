@@ -13,7 +13,7 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Server\MiddlewareInterface;
-use Hayrick\Http\Response;
+use Zend\Diactoros\Response;
 use Bulrush\Poroutine;
 use Generator;
 use Closure;
