@@ -41,9 +41,11 @@ $app->add(new Test());
 
 
 $app->get('/test/:id', function (ServerRequestInterface $request) {
+//    var_dump($request->getAttribute('context'));
     $id = $request->getAttribute('params');
     $response = new JsonResponse([
-        'data' => 'hello bear'
+        'data' => 'hello bear',
+        'context' => $request->getAttribute('context')->getRoutes(),
     ]);
     return $response;
 });

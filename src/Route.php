@@ -27,6 +27,8 @@ class Route
 
     public $pattern = '';
 
+    protected $route = '';
+
     protected $length = 0;
 
     /**
@@ -50,6 +52,11 @@ class Route
         $this->paramNames = $params;
         $this->length = count(explode('/', $route));
         $this->callable = $callable;
+    }
+
+    public function getRoute(): string
+    {
+        return $this->route;
     }
 
 

@@ -13,24 +13,25 @@ use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Hayrick\Http\Response;
 use Bulrush\Poroutine;
 use Generator;
 use Psr\Http\Server\MiddlewareInterface;
 use Throwable;
 use Closure;
+use Zend\Diactoros\Response;
+use Zend\Diactoros\ServerRequest;
 
 class Context
 {
-    public $request;
+    protected $request;
 
-    public $response;
+    protected $response;
 
-    public $middleware = [];
+    protected $middleware = [];
 
-    public $callable = [];
+    protected $callable = [];
 
-    public $paramNames = [];
+    protected $paramNames = [];
 
     protected $params = [];
 
@@ -40,9 +41,11 @@ class Context
 
     protected $container;
 
-    public $method = 'get';
+    protected $method = 'get';
 
-    public $collection;
+    protected $collection;
+
+    protected $routes = [];
 
     public static $allowMethods = [
         'get',
@@ -63,13 +66,22 @@ class Context
      * @throws \DI\DependencyException
      * @throws \DI\NotFoundException
      */
-    public function __construct(RequestInterface $request, ReplyInterface $reply, ContainerInterface $container)
+    public function __construct(ServerRequestInterface $request, ReplyInterface $reply, ContainerInterface $container)
     {
-
+        $request = $request->withAttribute('context', $this);
         $this->context['request'] = $request;
         $this->context['response'] = $reply;
         $this->container = $container;
         $this->method = $request->getMethod();
+        $this->routes = [];
+    }
+
+    /**
+     * @return array
+     */
+    public function getRoutes()
+    {
+        return $this->routes;
     }
 
     /**
@@ -95,6 +107,7 @@ class Context
             return;
         }
 
+        $this->routes[] = $route->getRoute();
         $paramNames = $route->getParamNames();
         foreach ($paramNames as $name) {
             if (isset($params[$name])) {
@@ -166,13 +179,13 @@ class Context
         ) {
             $reply = new Response();
             $reply = $reply->withHeader('Content-Type', 'application/json');
-            $reply = $reply->write($response);
+            $reply = $reply->getBody()->write(json_encode($response));
             $this->response = $reply;
         } elseif (is_object($response) && method_exists($response, 'getContent')) {
             $this->response = $response;
         } else {
             $this->response = new Response();
-            $this->response->write($response);
+            $this->response->getBody()->write($response);
         }
 
         return $this->respond($this->response);
