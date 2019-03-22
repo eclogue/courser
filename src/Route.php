@@ -11,21 +11,21 @@ namespace Courser;
 
 class Route
 {
-    public $method = 'get';
+    protected $method = 'get';
 
-    public $path = '/';
+    protected $path = '/';
 
-    public $callable = [];
+    protected $callable = [];
 
-    public $group = '/';
+    protected $group = '/';
 
-    public $scope = 1;
+    protected $scope = 1;
 
-    public $paramNames = [];
+    protected $paramNames = [];
 
-    public $middleware;
+    protected $middleware;
 
-    public $pattern = '';
+    protected $pattern = '';
 
     protected $route = '';
 
