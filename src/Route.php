@@ -158,4 +158,9 @@ class Route
     {
         return $this->paramNames;
     }
+
+    public function getCallable()
+    {
+        return $this->callable;
+    }
 }

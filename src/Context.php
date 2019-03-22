@@ -102,7 +102,7 @@ class Context
      */
     public function add(Route $route, array $params = [])
     {
-        $callback = $route->callable;
+        $callback = $route->getCallable();
         if (empty($callback)) {
             return;
         }
